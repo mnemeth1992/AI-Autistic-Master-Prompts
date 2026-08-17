@@ -193,38 +193,81 @@ except ImportError:
     GDRIVE_API_AVAILABLE = False
 
 
-def get_service_account_info() -> Optional[Dict[str, Any]]:
-    """Retrieves Google Service Account credentials from secrets, env, or config.json."""
-    try:
-        if "gcp_service_account" in st.secrets:
-            return dict(st.secrets["gcp_service_account"])
-        if "GOOGLE_SERVICE_ACCOUNT_JSON" in st.secrets:
-            raw = st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"]
-            if isinstance(raw, dict):
-                return raw
-            return json.loads(raw)
-    except Exception:
-        pass
-
-    env_sa = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
-    if env_sa:
+def normalize_service_account_dict(d: Any) -> Optional[Dict[str, Any]]:
+    if not d:
+        return None
+    res = None
+    if isinstance(d, dict):
+        res = dict(d)
+    elif hasattr(d, "to_dict"):
         try:
-            return json.loads(env_sa)
+            res = dict(d.to_dict())
+        except Exception:
+            pass
+    elif hasattr(d, "items"):
+        try:
+            res = {k: v for k, v in d.items()}
+        except Exception:
+            pass
+    elif isinstance(d, str) and "{" in d and "private_key" in d:
+        try:
+            res = json.loads(d.strip().strip("'\""))
         except Exception:
             pass
 
+    if isinstance(res, dict) and ("client_email" in res or "private_key" in res):
+        if "private_key" in res and isinstance(res["private_key"], str):
+            res["private_key"] = res["private_key"].replace("\\n", "\n")
+        return res
+    return None
+
+
+def get_service_account_info() -> Optional[Dict[str, Any]]:
+    """Retrieves Google Service Account credentials from secrets, env, or config.json."""
+    # 1. Check Streamlit secrets
+    try:
+        # Check standard keys
+        for k in ["gcp_service_account", "google_service_account", "service_account", "GOOGLE_SERVICE_ACCOUNT_JSON", "google_service_account_json", "SERVICE_ACCOUNT_JSON", "GOOGLE_CREDENTIALS"]:
+            if k in st.secrets:
+                norm = normalize_service_account_dict(st.secrets[k])
+                if norm:
+                    return norm
+
+        # Check if secrets root itself is the service account table
+        if "private_key" in st.secrets and "client_email" in st.secrets:
+            norm = normalize_service_account_dict(st.secrets)
+            if norm:
+                return norm
+
+        # Scan all secret keys
+        for k, v in st.secrets.items():
+            norm = normalize_service_account_dict(v)
+            if norm:
+                return norm
+    except Exception:
+        pass
+
+    # 2. Check environment variable
+    env_sa = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+    if env_sa:
+        norm = normalize_service_account_dict(env_sa)
+        if norm:
+            return norm
+
+    # 3. Check config.json
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 cfg_f = json.load(f)
                 raw_cfg = cfg_f.get("google_service_account_json", "")
-                if isinstance(raw_cfg, dict):
-                    return raw_cfg
-                if isinstance(raw_cfg, str) and raw_cfg.strip():
-                    return json.loads(raw_cfg.strip())
+                norm = normalize_service_account_dict(raw_cfg)
+                if norm:
+                    return norm
         except Exception:
             pass
+
     return None
+
 
 
 def get_gdrive_api_service():
@@ -5252,12 +5295,15 @@ elif "Rendszerbeállítások" in menu_choice or "7." in menu_choice:
             key="cfg_drive_path_input_v2"
         )
 
-        if sa_info:
-            st.success("🟢 Google Drive Cloud API csatlakoztatva és aktív!")
+        sa_info_fresh = get_service_account_info()
+        if sa_info_fresh:
+            email = sa_info_fresh.get("client_email", "Aktív")
+            st.success(f"🟢 Google Drive Cloud API csatlakoztatva és aktív! (Robot fiók: `{email}`)")
         elif os.path.exists(drive_path_val):
             st.success("🟢 Google Drive helyi mappa elérhető és csatlakoztatva!")
         else:
             st.info("💡 Helyi módban a laptop meghajtóját használja. Streamlit Cloudhoz add meg a Service Account JSON-t a Secrets-ben!")
+
 
 
         if st.button("📁 Mappastruktúra Ellenőrzése / Létrehozása", key="btn_init_drive_dirs_v2", use_container_width=True):
