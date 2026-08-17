@@ -90,11 +90,24 @@ class GeminiKeyManager:
         cfg_openrouter_key = cfg.get("openrouter_api_key", "").strip()
 
         self.image_engine = cfg.get("selected_image_engine", "pollinations_flux")
-        self.text_provider = cfg.get("selected_text_provider", "auto")
+        # Streamlit secrets check
+        try:
+            import streamlit as st
+            if "GROQ_API_KEY" in st.secrets:
+                env_groq_key = env_groq_key or str(st.secrets["GROQ_API_KEY"]).strip()
+            if "OPENROUTER_API_KEY" in st.secrets:
+                env_openrouter_key = env_openrouter_key or str(st.secrets["OPENROUTER_API_KEY"]).strip()
+            if "GEMINI_PAID_KEY" in st.secrets:
+                env_paid_key = env_paid_key or str(st.secrets["GEMINI_PAID_KEY"]).strip()
+            elif "GEMINI_API_KEY" in st.secrets:
+                env_paid_key = env_paid_key or str(st.secrets["GEMINI_API_KEY"]).strip()
+        except Exception:
+            pass
 
         self.paid_key = self.paid_key or env_paid_key or cfg_paid_key
         self.groq_key = self.groq_key or env_groq_key or cfg_groq_key
         self.openrouter_key = self.openrouter_key or env_openrouter_key or cfg_openrouter_key
+
 
     def save_configuration(
         self,
