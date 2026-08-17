@@ -197,28 +197,58 @@ def normalize_service_account_dict(d: Any) -> Optional[Dict[str, Any]]:
     if not d:
         return None
     res = None
-    if isinstance(d, dict):
-        res = dict(d)
-    elif hasattr(d, "to_dict"):
+
+    if isinstance(d, dict) or hasattr(d, "items") or hasattr(d, "to_dict"):
         try:
-            res = dict(d.to_dict())
+            res = dict(d)
         except Exception:
-            pass
-    elif hasattr(d, "items"):
-        try:
-            res = {k: v for k, v in d.items()}
-        except Exception:
-            pass
-    elif isinstance(d, str) and "{" in d and "private_key" in d:
-        try:
-            res = json.loads(d.strip().strip("'\""))
-        except Exception:
-            pass
+            try:
+                res = {str(k): v for k, v in d.items()}
+            except Exception:
+                pass
+
+    elif isinstance(d, str):
+        s = d.strip()
+        # 1. Try standard JSON decode
+        for test_s in [s, s.strip("'\""), s.strip("`")]:
+            try:
+                parsed = json.loads(test_s, strict=False)
+                if isinstance(parsed, dict):
+                    res = parsed
+                    break
+            except Exception:
+                pass
+
+        # 2. Regex fallback extraction for raw strings/TOML multiline
+        if not isinstance(res, dict) and ("client_email" in s or "private_key" in s):
+            try:
+                email_m = re.search(r'["\']client_email["\']\s*[:=]\s*["\']([^"\']+)["\']', s)
+                pk_m = re.search(r'["\']private_key["\']\s*[:=]\s*["\'](-----BEGIN [^"\']+)["\']', s, re.DOTALL)
+                proj_m = re.search(r'["\']project_id["\']\s*[:=]\s*["\']([^"\']+)["\']', s)
+                if email_m or pk_m:
+                    res = {
+                        "type": "service_account",
+                        "client_email": email_m.group(1).strip() if email_m else "",
+                        "private_key": pk_m.group(1).strip() if pk_m else "",
+                        "project_id": proj_m.group(1).strip() if proj_m else "",
+                        "token_uri": "https://oauth2.googleapis.com/token"
+                    }
+            except Exception:
+                pass
 
     if isinstance(res, dict) and ("client_email" in res or "private_key" in res):
-        if "private_key" in res and isinstance(res["private_key"], str):
-            res["private_key"] = res["private_key"].replace("\\n", "\n")
-        return res
+        norm_res = {}
+        for k, v in res.items():
+            norm_res[str(k).strip()] = v
+        if "private_key" in norm_res and isinstance(norm_res["private_key"], str):
+            pk = norm_res["private_key"]
+            if "\\n" in pk:
+                pk = pk.replace("\\n", "\n")
+            norm_res["private_key"] = pk
+        if "client_email" in norm_res:
+            norm_res["client_email"] = str(norm_res["client_email"]).strip()
+        return norm_res
+
     return None
 
 
@@ -227,7 +257,7 @@ def get_service_account_info() -> Optional[Dict[str, Any]]:
     # 1. Check Streamlit secrets
     try:
         # Check standard keys
-        for k in ["gcp_service_account", "google_service_account", "service_account", "GOOGLE_SERVICE_ACCOUNT_JSON", "google_service_account_json", "SERVICE_ACCOUNT_JSON", "GOOGLE_CREDENTIALS"]:
+        for k in ["gcp_service_account", "google_service_account", "service_account", "GOOGLE_SERVICE_ACCOUNT_JSON", "google_service_account_json", "SERVICE_ACCOUNT_JSON", "GOOGLE_CREDENTIALS", "google_credentials"]:
             if k in st.secrets:
                 norm = normalize_service_account_dict(st.secrets[k])
                 if norm:
@@ -240,7 +270,8 @@ def get_service_account_info() -> Optional[Dict[str, Any]]:
                 return norm
 
         # Scan all secret keys
-        for k, v in st.secrets.items():
+        for k in st.secrets:
+            v = st.secrets[k]
             norm = normalize_service_account_dict(v)
             if norm:
                 return norm
@@ -267,6 +298,7 @@ def get_service_account_info() -> Optional[Dict[str, Any]]:
             pass
 
     return None
+
 
 
 
@@ -5302,9 +5334,29 @@ elif "Rendszerbeállítások" in menu_choice or "7." in menu_choice:
         elif os.path.exists(drive_path_val):
             st.success("🟢 Google Drive helyi mappa elérhető és csatlakoztatva!")
         else:
-            st.info("💡 Helyi módban a laptop meghajtóját használja. Streamlit Cloudhoz add meg a Service Account JSON-t a Secrets-ben!")
+            st.info("💡 Helyi módban a laptop meghajtóját használja. Streamlit Cloudhoz add meg a Service Account JSON-t a Secrets-ben vagy illeszd be ide alább!")
 
+        sa_json_val = st.text_area(
+            "☁️ Google Service Account JSON Beillesztése (ha nem Secrets-ben adtad meg):",
+            value="",
+            height=70,
+            placeholder='{"type": "service_account", "project_id": "family-cashflow-4de1e", ...}',
+            key="cfg_sa_json_direct_input",
+            help="Ide is beillesztheted közvetlenül a letöltött Google Cloud JSON kulcsodat, majd kattints a Mentés gombra."
+        )
 
+        with st.expander("🔍 Secrets & Google Drive Diagnosztika"):
+            secrets_keys = []
+            try:
+                secrets_keys = list(st.secrets.keys())
+            except Exception:
+                pass
+            st.write("📋 Streamlit Secrets-ben látott kulcsok:", secrets_keys)
+            if sa_info_fresh:
+                st.success(f"✅ Aktív robot e-mail: `{sa_info_fresh.get('client_email')}`")
+                st.info(f"📂 Projekt ID: `{sa_info_fresh.get('project_id')}`")
+            else:
+                st.warning("⚠️ Még nem sikerült felismerni a Service Account kulcsot a Secrets-ből.")
 
         if st.button("📁 Mappastruktúra Ellenőrzése / Létrehozása", key="btn_init_drive_dirs_v2", use_container_width=True):
             try:
@@ -5331,7 +5383,7 @@ elif "Rendszerbeállítások" in menu_choice or "7." in menu_choice:
             clean_paid_key = new_paid_key.strip()
             chosen_text = st.session_state.get("cfg_model_sel_v2", sel_model)
 
-            save_config({
+            cfg_save_dict = {
                 "groq_api_key": new_groq_key.strip(),
                 "openrouter_api_key": new_openrouter_key.strip(),
                 "paid_key": clean_paid_key,
@@ -5342,12 +5394,21 @@ elif "Rendszerbeállítások" in menu_choice or "7." in menu_choice:
                 "temperature": sel_temp,
                 "drive_root_path": drive_path_val,
                 "gumroad_access_token": gumroad_token_input.strip()
-            })
+            }
+            if sa_json_val.strip():
+                cfg_save_dict["google_service_account_json"] = sa_json_val.strip()
+
+            save_config(cfg_save_dict)
             km.update_keys(
                 paid_key=clean_paid_key,
                 groq_key=new_groq_key.strip(),
                 openrouter_key=new_openrouter_key.strip()
             )
+
+            st.success("🎉 **Beállítások sikeresen elmentve!**")
+            time.sleep(0.6)
+            st.rerun()
+
 
             st.success("🎉 **Beállítások sikeresen elmentve!**")
             time.sleep(0.6)
