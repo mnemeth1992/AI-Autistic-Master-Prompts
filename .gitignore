@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Environment & API Keys (Sensitive)
+.env
+.env.local
+key_state.json
+time_log.json
+config.json
+
+# Local temp & scratch files
+scratch/
+Google_Drive_Mappak/
+*.tmp
+*.log
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,158 @@
+/* ==========================================================================
+   Keresztény AI Termékgenerátor & Munkaállomás - Mobil és Asztali CSS Stíluslap
+   ========================================================================== */
+
+/* ── 1. Alapvető változók és színek ── */
+:root {
+    --bg-primary: #0b1320;
+    --bg-card: #151f30;
+    --bg-card-hover: #1c2a42;
+    --border-color: #24354f;
+    --border-highlight: #3b82f6;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-gold: #f59e0b;
+    --text-emerald: #10b981;
+    --accent-blue: #2563eb;
+    --accent-emerald: #059669;
+}
+
+/* ── 2. Globális elrendezés és betűméretek ── */
+html, body, [class*="css"] {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Kártya stílusú konténerek */
+.metric-card {
+    background: linear-gradient(145deg, #151f30 0%, #111a28 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.metric-card:hover {
+    border-color: #3b82f6;
+}
+
+/* Fejléc és navigációs jelvények */
+.path-badge {
+    display: inline-block;
+    background: #1e293b;
+    color: #38bdf8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1px solid #334155;
+    margin-bottom: 12px;
+}
+
+.nav-title-box {
+    background: #151f30;
+    border-left: 4px solid #10b981;
+    padding: 8px 12px;
+    border-radius: 4px 8px 8px 4px;
+    margin-bottom: 12px;
+}
+
+.nav-title-text {
+    font-weight: 700;
+    color: #f1f5f9;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+
+/* Időzítő és fókusz doboz */
+.timer-display {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #38bdf8;
+    text-align: center;
+    letter-spacing: 2px;
+    padding: 10px;
+    background: #0f172a;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+    margin: 8px 0;
+}
+
+.phase-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+.phase-pill-done {
+    background: #065f46;
+    color: #a7f3d0;
+    border: 1px solid #059669;
+}
+.phase-pill-active {
+    background: #1e3a8a;
+    color: #bfdbfe;
+    border: 1px solid #3b82f6;
+}
+.phase-pill-pending {
+    background: #1e293b;
+    color: #64748b;
+    border: 1px solid #334155;
+}
+
+/* Prompt és kód kimenet előnézetek */
+.prompt-preview-box {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* ── 3. Mobil és érintőképernyős szabályok (Reszponzivitás) ── */
+@media (max-width: 768px) {
+    /* iOS input zoom megelőzése */
+    .stTextInput input, .stTextArea textarea, .stSelectbox select {
+        font-size: 16px !important;
+    }
+
+    /* Kényelmes érintési felületek gombokhoz */
+    .stButton button {
+        width: 100% !important;
+        min-height: 48px !important;
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 6px;
+        border-radius: 8px !important;
+    }
+
+    /* Fő tartalom margói mobil nézetben */
+    .block-container {
+        padding: 1rem 0.5rem 2rem 0.5rem !important;
+    }
+
+    /* Tab fejlécek jobb tördelése mobilon */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 8px 10px !important;
+        font-size: 0.88rem !important;
+    }
+
+    .timer-display {
+        font-size: 1.8rem;
+        padding: 8px;
+    }
+}
