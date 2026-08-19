@@ -2909,6 +2909,91 @@ def get_niche_field(field_name: str, niche_key: str = None) -> str:
     return fallbacks.get(field_name, "")
 
 
+def get_ffc_preset(niche_key: str, prod_type: str = "", language: str = "Magyar") -> dict:
+    """Returns full tailored product details based on Niche + Product Type + Language."""
+    is_en = "Angol" in language or "English" in language
+    n_info = get_niche_prompt_context(niche_key)
+    n_en = n_info.get("name_en", "Christian & Biblical Niche")
+    n_aud = n_info.get("default_audience", "Keresztény édesanyák, alkotók és hívők")
+    is_christian = "Keresztény" in niche_key or "Bibliai" in niche_key
+
+    if is_en:
+        if "Színező" in prod_type or "Coloring" in prod_type:
+            return {
+                "prod_name": f"30-Day {n_en} Coloring Book & Scripture Reflection Companion (Amazon KDP & Printable)",
+                "target_aud": f"Parents, kids, and adults interested in {n_en} looking for creative mindfulness",
+                "main_trans": f"Experience deep peace, reduce daily stress, and meditate on uplifting truths of {n_en} through 30 relaxing hand-drawn coloring scenes",
+                "vehicle": "Bold clean outlines, inspirational scripture quotes, and structured mindful reflection",
+                "extra_notes": f"Target English Amazon KDP {n_en} coloring book audience with 100% money-back guarantee."
+            }
+        elif "Falikép" in prod_type or "Clipart" in prod_type or "Wall" in prod_type:
+            return {
+                "prod_name": f"Museum-Quality {n_en} Wall Art & Clipart Master Bundle (300 DPI)",
+                "target_aud": f"Etsy shoppers, digital planners, and home decorators interested in {n_en}",
+                "main_trans": f"Easily decorate your home and craft best-selling print-on-demand products with timeless {n_en} artwork",
+                "vehicle": "High-resolution 300 DPI watercolor vector assets, print-ready PDF formats, and commercial license",
+                "extra_notes": "Highlight instant digital download and commercial POD usage rights."
+            }
+        elif "Tanfolyam" in prod_type or "Masterclass" in prod_type or "Course" in prod_type:
+            return {
+                "prod_name": f"{n_en} Digital Product & Faceless Funnel Masterclass",
+                "target_aud": f"Content creators, freelancers, and entrepreneurs in {n_en}",
+                "main_trans": f"Build and launch a 100% automated passive digital product funnel in {n_en} without showing your face on camera",
+                "vehicle": "DFY Canva templates, ManyChat keyword automation, and Stripe zero-cost sales funnel",
+                "extra_notes": "Include full step-by-step video curriculum and lifetime updates."
+            }
+        else:  # Devotional / Default
+            return {
+                "prod_name": f"30-Day {n_en} Guided Devotional & Mindfulness Journal (Printable & Digital)",
+                "target_aud": f"Believers, creators, and individuals seeking daily quiet time and focus in {n_en}",
+                "main_trans": f"Transform busy mornings into 10 minutes of profound spiritual clarity, release anxiety, and walk in peace through {n_en}",
+                "vehicle": "Micro-reflections, timeless scripture anchors, and aesthetic printable daily worksheets",
+                "extra_notes": "Include 30-day spiritual breakthrough guarantee."
+            }
+    else:  # Magyar
+        if "Színező" in prod_type:
+            return {
+                "prod_name": f"30 Napos {n_en} Színezőkönyv & Művészi Lelki Útitárs (Nyomtatható & KDP)",
+                "target_aud": f"Szülők, alkotók és felnőttek, akik kreatív elcsendesedésre vágynak a(z) {n_en} témájában",
+                "main_trans": f"Megtalálni a napi belső békét, elengedni a stresszt és elmélyülni a(z) {n_en} világában 30 gyönyörű színező lapon keresztül",
+                "vehicle": "Kristálytiszta kontúrok, inspiráló idézetek és vezetett relaxációs kérdések",
+                "extra_notes": "Nyomdakész Amazon KDP és otthon nyomtatható PDF formátumban."
+            }
+        elif "Falikép" in prod_type or "Clipart" in prod_type:
+            return {
+                "prod_name": f"Prémium {n_en} Igés Falikép & Művészi Clipart Mestercsomag (300 DPI)",
+                "target_aud": f"Etsy vásárlók, otthonszépítők és alkotók, akik igényes {n_en} grafikákat keresnek",
+                "main_trans": f"Otthonodat és digitális termékeidet felemelő, prémium minőségű {n_en} illusztrációkkal díszíteni",
+                "vehicle": "300 DPI nyomdakész PDF faliképek és átlátszó hátterű PNG clipartok kereskedelmi joggal",
+                "extra_notes": "Azonnali digitális letöltés és Canva szerkeszthetőség."
+            }
+        elif "Tanfolyam" in prod_type or "Masterclass" in prod_type:
+            return {
+                "prod_name": f"{n_en} Digitális Termék & Faceless Funnel Mesterkurzus",
+                "target_aud": f"Vállalkozók, alkotók és szabadúszók, akik passzív digitális jövedelmet akarnak építeni a(z) {n_en} területén",
+                "main_trans": f"Felépíteni egy 100%-ban automatizált digitális termékrendszert arc nélküli videókkal a(z) {n_en} piacán",
+                "vehicle": "DFY sablonok, ManyChat kulcsszó automatizáció és 0 Ft-os Stripe értékesítési tölcsér",
+                "extra_notes": "Lépésről-lépésre videók és azonnal másolható sablonok."
+            }
+        else:  # Devotional / Default
+            if is_christian:
+                return {
+                    "prod_name": "30 Napos Békesség & Fókusz Vezetett Lelki Napló (Printable & Digital)",
+                    "target_aud": "Keresztény édesanyák, alkotók és hívők, akik lelki csendességre vágynak",
+                    "main_trans": "Napi 10 perces vezetett csendességgel elengedni a szorongást, megtalálni a tartós belső békességet és Isten jelenlétében élni",
+                    "vehicle": "Mikro-reflexiók, strukturált bibliai igemagyarázatok és letisztult nyomtatható naplólapok",
+                    "extra_notes": "30 napos lelki megújulás garanciával."
+                }
+            else:
+                return {
+                    "prod_name": f"30 Napos {n_en} Vezetett Napi Munkafüzet & Transzformációs Napló",
+                    "target_aud": n_aud,
+                    "main_trans": f"Napi 10 perc fókuszált munkával leküzdeni az akadályokat és áttörést elérni a(z) {n_en} területén",
+                    "vehicle": "Strukturált napi feladatok, ellenőrzőlisták és letisztult digitális lapok",
+                    "extra_notes": "100% pénzvisszafizetési garanciával."
+                }
+
+
 def render_niche_status_bar(workspace_name: str = ""):
     """
     Renders an interactive status and quick-sync bar at the top of every workspace.
@@ -5876,45 +5961,51 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
 
         with col_f1_in:
             n_slug_ffc = get_niche_slug(curr_niche_key)
-            st.markdown("<div class='step-label'>Termék & Transzformáció Paraméterek</div>", unsafe_allow_html=True)
-            ffc_prod_name = st.text_input(
-                "Termék / Ajánlat Neve:",
-                value=st.session_state.get(f"ffc_prod_{n_slug_ffc}", get_niche_field("ffc_prod", curr_niche_key)),
-                key=f"ffc_prod_{n_slug_ffc}"
-            )
-            ffc_target_aud = st.text_input(
-                "Célközönség / Avatár:",
-                value=st.session_state.get(f"ffc_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
-                key=f"ffc_aud_{n_slug_ffc}"
-            )
-            ffc_main_trans = st.text_area(
-                "Fő Transzformáció (Végső Érzelmi/Szellemi Ígéret):",
-                value=st.session_state.get(f"ffc_trans_{n_slug_ffc}", get_niche_field("ffc_trans", curr_niche_key)),
-                height=75,
-                key=f"ffc_trans_{n_slug_ffc}"
-            )
-            ffc_vehicle = st.text_input(
-                "Az Új Módszer / Kulcs (The Vehicle):",
-                value=st.session_state.get(f"ffc_veh_{n_slug_ffc}", get_niche_field("ffc_vehicle", curr_niche_key)),
-                key=f"ffc_veh_{n_slug_ffc}"
-            )
-            ffc_extra_notes = st.text_area(
-                "➕ Extra preferenciák / Különleges részletek (opcionális):",
-                placeholder=f"Pl.: Igazodjon a(z) {curr_niche_data.get('name_en', '')} rétegpiachoz, tartalmazzon 14 napos garanciát.",
-                height=60,
-                key=f"ffc_notes_{n_slug_ffc}"
-            )
-
+            
+            st.markdown("<div class='step-label'>1. Lépés: Nyelv & Terméktípus Kiválasztása</div>", unsafe_allow_html=True)
             col_sub1, col_sub2 = st.columns(2)
             with col_sub1:
-                ffc_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key="ffc_lang_v2")
+                ffc_lang = st.selectbox("🌐 Nyelv (Language):", ["Magyar", "Angol (English)"], index=0, key="ffc_lang_v2")
             with col_sub2:
                 ffc_prod_type = st.selectbox(
-                    "Terméktípus:",
+                    "📦 Terméktípus:",
                     ["30 Napos Áhítat & Napló", "Keresztény Színezőkönyv (KDP)", "Igés Falikép / Clipart Csomag", "Keresztény Tanfolyam / Masterclass"],
                     index=0,
                     key="ffc_prod_type_v2"
                 )
+
+            # Get tailored preset data for this exact Niche + Product Type + Language
+            ffc_preset = get_ffc_preset(curr_niche_key, ffc_prod_type, ffc_lang)
+            pt_slug = f"{sanitize_filename(ffc_prod_type)[:10]}_{'en' if 'Angol' in ffc_lang else 'hu'}"
+
+            st.markdown("<div class='step-label'>2. Lépés: Termék & Transzformáció Paraméterek</div>", unsafe_allow_html=True)
+            ffc_prod_name = st.text_input(
+                "Termék / Ajánlat Neve:",
+                value=st.session_state.get(f"ffc_prod_{n_slug_ffc}_{pt_slug}", ffc_preset["prod_name"]),
+                key=f"ffc_prod_{n_slug_ffc}_{pt_slug}"
+            )
+            ffc_target_aud = st.text_input(
+                "Célközönség / Avatár:",
+                value=st.session_state.get(f"ffc_aud_{n_slug_ffc}_{pt_slug}", ffc_preset["target_aud"]),
+                key=f"ffc_aud_{n_slug_ffc}_{pt_slug}"
+            )
+            ffc_main_trans = st.text_area(
+                "Fő Transzformáció (Végső Érzelmi/Szellemi Ígéret):",
+                value=st.session_state.get(f"ffc_trans_{n_slug_ffc}_{pt_slug}", ffc_preset["main_trans"]),
+                height=75,
+                key=f"ffc_trans_{n_slug_ffc}_{pt_slug}"
+            )
+            ffc_vehicle = st.text_input(
+                "Az Új Módszer / Kulcs (The Vehicle):",
+                value=st.session_state.get(f"ffc_veh_{n_slug_ffc}_{pt_slug}", ffc_preset["vehicle"]),
+                key=f"ffc_veh_{n_slug_ffc}_{pt_slug}"
+            )
+            ffc_extra_notes = st.text_area(
+                "➕ Extra preferenciák / Különleges részletek (opcionális):",
+                value=st.session_state.get(f"ffc_notes_{n_slug_ffc}_{pt_slug}", ffc_preset["extra_notes"]),
+                height=60,
+                key=f"ffc_notes_{n_slug_ffc}_{pt_slug}"
+            )
 
             btn_gen_sales_pack = st.button("🚀 Teljes FFC Értékesítési Csomag Generálása (AI)", key="btn_gen_sales_pack", use_container_width=True)
 
@@ -6067,28 +6158,36 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
         col_r_in, col_r_out = st.columns([1, 1.2], gap="large")
 
         with col_r_in:
+            reels_lang = st.selectbox("🌐 Nyelv (Language):", ["Magyar", "Angol (English)"], index=0, key="reels_lang_select_v2")
+            is_r_en = "Angol" in reels_lang or "English" in reels_lang
+            r_lang_slug = "en" if is_r_en else "hu"
+
+            default_r_prod = f"30-Day {curr_niche_data.get('name_en', 'Christian')} Guided Journal" if is_r_en else get_niche_field("reels_prod", curr_niche_key)
+            default_r_aud = "Parents, creators, and believers seeking peace and focus" if is_r_en else get_niche_field("ffc_aud", curr_niche_key)
+
             st.markdown("<div class='step-label'>Reels & ManyChat Paraméterek</div>", unsafe_allow_html=True)
             reels_prod = st.text_input(
                 "Termék / Téma:",
-                value=st.session_state.get(f"reels_prod_{n_slug_ffc}", get_niche_field("reels_prod", curr_niche_key)),
-                key=f"reels_prod_{n_slug_ffc}"
+                value=st.session_state.get(f"reels_prod_{n_slug_ffc}_{r_lang_slug}", default_r_prod),
+                key=f"reels_prod_{n_slug_ffc}_{r_lang_slug}"
             )
             reels_target = st.text_input(
                 "Célközönség:",
-                value=st.session_state.get(f"reels_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
-                key=f"reels_aud_{n_slug_ffc}"
+                value=st.session_state.get(f"reels_aud_{n_slug_ffc}_{r_lang_slug}", default_r_aud),
+                key=f"reels_aud_{n_slug_ffc}_{r_lang_slug}"
             )
-            reels_cta_kw_val = get_niche_field("reels_cta_kw", curr_niche_key)
-            reels_cta_kw_opts = ["BÉKESSÉG", "CSODA", "ÁLDÁS", "HIT", "SIKER", "REMÉNY", "SZABADSÁG", "FÓKUSZ", "IRÁNYTŰ", "VAGYON", "EGÉSZSÉG"]
-            if reels_cta_kw_val not in reels_cta_kw_opts:
-                reels_cta_kw_opts.insert(0, reels_cta_kw_val)
+            
+            if is_r_en:
+                reels_cta_kw_opts = ["PEACE", "FAITH", "MIRACLE", "GRACE", "FOCUS", "FREEDOM", "BLESSING", "SUCCESS", "GROWTH"]
+            else:
+                reels_cta_kw_opts = ["BÉKESSÉG", "CSODA", "ÁLDÁS", "HIT", "SIKER", "REMÉNY", "SZABADSÁG", "FÓKUSZ", "IRÁNYTŰ", "VAGYON", "EGÉSZSÉG"]
+            
             reels_cta_kw = st.selectbox(
                 "ManyChat CTA Kulcsszó (Ezt kell kommentelniük):",
                 reels_cta_kw_opts,
-                index=reels_cta_kw_opts.index(reels_cta_kw_val) if reels_cta_kw_val in reels_cta_kw_opts else 0,
-                key=f"reels_cta_kw_{n_slug_ffc}"
+                index=0,
+                key=f"reels_cta_kw_{n_slug_ffc}_{r_lang_slug}"
             )
-            reels_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key=f"reels_lang_{n_slug_ffc}")
 
             btn_gen_reels = st.button("🎬 10 db Virális Reels & B-roll Prompt Generálása (AI)", key="btn_gen_reels_batch", use_container_width=True)
 
@@ -6262,50 +6361,65 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
         col_f3_in, col_f3_out = st.columns([1, 1.15], gap="large")
 
         with col_f3_in:
-            st.markdown("<div class='step-label'>Google Sites Landing Page Paraméterek</div>", unsafe_allow_html=True)
+            st.markdown("<div class='step-label'>1. Lépés: Nyelv & Stílus Kiválasztása</div>", unsafe_allow_html=True)
+            col_sub_p1, col_sub_p2 = st.columns(2)
+            with col_sub_p1:
+                gs_lang = st.selectbox("🌐 Nyelv (Language):", ["Magyar", "English"], index=0, key="gs_lang_select_v2")
+            with col_sub_p2:
+                gs_price = st.text_input("Ajánlati Ár (Gumroad):", value="$19 (Value: $67)", key="gs_price_v2")
+
+            is_gs_en = "English" in gs_lang
+            gs_lang_slug = "en" if is_gs_en else "hu"
+
+            if is_gs_en:
+                def_gs_prod = f"30-Day {curr_niche_data.get('name_en', 'Christian')} Guided Journal"
+                def_gs_aud = "Parents, creators, and believers seeking daily quiet time and focus"
+                def_gs_head = "Find Daily Peace, Spiritual Clarity, and Joy in Your Everyday Life"
+                def_gs_tag = "A beautiful 30-day printable guided workbook, scripture collection, and mindfulness companion for calm, balanced days."
+                def_gs_lm = "3-page free printable coloring sheet and mini workbook sample pack with instant download."
+                def_gs_ft = "30-day guided workbook, 30 high-resolution printable templates, 5 color palette guides, and instant digital PDF download."
+            else:
+                def_gs_prod = get_niche_field("gs_prod", curr_niche_key)
+                def_gs_aud = get_niche_field("ffc_aud", curr_niche_key)
+                def_gs_head = get_niche_field("gs_headline", curr_niche_key)
+                def_gs_tag = get_niche_field("gs_tagline", curr_niche_key)
+                def_gs_lm = get_niche_field("gs_lead_magnet", curr_niche_key)
+                def_gs_ft = get_niche_field("gs_features", curr_niche_key)
+
+            st.markdown("<div class='step-label'>2. Lépés: Google Sites Landing Page Paraméterek</div>", unsafe_allow_html=True)
             gs_prod_name = st.text_input(
                 "Termék Neve:",
-                value=st.session_state.get(f"gs_prod_{n_slug_ffc}", get_niche_field("gs_prod", curr_niche_key)),
-                key=f"gs_prod_{n_slug_ffc}"
+                value=st.session_state.get(f"gs_prod_{n_slug_ffc}_{gs_lang_slug}", def_gs_prod),
+                key=f"gs_prod_{n_slug_ffc}_{gs_lang_slug}"
             )
             gs_target_aud = st.text_input(
                 "Célközönség:",
-                value=st.session_state.get(f"gs_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
-                key=f"gs_aud_{n_slug_ffc}"
+                value=st.session_state.get(f"gs_aud_{n_slug_ffc}_{gs_lang_slug}", def_gs_aud),
+                key=f"gs_aud_{n_slug_ffc}_{gs_lang_slug}"
             )
             gs_headline = st.text_input(
                 "Hero Főcímsor (Main Headline):",
-                value=st.session_state.get(f"gs_head_{n_slug_ffc}", get_niche_field("gs_headline", curr_niche_key)),
-                key=f"gs_head_{n_slug_ffc}"
+                value=st.session_state.get(f"gs_head_{n_slug_ffc}_{gs_lang_slug}", def_gs_head),
+                key=f"gs_head_{n_slug_ffc}_{gs_lang_slug}"
             )
             gs_tagline = st.text_area(
                 "Alcím / Életérzés (Tagline):",
-                value=st.session_state.get(f"gs_tag_{n_slug_ffc}", get_niche_field("gs_tagline", curr_niche_key)),
+                value=st.session_state.get(f"gs_tag_{n_slug_ffc}_{gs_lang_slug}", def_gs_tag),
                 height=70,
-                key=f"gs_tag_{n_slug_ffc}"
+                key=f"gs_tag_{n_slug_ffc}_{gs_lang_slug}"
             )
             gs_lead_magnet = st.text_area(
                 "🎁 Ingyenes Csalitermék (Lead Magnet) Leírása:",
-                value=st.session_state.get(f"gs_lm_{n_slug_ffc}", get_niche_field("gs_lead_magnet", curr_niche_key)),
+                value=st.session_state.get(f"gs_lm_{n_slug_ffc}_{gs_lang_slug}", def_gs_lm),
                 height=70,
-                key=f"gs_lm_{n_slug_ffc}"
+                key=f"gs_lm_{n_slug_ffc}_{gs_lang_slug}"
             )
             gs_features = st.text_area(
                 "Csomag Tartalma & Főbb Előnyök:",
-                value=st.session_state.get(f"gs_ft_{n_slug_ffc}", get_niche_field("gs_features", curr_niche_key)),
+                value=st.session_state.get(f"gs_ft_{n_slug_ffc}_{gs_lang_slug}", def_gs_ft),
                 height=75,
-                key=f"gs_ft_{n_slug_ffc}"
+                key=f"gs_ft_{n_slug_ffc}_{gs_lang_slug}"
             )
-
-            col_sub_p1, col_sub_p2 = st.columns(2)
-            with col_sub_p1:
-                gs_price = st.text_input(
-                    "Ajánlati Ár (Gumroad csomag):",
-                    value="$19 (Eredeti érték: $67)",
-                    key="gs_price"
-                )
-            with col_sub_p2:
-                gs_lang = st.selectbox("Nyelv:", ["Magyar", "English"], index=0, key="gs_lang")
 
             gs_style = st.selectbox(
                 "🎨 Vizuális Design & Színvilág (Theme):",
@@ -6445,49 +6559,61 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
         col_f4_in, col_f4_out = st.columns([1, 1.1], gap="large")
 
         with col_f4_in:
+            em_lang = st.selectbox("🌐 Nyelv (Language):", ["Magyar", "Angol (English)"], index=0, key="em_lang_select_v2")
+            is_em_en = "Angol" in em_lang or "English" in em_lang
+            em_lang_slug = "en" if is_em_en else "hu"
+
+            if is_em_en:
+                def_em_lm = f"Free Printable {curr_niche_data.get('name_en', 'Christian')} Sample Workbook"
+                def_em_paid = f"Complete 30-Day {curr_niche_data.get('name_en', 'Christian')} Master Bundle"
+                def_em_aud = "Parents, creators, and believers seeking daily quiet time and focus"
+                def_em_disc = "25% exclusive welcome discount with coupon code PEACE25 (limited time)"
+                def_em_offer = "30-day guided workbook, 30 printable high-resolution templates, daily gratitude tracker, and instant digital PDF access."
+                def_em_story = "How I discovered peace, clarity, and daily focus in 10 minutes of quiet reflection during a chaotic season."
+            else:
+                def_em_lm = get_niche_field("em_lead_magnet", curr_niche_key)
+                def_em_paid = get_niche_field("em_paid_prod", curr_niche_key)
+                def_em_aud = get_niche_field("ffc_aud", curr_niche_key)
+                def_em_disc = f"25% exkluzív üdvözlő kedvezmény a {get_niche_field('reels_cta_kw', curr_niche_key)}25 kuponkóddal (korlátozott határidő)"
+                def_em_offer = "30 napos vezetett napló, 30 db művészi színező/fókusz kártya, napi hálaadás tracker, azonnali PDF hozzáférés."
+                def_em_story = "Hogyan találtam meg a reggeli 10 perces csendességben a lelki békét és fókuszt egy kimerítő életszakaszomban."
+
             st.markdown(f"<div class='step-label'>{'30 Napos E-mail Csomag' if is_30day_mode else '3 Napos Tölcsér'} Paraméterek</div>", unsafe_allow_html=True)
             em_lead_magnet = st.text_input(
                 "🎁 Ingyenes Csalitermék (Lead Magnet) Neve:",
-                value=st.session_state.get(f"em_lm_{n_slug_ffc}", get_niche_field("em_lead_magnet", curr_niche_key)),
-                key=f"em_lm_{n_slug_ffc}"
+                value=st.session_state.get(f"em_lm_{n_slug_ffc}_{em_lang_slug}", def_em_lm),
+                key=f"em_lm_{n_slug_ffc}_{em_lang_slug}"
             )
             em_paid_prod = st.text_input(
                 "💎 Értékesítendő Fizetős Termék / Ajánlat Neve:",
-                value=st.session_state.get(f"em_paid_{n_slug_ffc}", get_niche_field("em_paid_prod", curr_niche_key)),
-                key=f"em_paid_{n_slug_ffc}"
+                value=st.session_state.get(f"em_paid_{n_slug_ffc}_{em_lang_slug}", def_em_paid),
+                key=f"em_paid_{n_slug_ffc}_{em_lang_slug}"
             )
             em_target_aud = st.text_input(
                 "Célközönség:",
-                value=st.session_state.get(f"em_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
-                key=f"em_aud_{n_slug_ffc}"
+                value=st.session_state.get(f"em_aud_{n_slug_ffc}_{em_lang_slug}", def_em_aud),
+                key=f"em_aud_{n_slug_ffc}_{em_lang_slug}"
             )
             em_discount = st.text_input(
                 "Exkluzív Kedvezmény / Ajánlat Kupon:",
-                value=st.session_state.get(f"em_disc_{n_slug_ffc}", f"25% exkluzív üdvözlő kedvezmény a {get_niche_field('reels_cta_kw', curr_niche_key)}25 kuponkóddal (korlátozott határidő)"),
-                key=f"em_disc_{n_slug_ffc}"
+                value=st.session_state.get(f"em_disc_{n_slug_ffc}_{em_lang_slug}", def_em_disc),
+                key=f"em_disc_{n_slug_ffc}_{em_lang_slug}"
             )
 
             if is_30day_mode:
                 em_core_offer_desc = st.text_area(
                     "Fő Ajánlat Részletes Leírása (Value Stack):",
-                    value="30 napos vezetett napló, 30 db művészi színező/fókusz kártya, napi hálaadás tracker, azonnali PDF hozzáférés és bónusz Spotify lejátszási lista.",
+                    value=st.session_state.get(f"em_offer_{n_slug_ffc}_{em_lang_slug}", def_em_offer),
                     height=70,
-                    key="em_core_offer_desc"
+                    key=f"em_offer_{n_slug_ffc}_{em_lang_slug}"
                 )
             else:
                 em_story = st.text_area(
                     "Személyes Történet / Kapcsolódási Pont (2. naphoz):",
-                    value="Hogyan találtam meg a reggeli 10 perces csendességben a lelki békét és fókuszt egy kimerítő életszakaszomban.",
+                    value=st.session_state.get(f"em_story_{n_slug_ffc}_{em_lang_slug}", def_em_story),
                     height=70,
-                    key="em_story"
+                    key=f"em_story_{n_slug_ffc}_{em_lang_slug}"
                 )
-
-            em_lang = st.selectbox(
-                "E-mailek Nyelve:",
-                ["Magyar", "Angol (English)"],
-                index=0,
-                key="em_lang"
-            )
 
             btn_gen_email_funnel = st.button(
                 f"📧 {'30 Napos E-mail Csomag' if is_30day_mode else '3 Napos E-mail Szekvencia'} Generálása (AI)",
