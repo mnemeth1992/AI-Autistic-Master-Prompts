@@ -2614,10 +2614,274 @@ def render_book_project_manager_bar(project_type: str = "kdp_coloring", widget_p
                 st.markdown("<div style='font-size:0.75rem; color:#94a3b8; margin-top:8px;'>⚪ Nincs aktív mentés</div>", unsafe_allow_html=True)
 
 
+NICHE_DEFAULTS = {
+    "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)": {
+        "kdp_title": "NOAH'S ARK BIBLE ADVENTURES",
+        "kdp_subtitle": "For Kids Ages 4-8 · 30 Inspiring Bible Stories Coloring Book",
+        "kdp_theme": "Noah building the ark, animals coming two by two, the great flood, dove with olive branch, the rainbow covenant, and thanksgiving prayer",
+        "cov_title": "NOAH'S ARK BIBLE ADVENTURES",
+        "cov_sub": "30 Inspiring Bible Stories for Kids Ages 4-8",
+        "cov_theme": "Noah's ark on calm water with a bright colorful rainbow and cute smiling animals",
+        "storybook_title": "THE BRAVE LITTLE DOVE",
+        "storybook_theme": "A gentle white dove sent from Noah's ark carrying an olive branch bringing hope to the world",
+        "etsy_verse": "He restores my soul — Psalm 23:3",
+        "etsy_subject": "young biblical Moses holding the stone tablets with golden light shining around him",
+        "gum_topic": "30 Napos Békesség & Fókusz Keresztény Lelki Napló",
+        "gum_title": "30 Napos Békesség & Megújulás Keresztény Digitális Mestercsomag",
+        "gum_trans": "Napi 10 perces csendességgel elengedni a szorongást és megtalálni a lelki békét Isten jelenlétében",
+        "ffc_prod": "30 Napos Békesség & Fókusz Vezetett Lelki Napló (Printable & Digital)",
+        "ffc_aud": "Keresztény édesanyák, alkotók és hívők, akik lelki csendességre vágynak",
+        "ffc_trans": "Napi 10 perces vezetett csendességgel elengedni a szorongást, megtalálni a tartós belső békességet és Isten jelenlétében élni",
+        "ffc_vehicle": "Mikro-reflexiók, strukturált bibliai igemagyarázatok és letisztult nyomtatható naplólapok",
+        "reels_prod": "30 Napos Békesség & Fókusz Vezetett Keresztény Napló",
+        "reels_cta_kw": "BÉKESSÉG",
+        "gs_prod": "30 Napos Békesség & Fókusz Digitális Napló és Színező",
+        "gs_headline": "Találd meg a napi békességet és lelki fókuszt a mindennapok csendjében",
+        "gs_tagline": "Egy gyönyörű, nyomtatható 30 napos vezetett áhítat, bibliai igegyűjtemény és művészi színező kollekció a nyugodt, kiegyensúlyozott napokért.",
+        "gs_lead_magnet": "3-oldalas ingyenes nyomtatható színező lap és mini áhítat mintacsomag azonnali letöltéssel.",
+        "gs_features": "30 napos vezetett áhítat és napló, 30 db 4K felbontású nyomtatható színező oldal, 5 színpaletta ajánló, KJV igehelyek, azonnali digitális PDF letöltés."
+    },
+    "💼 Online Üzlet & Digitális Termékek (Online Business & PLR)": {
+        "kdp_title": "DIGITAL PRODUCT CREATOR BLUEPRINT",
+        "kdp_subtitle": "A Step-by-Step Workbook & Planner for Passive Income Creators",
+        "kdp_theme": "Modern home office workspace, laptop showing sales dashboard, brainstorming mind maps, product launch checklists, passive income streams",
+        "cov_title": "DIGITAL PRODUCT CREATOR BLUEPRINT",
+        "cov_sub": "From Zero to First $1,000 in Passive Income with Digital Products",
+        "cov_theme": "Sleek modern workspace with golden growth graph, laptop displaying digital shop, and creative design tools",
+        "storybook_title": "LEO'S FIRST LEMONADE STAND",
+        "storybook_theme": "A curious young boy learning business, saving coins, and building his first successful little shop",
+        "etsy_verse": "Build what you love and the growth will follow — Creator Proverb",
+        "etsy_subject": "minimalist 3D isometric digital shop icon with gold coins and sparkle stars",
+        "gum_topic": "0-ról az Első 1000 Dollárig Digitális Termékekkel",
+        "gum_title": "Digitális Termék Indítási Mestercsomag & PLR Értékesítési Tölcsér",
+        "gum_trans": "Megalkotni és automatizálni az első digitális termékedet 0 Ft-os eszközökkel, technikai tudás nélkül",
+        "ffc_prod": "Faceless Funnel & Digitális Termék Mestercsomag (DFY Sablonok)",
+        "ffc_aud": "Kezdő digitális alkotók és szabadúszók, akik passzív jövedelmet akarnak építeni arc nélkül",
+        "ffc_trans": "Létrehozni egy teljesen automata digitális értékesítési tölcsért, ami napi 10-20 passzív vásárlást hoz",
+        "ffc_vehicle": "Arc nélküli rövid videók (Faceless Reels) + ManyChat kulcsszó automatizáció + 0 Ft-os Stripe tölcsér",
+        "reels_prod": "Arc Nélküli Digitális Termék Értékesítési Rendszer",
+        "reels_cta_kw": "SZABADSÁG",
+        "gs_prod": "Faceless Funnel Digitális Termék Mestercsomag",
+        "gs_headline": "Építs 100% Passzív Jövedelmet Arc Nélküli Rövid Videókkal és Digitális Termékekkel",
+        "gs_tagline": "Azonnal használható DFY sablonok, értékesítési tölcsérek és automatizált Stripe rendszerek a szabadabb életért.",
+        "gs_lead_magnet": "Ingyenes 10-Lépéses Digitális Termék Indítási Ellenőrzőlista és Vázlat Sablon azonnali letöltéssel.",
+        "gs_features": "10 db kész Reels forgatókönyv, ManyChat sablon, Google Apps Script webhook, 30 napos e-mail tölcsér és Canva értékesítési csomag."
+    },
+    "📈 Befektetés & Személyes Pénzügyek (Investing & Personal Finance)": {
+        "kdp_title": "FINANCIAL FREEDOM & WEALTH TRACKER",
+        "kdp_subtitle": "Budgeting, Sinking Funds & Compound Interest Milestone Planner",
+        "kdp_theme": "Financial freedom vision board, compounding wealth tree, piggy bank milestones, debt-free thermometer, investment dividend charts",
+        "cov_title": "FINANCIAL FREEDOM & WEALTH TRACKER",
+        "cov_sub": "Master Your Money, Eliminate Debt & Build Generational Wealth",
+        "cov_theme": "Deep navy blue and emerald green geometric money tree growing under golden stars with clean charts",
+        "storybook_title": "PENNY'S MAGIC MONEY JAR",
+        "storybook_theme": "A smart girl named Penny learning the power of saving, investing, and watching her seed grow into a big money tree",
+        "etsy_verse": "Wealth from get-rich-quick schemes quickly disappears; wealth from hard work grows over time. — Proverbs 13:11",
+        "etsy_subject": "golden coin stack sprouting a fresh green plant sprout with radiant glow",
+        "gum_topic": "Pénzügyi Függetlenség & Vagyonépítő Naptár",
+        "gum_title": "Pénzügyi Szabadság Mestercsomag: Költségvetés, Adósságcsökkentés & Befektetés",
+        "gum_trans": "Teljes kontrollt szerezni a pénzügyeid felett, megszabadulni az adósságoktól és felépíteni a vésztartalékot",
+        "ffc_prod": "30 Napos Pénzügyi Áttörés & Vagyonépítő Digitális Rendszer",
+        "ffc_aud": "Tudatos magánszemélyek és családok, akik stabil anyagi biztonságot akarnak",
+        "ffc_trans": "Megszüntetni a hóvégi pénzügyi stresszt és automatizálni a megtakarításaidat",
+        "ffc_vehicle": "3-Kasszás költségvetési módszer + Automatikus befektetési kalkulátor + Napi költéskövető",
+        "reels_prod": "Pénzügyi Függetlenség és Befektetési Trükkök",
+        "reels_cta_kw": "SIKER",
+        "gs_prod": "Pénzügyi Szabadság & Vagyonépítő Rendszer",
+        "gs_headline": "Vedd Át Az Irányítást A Pénzed Felett És Építs Tartós Vagyont",
+        "gs_tagline": "Gyakorlatias, azonnal nyomtatható és digitális pénzügyi tervező, kalkulátorok és lépésről lépésre vezetett útmutatók.",
+        "gs_lead_magnet": "Ingyenes Vészhelyzeti Alap & Adósságtörlesztő Tervező Sablon azonnali letöltéssel.",
+        "gs_features": "12 havi költségvetés tervező, adósság-hógolyó tracker, kamatos kamat vizualizáció és 30 napos pénzügyi kihívás."
+    },
+    "⚡ Produktivitás & Notion Rendszerek (Productivity/Notion)": {
+        "kdp_title": "MINIMALIST NOTION FOCUS & HABIT PLANNER",
+        "kdp_subtitle": "ADHD-Friendly Daily Time-Blocking & Deep Work Journal",
+        "kdp_theme": "Clean aesthetic desk setup, Pomodoro timer, habit tracker grid, daily top 3 priorities list, mindful reflection box, clutter-free space",
+        "cov_title": "MINIMALIST NOTION FOCUS & HABIT PLANNER",
+        "cov_sub": "Defeat Procrastination and Build Laser-Sharp Focus",
+        "cov_theme": "Minimalist monochrome aesthetic layout with subtle sage green accents and geometric focus grid",
+        "storybook_title": "THE CLOCKWORK OWL",
+        "storybook_theme": "A wise little owl who teaches forest animals how to organize their acorns and finish big projects on time",
+        "etsy_verse": "Focus on being productive instead of busy. — Tim Ferriss",
+        "etsy_subject": "aesthetic minimalist hourglass with glowing golden sand and botanical leaves",
+        "gum_topic": "ADHD-Barát Napi Fókusz & Szokásépítő Rendszer",
+        "gum_title": "ADHD-Barát Produktivitási Mestercsomag & Notion Életrendező",
+        "gum_trans": "Leküzdeni a halogatást, rendszerezni a szétszórt gondolatokat és elérni a napi flow élményt",
+        "ffc_prod": "ADHD-Barát 120-Perces Fókusz & Időgazdálkodási Mestercsomag",
+        "ffc_aud": "ADHD-s alkotók, túlterhelt szakemberek és vizsgázó egyetemisták",
+        "ffc_trans": "Megszüntetni a szétesettséget és napi 2 óra mélyfókuszban elvégezni egy egész napi teendőt",
+        "ffc_vehicle": "120 perces Pomodoro ritmus + Döntésmentes sablonok + Napi 3-as prioritás szűrő",
+        "reels_prod": "ADHD Fókusz és Produktivitási Trükkök",
+        "reels_cta_kw": "FÓKUSZ",
+        "gs_prod": "ADHD-Barát Fókusz & Produktivitási Rendszer",
+        "gs_headline": "Győzd Le A Halogatást És Találd Meg A Nyugodt, Fókuszált Munka Örömét",
+        "gs_tagline": "Súrlódásmentes, vizuális rendszerező eszközök és időblokkoló naplók a túlterheltség ellen.",
+        "gs_lead_magnet": "Ingyenes 1-Oldalas Napi Fókusz & Dopamin Tracker azonnali letöltéssel.",
+        "gs_features": "30 napos fókusz napló, időblokkoló sablonok, Notion életműszerfal sablon és hangulat-tracker."
+    },
+    "🧘 Mentális Egészség & Stresszoldás (Mental Health & Stress Relief)": {
+        "kdp_title": "CALM MINDFULNESS & ANXIETY RELIEF COLORING",
+        "kdp_subtitle": "Gentle Mandala & Calming Nature Scenes for Stress Relief",
+        "kdp_theme": "Soothing ocean waves, tranquil zen rock garden, gentle blooming lavender field, warm cup of tea by rainy window, peaceful forest canopy",
+        "cov_title": "CALM MINDFULNESS & ANXIETY RELIEF",
+        "cov_sub": "A Soothing Coloring Journey to Quiet Your Mind and Relax",
+        "cov_theme": "Soft pastel watercolor soothing lavender field under misty mountains and serene gentle lake",
+        "storybook_title": "THE BEAR WHO LEARNED TO BREATHE",
+        "storybook_theme": "A big cuddly bear who learns to take deep breaths to feel calm when big storms arrive in the forest",
+        "etsy_verse": "Peace begins the moment you choose not to allow another person or event to control your emotions.",
+        "etsy_subject": "gentle blooming eucalyptus branch in soft pastel watercolor with soft dew drops",
+        "gum_topic": "30 Napos Belső Nyugalom & Szorongásoldó Napló",
+        "gum_title": "Mentális Egészség & Stresszoldó Megújulás Mestercsomag",
+        "gum_trans": "Megnyugtatni a túlterhelt idegrendszert, elcsendesíteni a kavargó gondolatokat és békében aludni",
+        "ffc_prod": "30 Napos Idegrendszer-Megnyugtató & Szorongásoldó Digitális Napló",
+        "ffc_aud": "Szorongással, kiégéssel és stresszel küzdő emberek, akik belső nyugalomra vágynak",
+        "ffc_trans": "Megtanulni 5 perc alatt leföldelni a stresszt és visszanyerni a belső kontrollt",
+        "ffc_vehicle": "Szomatikus légzésgyakorlatok + Vezetett érzelemnapló + Művészi relaxációs kártyák",
+        "reels_prod": "Szorongásoldás és Idegrendszer Nyugtató Gyakorlatok",
+        "reels_cta_kw": "NYUGALOM",
+        "gs_prod": "30 Napos Szorongásoldó & Belső Béke Mestercsomag",
+        "gs_headline": "Engedd El A Belső Feszültséget És Találd Meg A Tartós Békességet",
+        "gs_tagline": "Gyengéd, megnyugtató gyakorlatok, naplókérdések és művészi színezők a kiegyensúlyozott mindennapokért.",
+        "gs_lead_magnet": "Ingyenes 5-Perces Vészhelyzeti Nyugtató Légzés & Napló Sablon azonnali letöltéssel.",
+        "gs_features": "30 napos reflexió, szomatikus stresszoldó kártyák, 30 db részletgazdag relaxációs színező és hangulat-napló."
+    },
+    "🥗 Fogyás & Egészséges Táplálkozás (Weight Loss & Nutrition)": {
+        "kdp_title": "CLEAN EATING & MEAL PREP MASTER PLANNER",
+        "kdp_subtitle": "90-Day Healthy Nutrition, Recipe & Fitness Transformation Log",
+        "kdp_theme": "Fresh organic farmer's market vegetables, colorful smoothie bowls, clean kitchen meal prep containers, water tracker drops, healthy balanced plate guide",
+        "cov_title": "CLEAN EATING & MEAL PREP MASTER PLANNER",
+        "cov_sub": "Transform Your Health with 90 Days of Mindful Nutrition",
+        "cov_theme": "Vibrant fresh Mediterranean ingredients on rustic marble table with clean modern typography",
+        "storybook_title": "THE LITTLE CHEF'S RAINBOW GARDEN",
+        "storybook_theme": "Two cute animal friends discovering colorful fruits and vegetables in a magical sunny vegetable garden",
+        "etsy_verse": "Let food be thy medicine and medicine be thy food. — Hippocrates",
+        "etsy_subject": "vintage botanical illustration of fresh rosemary, lavender, and lemon with watercolor accents",
+        "gum_topic": "90 Napos Tiszta Étkezés & Fenntartható Életmódváltás",
+        "gum_title": "Egészséges Táplálkozás & Meal Prep Életmódváltó Mestercsomag",
+        "gum_trans": "Önsanyargatás nélkül lefogyni, energikusnak lenni és fenntartható táplálkozási szokásokat kialakítani",
+        "ffc_prod": "90 Napos Tiszta Étkezés & Meal Prep Életmódváltó Rendszer",
+        "ffc_aud": "Életmódváltásra vágyó nők és férfiak, akik jojó-diéták nélkül akarnak fogyni",
+        "ffc_trans": "Könnyedén megtervezni az egész heti egészséges ételeket 1 óra alatt és elérni az álomsúlyt",
+        "ffc_vehicle": "Egyszerű heti menütervezési mátrix + Gyors bevásárlólisták + Éhség- és energianapló",
+        "reels_prod": "Egészséges Fogyás és Tiszta Étkezési Trükkök",
+        "reels_cta_kw": "EGÉSZSÉG",
+        "gs_prod": "Tiszta Étkezés & Meal Prep Életmód Mestercsomag",
+        "gs_headline": "Fogyj Le Éhezés Nélkül És Nyerj Vissza Határtalan Energiát",
+        "gs_tagline": "Strukturált étkezéstervezők, 15 perces receptek és szokásépítő naplók az egészséges életért.",
+        "gs_lead_magnet": "Ingyenes 7-Napos Tiszta Étkezési Minta Étrend és Bevásárlólista azonnali letöltéssel.",
+        "gs_features": "90 napos étkezési napló, heti meal prep tervező, víz- és kalóriakövető lapok, valamint 50 gyors receptötlet."
+    }
+}
+
+
+def sync_niche_preset_to_inputs(niche_key: str, force: bool = False):
+    """
+    Synchronizes all input fields across all workspaces when a niche is selected
+    or when the user clicks 'Alapértelmezések Frissítése'.
+    """
+    niche_info = get_niche_prompt_context(niche_key)
+    preset = NICHE_DEFAULTS.get(niche_key, {})
+    
+    n_name = niche_info.get("name_en", "General Niche")
+    n_aud = niche_info.get("default_audience", "Célközönség az adott rétegpiacon")
+    n_keys = niche_info.get("keywords", ["Success", "Growth", "Focus"])
+
+    kdp_t = preset.get("kdp_title", f"{n_name.upper()} MASTER COLORING & JOURNAL")
+    kdp_s = preset.get("kdp_subtitle", f"30 Inspiring {n_name} Prompts & Reflections")
+    kdp_th = preset.get("kdp_theme", f"Inspiring scenes related to {n_name}, including {', '.join(n_keys[:4])}")
+    
+    cov_t = preset.get("cov_title", kdp_t)
+    cov_s = preset.get("cov_sub", kdp_s)
+    cov_th = preset.get("cov_theme", f"Beautiful high resolution artwork depicting {n_name}")
+
+    story_t = preset.get("storybook_title", f"THE WONDERFUL ADVENTURE OF {n_name.upper()}")
+    story_th = preset.get("storybook_theme", f"An inspiring illustrated story about courage and discovery in {n_name}")
+
+    ffc_p = preset.get("ffc_prod", f"30 Napos {n_name} Digitális Mestercsomag")
+    ffc_a = preset.get("ffc_aud", n_aud)
+    ffc_tr = preset.get("ffc_trans", f"Megoldani a legfőbb akadályokat a(z) {n_name} területén és elérni a kívánt célt")
+    ffc_v = preset.get("ffc_vehicle", "Strukturált napi gyakorlatok, ellenőrzőlisták és letisztult digitális lapok")
+    reels_p = preset.get("reels_prod", ffc_p)
+    reels_kw = preset.get("reels_cta_kw", n_keys[0].upper() if n_keys and len(n_keys[0]) <= 8 else "SIKER")
+
+    gs_p = preset.get("gs_prod", ffc_p)
+    gs_h = preset.get("gs_headline", f"Érd El A Kiválóságot És Fejlődj A(z) {n_name} Területén Napi 10 Percben")
+    gs_tag = preset.get("gs_tagline", f"Prémium nyomtatható és digitális eszközök, sablonok és útmutatók a(z) {n_name} célközönségének.")
+    gs_lm = preset.get("gs_lead_magnet", f"Ingyenes mintacsomag és kezdő munkafüzet a(z) {n_name} témájában.")
+    gs_ft = preset.get("gs_features", f"30 napos vezetett napló, 30 db prémium nyomtatható sablon a(z) {n_name} témájában, azonnali PDF letöltéssel.")
+
+    keys_to_update = {
+        "kdp_ap_title": kdp_t,
+        "kdp_ap_subtitle": kdp_s,
+        "kdp_ap_theme": kdp_th,
+        "ib_title_input": story_t,
+        "ib_sub_input": f"For Kids · Inspiring {n_name} Story",
+        "ib_theme_input": story_th,
+        "cov_title_inp": cov_t,
+        "cov_sub_inp": cov_s,
+        "cov_theme_inp": cov_th,
+        "verse_etsy": preset.get("etsy_verse", f"Inspiring wisdom about {n_name}."),
+        "subject_etsy": preset.get("etsy_subject", f"artistic minimalist vector scene of {n_name}"),
+        "audience_dev": n_aud,
+        "theme_dev": f"30 Napos {n_name} Megújulás",
+        "aud_b": n_aud,
+        "thm_b": f"{n_name} témájú inspirációk",
+        "e4_prod_title": f"{n_name} Printable Digital Pack",
+        "ffc_prod_name_v2": ffc_p,
+        "ffc_target_aud_v2": ffc_a,
+        "ffc_main_trans_v2": ffc_tr,
+        "ffc_vehicle_v2": ffc_v,
+        "reels_prod_input": reels_p,
+        "reels_cta_kw_input": reels_kw,
+        "reels_target_input": ffc_a,
+        "wh_prod_name_input": ffc_p,
+        "gs_prod_name": gs_p,
+        "gs_target_aud": ffc_a,
+        "gs_headline": gs_h,
+        "gs_tagline": gs_tag,
+        "gs_lead_magnet": gs_lm,
+        "gs_features": gs_ft,
+        "em_lead_magnet": gs_lm,
+        "em_paid_prod": ffc_p,
+        "em_target_aud": ffc_a,
+        "cal_prod_name": ffc_p,
+        "cal_target_aud": ffc_a
+    }
+
+    for k, val in keys_to_update.items():
+        if force or k not in st.session_state or not st.session_state[k]:
+            st.session_state[k] = val
+
+    st.session_state["last_synced_niche"] = niche_key
+
+
+def render_niche_status_bar(workspace_name: str = ""):
+    """
+    Renders an interactive status and quick-sync bar at the top of every workspace.
+    """
+    niche_k = st.session_state.get("active_niche_choice", "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)")
+    niche_info = get_niche_prompt_context(niche_k)
+
+    col_nb1, col_nb2 = st.columns([2.6, 1])
+    with col_nb1:
+        st.markdown(f"""
+        <div style='background: rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; border-radius: 8px; padding: 8px 14px; margin-bottom: 14px;'>
+            <span style='color:#34d399; font-weight:700;'>🎯 Aktív Célpiac:</span> <b>{niche_k}</b>
+            <span style='color:#94a3b8; font-size:0.82rem; margin-left:8px;'>({niche_info.get('group', 'General')})</span><br>
+            <span style='color:#cbd5e1; font-size:0.84rem;'>👥 <i>Célközönség: {niche_info.get('default_audience', '')}</i></span>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_nb2:
+        if st.button("🔄 Téma Sablonok Újratöltése", key=f"btn_reload_niche_{workspace_name}", use_container_width=True, help="Kattints ide, ha vissza szeretnéd tölteni az ehhez a célpiachoz tartozó gyári sablonokat a mezőkbe!"):
+            sync_niche_preset_to_inputs(niche_k, force=True)
+            st.toast(f"✅ {niche_k} sablonok sikeresen betöltve!", icon="🎯")
+            st.rerun()
+
+
 def render_style_selector(widget_prefix: str = "ws") -> str:
     """
     Renders an inline visual art style selector component directly on any workspace.
-    Synchronizes across session state and returns the active style prompt text.
+    Synchronizes across session state and displays an immediate live preview of the active style prompt.
     """
     style_keys = list(STYLE_PRESETS.keys())
     saved_style = st.session_state.get("active_style_choice", style_keys[0])
@@ -2625,7 +2889,7 @@ def render_style_selector(widget_prefix: str = "ws") -> str:
         saved_style = style_keys[0]
 
     with st.container():
-        col_st1, col_st2 = st.columns([1.2, 1])
+        col_st1, col_st2 = st.columns([1.1, 1.25])
         with col_st1:
             chosen_style = st.selectbox(
                 "🎨 Vizuális Márka Stílus (Art Style):",
@@ -2650,10 +2914,16 @@ def render_style_selector(widget_prefix: str = "ws") -> str:
         else:
             res_prompt = STYLE_PRESETS.get(chosen_style, "")
             with col_st2:
-                st.caption(f"**Aktív stílus prompt:**\n*{res_prompt[:110]}...*")
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9)); border: 1px solid #3b82f6; border-radius: 10px; padding: 10px 14px; margin-top: 4px;'>
+                    <div style='color: #60a5fa; font-size: 0.82rem; font-weight: 700;'>✨ Aktív Vizuális Stílus Prompt:</div>
+                    <div style='color: #f1f5f9; font-size: 0.85rem; margin-top: 3px; font-style: italic; line-height: 1.3;'>"{res_prompt}"</div>
+                </div>
+                """, unsafe_allow_html=True)
 
     st.markdown("---")
     return res_prompt
+
 
 
 def render_audhd_focus_dashboard():
@@ -3095,6 +3365,11 @@ chosen_niche = st.sidebar.selectbox(
 st.session_state["active_niche_choice"] = chosen_niche
 active_niche_info = get_niche_prompt_context(chosen_niche)
 
+# Automatically sync inputs across all workspaces when niche is selected or changed
+if st.session_state.get("last_synced_niche") != chosen_niche:
+    sync_niche_preset_to_inputs(chosen_niche, force=True)
+    st.session_state["last_synced_niche"] = chosen_niche
+
 st.sidebar.markdown(f"""
 <div style='background:#161f30; border:1px solid #28364e; border-radius:10px; padding:8px 12px; margin-bottom:14px; font-size:0.82rem; color:#94a3b8;'>
     <strong style='color:#34d399;'>🏷️ Csoport:</strong> {active_niche_info.get('group', 'General')}<br>
@@ -3184,6 +3459,7 @@ if "Színező" in menu_choice or "KDP Színező" in menu_choice:
     st.caption("Hozz létre kristálytiszta Gemini színező promptokat, gyűjtsd be a képeket a Google Drive-ról, és fűzd össze nyomdakész PDF könyvbelsővé.")
 
     active_art_style_prompt = render_style_selector("ws_kdp")
+    render_niche_status_bar("kdp")
 
     tab_kdp_autopilot, tab_kdp_single = st.tabs([
         "⚡ 1. Gemini Képasszisztens & KDP Színező PDF Összeállító",
@@ -3762,6 +4038,7 @@ elif "Illusztrált" in menu_choice or "Mesekönyv" in menu_choice:
     st.caption("Generálj teljes történetet, tanulságos mesét vagy fejezetes könyvet megírt szöveggel és a hozzájuk tartozó színes Gemini illusztrációs promptokkal!")
 
     active_art_style_prompt = render_style_selector("ws_ib")
+    render_niche_status_bar("ib")
 
     # Project Management & Persistence Bar for Illustrated Books
     render_book_project_manager_bar(project_type="kdp_illustrated", widget_prefix="ib_ed")
@@ -3953,6 +4230,7 @@ elif "Borító" in menu_choice or "Gerinc" in menu_choice:
     st.caption("Számítsd ki a pontos gerincvastagságot és teljes borító méretet (Front + Back + Spine), majd generálj hozzá illeszkedő Gemini borító promptot!")
 
     active_art_style_prompt = render_style_selector("ws_cov")
+    render_niche_status_bar("cov")
 
     col_cov1, col_cov2 = st.columns(2, gap="large")
     with col_cov1:
@@ -4006,6 +4284,7 @@ elif "Etsy" in menu_choice or "2." in menu_choice:
     st.caption("Készíts múzeumi minőségű akvarell, boho vagy aranyfóliás falikép és clipart promptokat.")
 
     active_art_style_prompt = render_style_selector("ws_etsy")
+    render_niche_status_bar("etsy")
 
     tab_etsy_single, tab_etsy_batch = st.tabs([
         "✍️ Egyedi Etsy Prompt Készítő",
@@ -4304,6 +4583,7 @@ elif "Gumroad" in menu_choice or "3." in menu_choice:
     st.caption("Írj mély, KJV igealapú áhítatokat és generálj vásárlásösztönző Etsy termékleírásokat.")
 
     active_art_style_prompt = render_style_selector("ws_gumroad")
+    render_niche_status_bar("gumroad")
 
     gum_sub = st.radio(
         "Mit szeretnél generálni?",
@@ -4519,6 +4799,7 @@ elif "Ötletgeneráló" in menu_choice or "30 Téma" in menu_choice or "4." in m
     st.caption("Készíts 30 tételes ötletlistát KDP színezőkhöz, Etsy faliképekhez vagy exportálj hivatalos, szigorú Etsy SEO CSV listázásokat és publikálj Gumroadra.")
 
     active_art_style_prompt = render_style_selector("ws_ideas")
+    render_niche_status_bar("ideas")
 
     tab_ideas1, tab_ideas_kdp_batch, tab_ideas2 = st.tabs([
         "💡 1. 30 Téma & Ötletgeneráló Műhely",
@@ -4905,6 +5186,7 @@ elif "AI Vision" in menu_choice or "Vision Lab" in menu_choice or "5." in menu_c
     st.caption("Töltsd fel meglévő könyvborítódat vagy a színező lapjaidat: a Gemini Vision automatikusan kinyeri az igéket és pár-promptokat generál!")
 
     active_art_style_prompt = render_style_selector("ws_vision")
+    render_niche_status_bar("vision")
 
     st.markdown("---")
     col_up1, col_up2 = st.columns([1, 1], gap="large")
@@ -5057,6 +5339,7 @@ elif "Tömeges Képgeneráló" in menu_choice or "Gemini Képbegyűjtő" in menu
     st.caption("Olvasd be a mentett `.txt` promptfájlt, másold a promptokat a Gemini-be, majd gyűjtsd be az elkészült képeket a Google Drive-ról és fűzd össze nyomdakész PDF-fé!")
 
     active_art_style_prompt = render_style_selector("ws_bulk")
+    render_niche_status_bar("bulk")
 
     col_src, col_cfg = st.columns([1, 1], gap="large")
 
@@ -5485,6 +5768,7 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
     st.caption("Teljes Keresztény Értékesítési Ökoszisztéma: Russell Brunson 10-részes Sales Pack, 10 db Arc Nélküli Reels + FLUX.1 B-roll képek, 0 Ft-os Stripe ➔ Sheets ➔ Gmail webhook, Google Sites landing page és 30 napos e-mail tölcsér.")
 
     active_art_style_prompt = render_style_selector("ws_ffc")
+    render_niche_status_bar("ffc")
 
     tab_ffc1, tab_ffc2, tab_ffc3, tab_ffc4, tab_ffc5, tab_ffc6 = st.tabs([
         "🎯 1. FFC 10-Részes Sales Pack & 3-Tagú Bulletek",
