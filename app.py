@@ -2855,6 +2855,60 @@ def sync_niche_preset_to_inputs(niche_key: str, force: bool = False):
     st.session_state["last_synced_niche"] = niche_key
 
 
+def get_niche_slug(niche_key: str = None) -> str:
+    if not niche_key:
+        niche_key = st.session_state.get("active_niche_choice", "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)")
+    return "".join(c if c.isalnum() else "_" for c in niche_key)[:25]
+
+
+def get_niche_field(field_name: str, niche_key: str = None) -> str:
+    """Returns the tailored default value for any field for the active niche."""
+    if not niche_key:
+        niche_key = st.session_state.get("active_niche_choice", "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)")
+        
+    preset = NICHE_DEFAULTS.get(niche_key, {})
+    if field_name in preset:
+        return preset[field_name]
+        
+    # Fallback generation
+    niche_info = get_niche_prompt_context(niche_key)
+    n_name = niche_info.get("name_en", "General Niche")
+    n_aud = niche_info.get("default_audience", "Célközönség")
+    n_keys = niche_info.get("keywords", ["Growth", "Focus", "Success"])
+    
+    fallbacks = {
+        "kdp_title": f"{n_name.upper()} MASTER COLORING & JOURNAL",
+        "kdp_subtitle": f"30 Inspiring {n_name} Prompts & Reflections",
+        "kdp_theme": f"Inspiring scenes related to {n_name}, including {', '.join(n_keys[:4])}",
+        "cov_title": f"{n_name.upper()} MASTER COLORING & JOURNAL",
+        "cov_sub": f"30 Inspiring {n_name} Prompts & Reflections",
+        "cov_theme": f"Beautiful high resolution artwork depicting {n_name}",
+        "storybook_title": f"THE WONDERFUL ADVENTURE OF {n_name.upper()}",
+        "storybook_sub": f"For Kids · Inspiring {n_name} Story",
+        "storybook_theme": f"An inspiring illustrated story about courage and discovery in {n_name}",
+        "verse_etsy": f"Inspiring wisdom about {n_name}.",
+        "subject_etsy": f"artistic minimalist vector scene of {n_name}",
+        "gum_topic": f"30 Napos {n_name} Megújulás & Vezetett Napló",
+        "gum_title": f"30 Napos {n_name} Digitális Mestercsomag",
+        "gum_trans": f"Megoldani a legfőbb akadályokat a(z) {n_name} területén és elérni a kívánt célt",
+        "ffc_prod": f"30 Napos {n_name} Digitális Mestercsomag",
+        "ffc_aud": n_aud,
+        "ffc_trans": f"Megoldani a legfőbb akadályokat a(z) {n_name} területén és elérni a kívánt célt",
+        "ffc_vehicle": "Strukturált napi gyakorlatok, ellenőrzőlisták és letisztult digitális lapok",
+        "reels_prod": f"30 Napos {n_name} Digitális Rendszer",
+        "reels_cta_kw": n_keys[0].upper() if n_keys and len(n_keys[0]) <= 8 else "SIKER",
+        "gs_prod": f"30 Napos {n_name} Digitális Mestercsomag",
+        "gs_headline": f"Érd El A Kiválóságot És Fejlődj A(z) {n_name} Területén Napi 10 Percben",
+        "gs_tagline": f"Prémium nyomtatható és digitális eszközök, sablonok és útmutatók a(z) {n_name} célközönségének.",
+        "gs_lead_magnet": f"Ingyenes mintacsomag és kezdő munkafüzet a(z) {n_name} témájában.",
+        "gs_features": f"30 napos vezetett napló, 30 db prémium nyomtatható sablon a(z) {n_name} témájában, azonnali PDF letöltéssel.",
+        "em_lead_magnet": f"Ingyenes mintacsomag és kezdő munkafüzet a(z) {n_name} témájában.",
+        "em_paid_prod": f"30 Napos {n_name} Digitális Mestercsomag",
+        "cal_prod_name": f"30 Napos {n_name} Digitális Naptár"
+    }
+    return fallbacks.get(field_name, "")
+
+
 def render_niche_status_bar(workspace_name: str = ""):
     """
     Renders an interactive status and quick-sync bar at the top of every workspace.
@@ -3496,23 +3550,24 @@ if "Színező" in menu_choice or "KDP Színező" in menu_choice:
 
         with col_ap_left:
             st.markdown("<div class='step-label'>Lépés 1 — Könyv Alapadatok</div>", unsafe_allow_html=True)
+            n_slug_kdp = get_niche_slug(chosen_niche)
             book_title_ap = st.text_input(
                 "📖 Könyv Főcíme (Nagybetűkkel jelenik meg a borítón és címoldalon):",
-                value=st.session_state.get("kdp_autopilot_book_title", "NOAH'S ARK BIBLE ADVENTURES"),
-                key="kdp_ap_title",
+                value=st.session_state.get(f"kdp_ap_title_{n_slug_kdp}", get_niche_field("kdp_title", chosen_niche)),
+                key=f"kdp_ap_title_{n_slug_kdp}",
                 help="Pl. NOAH'S ARK BIBLE ADVENTURES, HEROES OF FAITH COLORING BOOK"
             )
             book_sub_ap = st.text_input(
                 "🏷️ Alcím / Célközönség leírás (opcionális):",
-                value=st.session_state.get("kdp_autopilot_book_sub", "For Kids Ages 4-8 · 30 Inspiring Bible Stories"),
-                key="kdp_ap_subtitle",
+                value=st.session_state.get(f"kdp_ap_subtitle_{n_slug_kdp}", get_niche_field("kdp_subtitle", chosen_niche)),
+                key=f"kdp_ap_subtitle_{n_slug_kdp}",
                 help="Pl. For Kids Ages 4-8 · 30 Inspiring Bible Stories"
             )
             book_theme_ap = st.text_area(
                 "🌟 Könyv Témája & Történetíve (miről szóljanak a jelenetek?):",
-                value=st.session_state.get("kdp_autopilot_theme", "Noah building the ark, animals coming two by two, the great flood, dove with olive branch, the rainbow covenant, and thanksgiving prayer"),
+                value=st.session_state.get(f"kdp_ap_theme_{n_slug_kdp}", get_niche_field("kdp_theme", chosen_niche)),
                 height=110,
-                key="kdp_ap_theme",
+                key=f"kdp_ap_theme_{n_slug_kdp}",
                 help="Részletezd a történetet, főbb szereplőket, hogy a Gemini változatos és összefüggő jeleneteket alkosson."
             )
 
@@ -4045,13 +4100,22 @@ elif "Illusztrált" in menu_choice or "Mesekönyv" in menu_choice:
 
     col_ib1, col_ib2 = st.columns([1.1, 1], gap="large")
     with col_ib1:
-        ib_title = st.text_input("📖 Könyv Címe:", value=st.session_state.get("ib_book_title", "THE COURAGEOUS LITTLE LAMB"), key="ib_title_input")
-        ib_subtitle = st.text_input("🏷️ Alcím / Célközönség:", value=st.session_state.get("ib_book_sub", "A Bedtime Story of Faith and Friendship"), key="ib_sub_input")
+        n_slug_ib = get_niche_slug(chosen_niche)
+        ib_title = st.text_input(
+            "📖 Könyv Címe:",
+            value=st.session_state.get(f"ib_title_{n_slug_ib}", get_niche_field("storybook_title", chosen_niche)),
+            key=f"ib_title_{n_slug_ib}"
+        )
+        ib_subtitle = st.text_input(
+            "🏷️ Alcím / Célközönség:",
+            value=st.session_state.get(f"ib_sub_{n_slug_ib}", get_niche_field("storybook_sub", chosen_niche)),
+            key=f"ib_sub_{n_slug_ib}"
+        )
         ib_theme = st.text_area(
             "🌟 Történet témája és fő tanulsága:",
-            value=st.session_state.get("ib_book_theme", "A small timid lamb named Barnaby who discovers that God gives him courage when a lost friend needs help in the valley"),
+            value=st.session_state.get(f"ib_theme_{n_slug_ib}", get_niche_field("storybook_theme", chosen_niche)),
             height=100,
-            key="ib_theme_input"
+            key=f"ib_theme_{n_slug_ib}"
         )
     with col_ib2:
         # Format & Aspect Ratio Selector for Illustrated Books (Default 8.5x8.5 Square)
@@ -4232,11 +4296,25 @@ elif "Borító" in menu_choice or "Gerinc" in menu_choice:
     active_art_style_prompt = render_style_selector("ws_cov")
     render_niche_status_bar("cov")
 
+    n_slug_cov = get_niche_slug(chosen_niche)
     col_cov1, col_cov2 = st.columns(2, gap="large")
     with col_cov1:
-        cov_title = st.text_input("📖 Könyv Főcíme a Borítón:", value="NOAH'S ARK BIBLE ADVENTURES", key="cov_title_inp")
-        cov_sub = st.text_input("🏷️ Alcím:", value="For Kids Ages 4-8", key="cov_sub_inp")
-        cov_theme = st.text_area("🌟 Borító Illusztráció Leírása:", value="Noah's ark on calm water with a bright colorful rainbow and cute smiling animals", height=80, key="cov_theme_inp")
+        cov_title = st.text_input(
+            "📖 Könyv Főcíme a Borítón:",
+            value=st.session_state.get(f"cov_title_{n_slug_cov}", get_niche_field("cov_title", chosen_niche)),
+            key=f"cov_title_{n_slug_cov}"
+        )
+        cov_sub = st.text_input(
+            "🏷️ Alcím:",
+            value=st.session_state.get(f"cov_sub_{n_slug_cov}", get_niche_field("cov_sub", chosen_niche)),
+            key=f"cov_sub_{n_slug_cov}"
+        )
+        cov_theme = st.text_area(
+            "🌟 Borító Illusztráció Leírása:",
+            value=st.session_state.get(f"cov_theme_{n_slug_cov}", get_niche_field("cov_theme", chosen_niche)),
+            height=80,
+            key=f"cov_theme_{n_slug_cov}"
+        )
 
     with col_cov2:
         cov_pages = st.number_input("🔢 Teljes Oldalszám a Belső PDF-ben (Spine math):", min_value=24, max_value=800, value=76, step=2, key="cov_pages_inp")
@@ -4303,19 +4381,20 @@ elif "Etsy" in menu_choice or "2." in menu_choice:
         col_form2, col_out2 = st.columns([1, 1.05], gap="large")
 
         with col_form2:
+            n_slug_etsy = get_niche_slug(chosen_niche)
             if "Falikép" in etsy_sub:
-                st.markdown("<div class='step-label'>KJV Igeidézet megadása</div>", unsafe_allow_html=True)
+                st.markdown("<div class='step-label'>Igeidézet / Idézet megadása</div>", unsafe_allow_html=True)
                 verse_etsy = st.text_input(
-                    "Exakt bibliai ige (KJV fordításban, angolul)",
-                    value="He restores my soul — Psalm 23:3",
-                    key="verse_etsy",
+                    "Exakt bibliai ige vagy inspiráló idézet (angolul)",
+                    value=st.session_state.get(f"verse_etsy_{n_slug_etsy}", get_niche_field("verse_etsy", chosen_niche)),
+                    key=f"verse_etsy_{n_slug_etsy}",
                     help="Pontosan azt írd ide, amit a falikép közepén szeretnél megjeleníteni."
                 )
                 extra_etsy = st.text_area(
                     "➕ Extra megjegyzés / stílusjegyzet (opcionális)",
                     placeholder="Pl.: Use soft lavender and blush pink tones. Add small watercolor flowers at the corners.",
                     height=90,
-                    key="extra_etsy"
+                    key=f"extra_etsy_{n_slug_etsy}"
                 )
                 base2 = template_etsy_wall_art(verse_etsy)
 
@@ -4323,16 +4402,16 @@ elif "Etsy" in menu_choice or "2." in menu_choice:
                 st.markdown("<div class='step-label'>Karakter / Tárgy megadása</div>", unsafe_allow_html=True)
                 subject_etsy = st.text_area(
                     "Mit ábrázoljon a clipart?",
-                    value="young biblical Moses holding the stone tablets with golden light shining around him",
+                    value=st.session_state.get(f"subject_etsy_{n_slug_etsy}", get_niche_field("subject_etsy", chosen_niche)),
                     height=90,
-                    key="subject_etsy",
+                    key=f"subject_etsy_{n_slug_etsy}",
                     help="Pl.: baby Jesus in a manger, Noah's dove with olive branch, angel with wings"
                 )
                 extra_etsy = st.text_area(
                     "➕ Extra megjegyzés (opcionális)",
                     placeholder="Pl.: Make 3 variations: one frontal, one side view, one from above. Soft blush pink palette.",
                     height=80,
-                    key="extra_etsy_clip"
+                    key=f"extra_etsy_clip_{n_slug_etsy}"
                 )
                 base2 = template_etsy_clipart(subject_etsy)
 
@@ -4598,11 +4677,12 @@ elif "Gumroad" in menu_choice or "3." in menu_choice:
         col_form3, col_out3 = st.columns([1, 1.05], gap="large")
 
         with col_form3:
-            st.markdown("<div class='step-label'>Áhítat Paraméterek</div>", unsafe_allow_html=True)
-            audience_dev = st.text_input("Célközönség", value="women going through difficult seasons of life", key="audience_dev")
-            theme_dev = st.text_input("Áhítat téma / cím", value="Hope in Hard Times", key="theme_dev")
-            day_dev = st.selectbox("Nap száma", [str(i) for i in range(1, 31)], index=0, key="day_dev")
-            extra_dev = st.text_area("➕ Extra utasítás (opcionális)", placeholder="Pl.: Focus on Psalm 23.", height=80, key="extra_dev")
+            n_slug_gum = get_niche_slug(chosen_niche)
+            st.markdown("<div class='step-label'>Áhítat / Napló Paraméterek</div>", unsafe_allow_html=True)
+            audience_dev = st.text_input("Célközönség", value=st.session_state.get(f"aud_dev_{n_slug_gum}", get_niche_field("ffc_aud", chosen_niche)), key=f"aud_dev_{n_slug_gum}")
+            theme_dev = st.text_input("Áhítat / Napló téma", value=st.session_state.get(f"theme_dev_{n_slug_gum}", get_niche_field("gum_topic", chosen_niche)), key=f"theme_dev_{n_slug_gum}")
+            day_dev = st.selectbox("Nap száma", [str(i) for i in range(1, 31)], index=0, key=f"day_dev_{n_slug_gum}")
+            extra_dev = st.text_area("➕ Extra utasítás (opcionális)", placeholder="Pl.: Focus on daily reflection.", height=80, key=f"extra_dev_{n_slug_gum}")
 
             base3 = template_devotional(audience_dev, theme_dev, day_dev)
             generate_dev = st.button("✨ Áhítat Prompt Generálása", key="gen_dev", use_container_width=True)
@@ -4823,26 +4903,27 @@ elif "Ötletgeneráló" in menu_choice or "30 Téma" in menu_choice or "4." in m
         col_i_form, col_i_out = st.columns([1, 1.05], gap="large")
 
         with col_i_form:
+            n_slug_ideas = get_niche_slug(chosen_niche)
             if "Színező" in idea_category:
                 st.markdown("<div class='step-label'>Színező Téma Paraméterek</div>", unsafe_allow_html=True)
-                aud_b = st.text_input("Célközönség", value="gyerekeknek", key="aud_b")
-                thm_b = st.text_input("Főtéma", value="Ószövetségi és Újszövetségi történetek", key="thm_b")
+                aud_b = st.text_input("Célközönség", value=st.session_state.get(f"aud_b_{n_slug_ideas}", get_niche_field("ffc_aud", chosen_niche)), key=f"aud_b_{n_slug_ideas}")
+                thm_b = st.text_input("Főtéma", value=st.session_state.get(f"thm_b_{n_slug_ideas}", get_niche_field("kdp_theme", chosen_niche)), key=f"thm_b_{n_slug_ideas}")
                 current_idea_prompt = template_idea_kdp(aud_b, thm_b)
 
             elif "Falikép" in idea_category:
                 st.markdown("<div class='step-label'>Falikép Idézet Paraméterek</div>", unsafe_allow_html=True)
-                thm_b = st.text_input("Főtéma / Hangulat", value="Vigasztalás, békesség és remény", key="thm_wall_b")
+                thm_b = st.text_input("Főtéma / Hangulat", value=st.session_state.get(f"thm_wall_b_{n_slug_ideas}", get_niche_field("verse_etsy", chosen_niche)), key=f"thm_wall_b_{n_slug_ideas}")
                 current_idea_prompt = template_idea_wall_art(thm_b)
 
             elif "Clipart" in idea_category:
                 st.markdown("<div class='step-label'>Clipart Csomag Paraméterek</div>", unsafe_allow_html=True)
-                thm_b = st.text_input("Csomag megnevezése / Témája", value="Bibliai hősök és angyalok", key="thm_clip_b")
+                thm_b = st.text_input("Csomag megnevezése / Témája", value=st.session_state.get(f"thm_clip_b_{n_slug_ideas}", get_niche_field("subject_etsy", chosen_niche)), key=f"thm_clip_b_{n_slug_ideas}")
                 current_idea_prompt = template_idea_clipart(thm_b)
 
             else:  # Devotional
-                st.markdown("<div class='step-label'>Áhítat Tématerv Paraméterek</div>", unsafe_allow_html=True)
-                aud_b = st.text_input("Célközönség", value="nőknek", key="aud_dev_b")
-                thm_b = st.text_input("Áhítat Főcíme / Témája", value="Reménység a nehéz időkben", key="thm_dev_b")
+                st.markdown("<div class='step-label'>Áhítat / Napló Tématerv Paraméterek</div>", unsafe_allow_html=True)
+                aud_b = st.text_input("Célközönség", value=st.session_state.get(f"aud_dev_b_{n_slug_ideas}", get_niche_field("ffc_aud", chosen_niche)), key=f"aud_dev_b_{n_slug_ideas}")
+                thm_b = st.text_input("Áhítat / Napló Főcíme", value=st.session_state.get(f"thm_dev_b_{n_slug_ideas}", get_niche_field("gum_topic", chosen_niche)), key=f"thm_dev_b_{n_slug_ideas}")
                 current_idea_prompt = template_idea_devotional(aud_b, thm_b)
 
             st.markdown("<div class='step-label'>📋 Másolható Ötletelő Prompt</div>", unsafe_allow_html=True)
@@ -5794,33 +5875,34 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
         col_f1_in, col_f1_out = st.columns([1, 1.15], gap="large")
 
         with col_f1_in:
+            n_slug_ffc = get_niche_slug(curr_niche_key)
             st.markdown("<div class='step-label'>Termék & Transzformáció Paraméterek</div>", unsafe_allow_html=True)
             ffc_prod_name = st.text_input(
                 "Termék / Ajánlat Neve:",
-                value="30 Napos Békesség & Fókusz Vezetett Lelki Napló (Printable & Digital)",
-                key="ffc_prod_name_v2"
+                value=st.session_state.get(f"ffc_prod_{n_slug_ffc}", get_niche_field("ffc_prod", curr_niche_key)),
+                key=f"ffc_prod_{n_slug_ffc}"
             )
             ffc_target_aud = st.text_input(
                 "Célközönség / Avatár:",
-                value=niche_default_aud,
-                key="ffc_target_aud_v2"
+                value=st.session_state.get(f"ffc_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
+                key=f"ffc_aud_{n_slug_ffc}"
             )
             ffc_main_trans = st.text_area(
                 "Fő Transzformáció (Végső Érzelmi/Szellemi Ígéret):",
-                value="Napi 10 perces vezetett csendességgel elengedni a szorongást, megtalálni a tartós belső békességet és Isten jelenlétében élni a zsúfolt hétköznapokban",
+                value=st.session_state.get(f"ffc_trans_{n_slug_ffc}", get_niche_field("ffc_trans", curr_niche_key)),
                 height=75,
-                key="ffc_main_trans_v2"
+                key=f"ffc_trans_{n_slug_ffc}"
             )
             ffc_vehicle = st.text_input(
                 "Az Új Módszer / Kulcs (The Vehicle):",
-                value="Mikro-reflexiók, strukturált bibliai igemagyarázatok és letisztult nyomtatható naplólapok",
-                key="ffc_vehicle_v2"
+                value=st.session_state.get(f"ffc_veh_{n_slug_ffc}", get_niche_field("ffc_vehicle", curr_niche_key)),
+                key=f"ffc_veh_{n_slug_ffc}"
             )
             ffc_extra_notes = st.text_area(
                 "➕ Extra preferenciák / Különleges részletek (opcionális):",
-                placeholder=f"Pl.: Igazodjon a(z) {curr_niche_data.get('name_en', '')} rétegpiachoz, tartalmazzon 14 napos Áldás-garanciát.",
+                placeholder=f"Pl.: Igazodjon a(z) {curr_niche_data.get('name_en', '')} rétegpiachoz, tartalmazzon 14 napos garanciát.",
                 height=60,
-                key="ffc_extra_notes_v2"
+                key=f"ffc_notes_{n_slug_ffc}"
             )
 
             col_sub1, col_sub2 = st.columns(2)
@@ -5988,21 +6070,25 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
             st.markdown("<div class='step-label'>Reels & ManyChat Paraméterek</div>", unsafe_allow_html=True)
             reels_prod = st.text_input(
                 "Termék / Téma:",
-                value="30 Napos Békesség & Fókusz Vezetett Keresztény Napló",
-                key="reels_prod_input"
-            )
-            reels_cta_kw = st.selectbox(
-                "ManyChat CTA Kulcsszó (Ezt kell kommentelniük):",
-                ["BÉKESSÉG", "CSODA", "ÁLDÁS", "HIT", "SIKER", "REMÉNY", "SZABADSÁG", "FÓKUSZ", "IRÁNYTŰ"],
-                index=0,
-                key="reels_cta_kw_input"
+                value=st.session_state.get(f"reels_prod_{n_slug_ffc}", get_niche_field("reels_prod", curr_niche_key)),
+                key=f"reels_prod_{n_slug_ffc}"
             )
             reels_target = st.text_input(
                 "Célközönség:",
-                value=niche_default_aud,
-                key="reels_target_input"
+                value=st.session_state.get(f"reels_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
+                key=f"reels_aud_{n_slug_ffc}"
             )
-            reels_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key="reels_lang_input")
+            reels_cta_kw_val = get_niche_field("reels_cta_kw", curr_niche_key)
+            reels_cta_kw_opts = ["BÉKESSÉG", "CSODA", "ÁLDÁS", "HIT", "SIKER", "REMÉNY", "SZABADSÁG", "FÓKUSZ", "IRÁNYTŰ", "VAGYON", "EGÉSZSÉG"]
+            if reels_cta_kw_val not in reels_cta_kw_opts:
+                reels_cta_kw_opts.insert(0, reels_cta_kw_val)
+            reels_cta_kw = st.selectbox(
+                "ManyChat CTA Kulcsszó (Ezt kell kommentelniük):",
+                reels_cta_kw_opts,
+                index=reels_cta_kw_opts.index(reels_cta_kw_val) if reels_cta_kw_val in reels_cta_kw_opts else 0,
+                key=f"reels_cta_kw_{n_slug_ffc}"
+            )
+            reels_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key=f"reels_lang_{n_slug_ffc}")
 
             btn_gen_reels = st.button("🎬 10 db Virális Reels & B-roll Prompt Generálása (AI)", key="btn_gen_reels_batch", use_container_width=True)
 
@@ -6179,36 +6265,36 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
             st.markdown("<div class='step-label'>Google Sites Landing Page Paraméterek</div>", unsafe_allow_html=True)
             gs_prod_name = st.text_input(
                 "Termék Neve:",
-                value="30 Napos Békesség & Fókusz Digitális Napló és Színező",
-                key="gs_prod_name"
+                value=st.session_state.get(f"gs_prod_{n_slug_ffc}", get_niche_field("gs_prod", curr_niche_key)),
+                key=f"gs_prod_{n_slug_ffc}"
             )
             gs_target_aud = st.text_input(
                 "Célközönség:",
-                value=curr_niche_data.get("default_audience", "Keresztény édesanyák, alkotók és hívők"),
-                key="gs_target_aud"
+                value=st.session_state.get(f"gs_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
+                key=f"gs_aud_{n_slug_ffc}"
             )
             gs_headline = st.text_input(
                 "Hero Főcímsor (Main Headline):",
-                value="Találd meg a napi békességet és lelki fókuszt a mindennapok csendjében",
-                key="gs_headline"
+                value=st.session_state.get(f"gs_head_{n_slug_ffc}", get_niche_field("gs_headline", curr_niche_key)),
+                key=f"gs_head_{n_slug_ffc}"
             )
             gs_tagline = st.text_area(
                 "Alcím / Életérzés (Tagline):",
-                value="Egy gyönyörű, nyomtatható 30 napos vezetett áhítat, bibliai igegyűjtemény és művészi színező kollekció a nyugodt, kiegyensúlyozott napokért.",
+                value=st.session_state.get(f"gs_tag_{n_slug_ffc}", get_niche_field("gs_tagline", curr_niche_key)),
                 height=70,
-                key="gs_tagline"
+                key=f"gs_tag_{n_slug_ffc}"
             )
             gs_lead_magnet = st.text_area(
                 "🎁 Ingyenes Csalitermék (Lead Magnet) Leírása:",
-                value="3-oldalas ingyenes nyomtatható színező lap és mini áhítat mintacsomag azonnali letöltéssel a Gumroadon keresztül.",
+                value=st.session_state.get(f"gs_lm_{n_slug_ffc}", get_niche_field("gs_lead_magnet", curr_niche_key)),
                 height=70,
-                key="gs_lead_magnet"
+                key=f"gs_lm_{n_slug_ffc}"
             )
             gs_features = st.text_area(
                 "Csomag Tartalma & Főbb Előnyök:",
-                value="30 napos vezetett áhítat és napló, 30 db 4K felbontású nyomtatható színező oldal, 5 színpaletta ajánló, KJV igehelyek, azonnali digitális PDF letöltés.",
+                value=st.session_state.get(f"gs_ft_{n_slug_ffc}", get_niche_field("gs_features", curr_niche_key)),
                 height=75,
-                key="gs_features"
+                key=f"gs_ft_{n_slug_ffc}"
             )
 
             col_sub_p1, col_sub_p2 = st.columns(2)
@@ -6362,23 +6448,23 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
             st.markdown(f"<div class='step-label'>{'30 Napos E-mail Csomag' if is_30day_mode else '3 Napos Tölcsér'} Paraméterek</div>", unsafe_allow_html=True)
             em_lead_magnet = st.text_input(
                 "🎁 Ingyenes Csalitermék (Lead Magnet) Neve:",
-                value="Ingyenes Minta Letölthető PDF Munkafüzet",
-                key="em_lead_magnet"
+                value=st.session_state.get(f"em_lm_{n_slug_ffc}", get_niche_field("em_lead_magnet", curr_niche_key)),
+                key=f"em_lm_{n_slug_ffc}"
             )
             em_paid_prod = st.text_input(
                 "💎 Értékesítendő Fizetős Termék / Ajánlat Neve:",
-                value="Teljes 30 Napos Digitális Békesség & Megújulás Mestercsomag",
-                key="em_paid_prod"
+                value=st.session_state.get(f"em_paid_{n_slug_ffc}", get_niche_field("em_paid_prod", curr_niche_key)),
+                key=f"em_paid_{n_slug_ffc}"
             )
             em_target_aud = st.text_input(
                 "Célközönség:",
-                value=niche_default_aud,
-                key="em_target_aud"
+                value=st.session_state.get(f"em_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
+                key=f"em_aud_{n_slug_ffc}"
             )
             em_discount = st.text_input(
                 "Exkluzív Kedvezmény / Ajánlat Kupon:",
-                value="25% exkluzív üdvözlő kedvezmény a BEKESSEG25 kuponkóddal (korlátozott határidő)",
-                key="em_discount"
+                value=st.session_state.get(f"em_disc_{n_slug_ffc}", f"25% exkluzív üdvözlő kedvezmény a {get_niche_field('reels_cta_kw', curr_niche_key)}25 kuponkóddal (korlátozott határidő)"),
+                key=f"em_disc_{n_slug_ffc}"
             )
 
             if is_30day_mode:
@@ -6513,19 +6599,19 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
             st.markdown("<div class='step-label'>Tartalomnaptár Paraméterek</div>", unsafe_allow_html=True)
             cal_prod_name = st.text_input(
                 "Termék / Csomag Neve:",
-                value="30 Napos Békesség & Megújulás Digitális Napló",
-                key="cal_prod_name"
+                value=st.session_state.get(f"cal_prod_{n_slug_ffc}", get_niche_field("cal_prod_name", curr_niche_key)),
+                key=f"cal_prod_{n_slug_ffc}"
             )
             cal_target_aud = st.text_input(
                 "Célközönség:",
-                value=niche_default_aud,
-                key="cal_target_aud"
+                value=st.session_state.get(f"cal_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
+                key=f"cal_aud_{n_slug_ffc}"
             )
             cal_topics = st.text_area(
                 "Fő Tartalmi Pillérek / Témák (opcionális):",
-                value="1. Hét: Stresszoldás és a napi csendesség hiánya\n2. Hét: Napi 10 perces reggeli fókusz rutin kialakítása\n3. Hét: Művészetterápia, színezés és hálaadás\n4. Hét: Közösség, vásárlói tapasztalatok és sürgősség",
+                value=st.session_state.get(f"cal_top_{n_slug_ffc}", f"1. Hét: A(z) {get_niche_field('ffc_prod', curr_niche_key)} fő kihívásai és az akadályok leküzdése\n2. Hét: Gyakorlati lépések, fókusz és {get_niche_field('ffc_vehicle', curr_niche_key)}\n3. Hét: Esettanulmányok, sikerélmények és vizualizáció\n4. Hét: Záró ajánlat, bónuszok és sürgősség"),
                 height=85,
-                key="cal_topics"
+                key=f"cal_top_{n_slug_ffc}"
             )
             cal_platforms = st.multiselect(
                 "Célplatformok:",
