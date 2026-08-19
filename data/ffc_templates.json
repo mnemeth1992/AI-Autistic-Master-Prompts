@@ -1,0 +1,28 @@
+{
+  "sales_page_framework": {
+    "step_1_hook": "Figyelemfelkeltő, sokkoló vagy kíváncsiságkeltő főcím (Hogyan érj el [Kívánt Eredményt] [Fájdalom/Félelem] nélkül).",
+    "step_2_story": "A sebezhető, emberi történet: 'Nem is olyan régen még én is...', a mélypont és a keresés.",
+    "step_3_epiphany": "A 'Megvilágosodás' pillanata (Epiphany Bridge): Miért buktak el a régi módszerek és mi a valódi megoldás.",
+    "step_4_big_domino": "A Big Domino állítás: Ha meg tudom győzni a vásárlót erről az 1 dologról, minden más kifogás elenyészik.",
+    "step_5_the_vehicle": "Az Új Lehetőség bemutatása (Nem a régi hibás módszer feljavítása, hanem egy teljesen új út).",
+    "step_6_three_part_bullets": "3-tagú termékleíró bullet pontok (Mit kap + Még akkor is ha + Ami azt jelenti).",
+    "step_7_value_stack": "Értékkosár: Fő termék + Bónusz #1 + Bónusz #2 + Bónusz #3 (Összérték $500+ -> Ajánlati ár $27 / 9.990 Ft).",
+    "step_8_objection_handling": "A 3 fő kifogás kezelése (1. Vehicle/Eszköz, 2. Belső önbizalomhiány, 3. Külső körülmények/időhiány).",
+    "step_9_risk_reversal": "100% Kockázatmentes 14/30 napos 'Áldás vagy Pénzvisszafizetés' garancia.",
+    "step_10_urgency_cta": "Cselekvésre ösztönzés (CTA), sürgetés és 'Mit veszítesz, ha semmit sem teszel' lezárás."
+  },
+  "three_part_bullet_formula": {
+    "part_1_feature": "Mit kap pontosan (fejezet, sablon, naplólap)",
+    "part_2_objection": "Még akkor is ha (kifogás kezelése: nincs időd, nem tudsz rajzolni, szétszórt vagy)",
+    "part_3_benefit": "Ami azt jelenti (valódi érzelmi, szellemi vagy anyagi transzformáció a mindennapokban)"
+  },
+  "vsl_script_structure": {
+    "duration": "3 perc (kb. 380-450 szó)",
+    "scene_1_hook": "0:00 - 0:25: Mintamegtörő felütés és a legnagyobb rejtett akadály bemutatása.",
+    "scene_2_problem": "0:25 - 0:55: A belső küzdelem (túlterheltség, bizonytalanság, fókuszhiány).",
+    "scene_3_epiphany": "0:55 - 1:30: A megvilágosodás története és a Big Domino felismerés.",
+    "scene_4_solution": "1:30 - 2:10: A termék bemutatása mint a legegyszerűbb, leggyorsabb híd a célhoz.",
+    "scene_5_value_stack": "2:10 - 2:40: Az ajánlat, a bónuszok és a kockázatmentes garancia.",
+    "scene_6_cta": "2:40 - 3:00: Sürgetés és a letöltés gomb megnyomása."
+  }
+}

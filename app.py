@@ -61,6 +61,15 @@ import gumroad_publisher
 importlib.reload(gumroad_publisher)
 from gumroad_publisher import publish_to_gumroad, get_stored_gumroad_token
 
+# FFC & Google Ecosystem Modules
+try:
+    from modules.ffc_engine import generate_ffc_sales_pack, generate_offline_ffc_pack
+    from modules.reels_generator import generate_faceless_reels_batch, generate_reels_broll_image
+    from modules.google_hub import get_apps_script_webhook_template, get_stripe_setup_guide, get_google_sites_embed_button
+    FFC_MODULES_AVAILABLE = True
+except ImportError:
+    FFC_MODULES_AVAILABLE = False
+
 # Config & Time Log file persistence
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 TIME_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "time_log.json")
@@ -107,15 +116,15 @@ AUDHD_DAY_PLANS = {
         ]
     },
     "Csütörtök": {
-        "title": "🚀 FFC Marketing, Copywriting & Google Sites Stúdió",
-        "description": "2 órás mélyfókusz: Avatar kutatás, 12-lépéses Sales Letter, 0 Ft-os Google Sites oldal & E-mailek.",
+        "title": "🚀 FFC Faceless Funnel, Reels & Copywriting Műhely",
+        "description": "2 órás mélyfókusz: Niche validálás, Termék PDF, FFC Copywriting, 10 db Reels és Drive szinkron.",
         "target_minutes": 120,
         "tasks": [
-            "🎯 1. FFC Avatar kutatás & 10 db pszichológiai Big Domino horog generálása (25 perc)",
-            "📜 2. 12-lépéses Russell Brunson Sales Letter (Értékesítési levél) megírása (35 perc)",
-            "🌐 3. Google Sites 0 Ft-os Landing Page szövegek és CTA blokkok összeállítása (25 perc)",
-            "📧 4. 3 napos / 30 napos automata e-mail tölcsér és hírlevél szekvencia generálása (20 perc)",
-            "💾 5. Marketing anyagok mentése Word (.docx) és .txt formátumban a Drive-ra (15 perc)"
+            "🎯 1. Piac & Niche Validálás (15 perc)",
+            "📖 2. Termék & PDF Generálás (35 perc)",
+            "📜 3. FFC Copywriting & VSL (25 perc)",
+            "🎬 4. 10 db Reels & B-roll Kép Batch (25 perc)",
+            "🚀 5. Drive Szinkron & Kampányindítás (20 perc)"
         ]
     },
     "Péntek": {
@@ -467,24 +476,38 @@ def create_marketing_docx(title: str, content: str, header_info: str = "") -> io
 def save_marketing_file_to_drive(product_name: str, text_content: str, header_info: str = "Marketing Anyag", content_type_tag: str = "") -> tuple[bool, str, str]:
     """
     Saves generated marketing materials (Sales Letter, Email Funnel, Google Sites Landing Page, SEO Leírás)
-    into the Google Drive 06_📌_MARKETING_ES_SEO directory as Marketing_[TERMÉK]_[DÁTUM].txt and .docx.
+    into the Google Drive 06_📌_MARKETING_ES_SEO directory (both Cloud API & local filesystem) as .txt and .docx.
     """
+    sanitized_prod = sanitize_filename(product_name)
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    tag = f"_{sanitize_filename(content_type_tag)}" if content_type_tag else ""
+    filename_txt = f"Marketing_{sanitized_prod}{tag}_{timestamp}.txt"
+    
+    full_text = ""
+    if header_info:
+        full_text += f"=== {header_info} ===\n"
+        full_text += f"Dátum: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        full_text += f"Termék: {product_name}\n"
+        full_text += "="*40 + "\n\n"
+    full_text += text_content.strip() + "\n"
+
+    cloud_link = ""
+    if get_service_account_info():
+        ok_c, link_c, _ = upload_to_google_drive_api(
+            filename=filename_txt,
+            file_bytes=full_text.encode("utf-8"),
+            folder_category="marketing",
+            mime_type="text/plain"
+        )
+        if ok_c:
+            cloud_link = link_c
+
     try:
         target_dir = resolve_drive_folder("marketing")
-        sanitized_prod = sanitize_filename(product_name)
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        tag = f"_{sanitize_filename(content_type_tag)}" if content_type_tag else ""
-        
-        filename_txt = f"Marketing_{sanitized_prod}{tag}_{timestamp}.txt"
         file_path_txt = os.path.join(target_dir, filename_txt)
         
         with open(file_path_txt, "w", encoding="utf-8") as f:
-            if header_info:
-                f.write(f"=== {header_info} ===\n")
-                f.write(f"Dátum: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Termék: {product_name}\n")
-                f.write("="*40 + "\n\n")
-            f.write(text_content.strip() + "\n")
+            f.write(full_text)
             
         docx_created = False
         file_path_docx = ""
@@ -496,13 +519,24 @@ def save_marketing_file_to_drive(product_name: str, text_content: str, header_in
                 with open(file_path_docx, "wb") as f_docx:
                     f_docx.write(bio.getvalue())
                 docx_created = True
+
+                if get_service_account_info():
+                    upload_to_google_drive_api(
+                        filename=filename_docx,
+                        file_bytes=bio.getvalue(),
+                        folder_category="marketing",
+                        mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
             except Exception:
                 pass
                 
-        details = file_path_txt + (f" és {file_path_docx}" if docx_created else "")
+        details = (f"☁️ Cloud: {cloud_link} | " if cloud_link else "") + file_path_txt + (f" és {file_path_docx}" if docx_created else "")
         return True, details, file_path_txt
     except Exception as e:
+        if cloud_link:
+            return True, f"☁️ Google Drive Felhő: {cloud_link}", cloud_link
         return False, str(e), ""
+
 
 
 def parse_prompts_from_text(text: str, default_category: str = "kdp") -> list[dict]:
@@ -5446,363 +5480,412 @@ elif "Rendszerbeállítások" in menu_choice or "7." in menu_choice:
 # ==========================================================
 
 elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in menu_choice:
-    st.markdown("<div class='path-badge'>🚀 FFC Marketing & Google Sites Stúdió</div>", unsafe_allow_html=True)
-    st.markdown("### 🚀 FFC Magic Marketing, Copywriting & Google Sites Stúdió")
-    st.caption("All-in-One Értékesítési Rendszer: Avatar kutatás, Big Domino Horgok, 12-lépéses Sales Letter, Google Sites 0 Ft-os Landing Page és 3-napos E-mail Tölcsér.")
+    st.markdown("<div class='path-badge'>🚀 FFC Launchpad, Reels Gyár & Google Ökoszisztéma</div>", unsafe_allow_html=True)
+    st.markdown("### 🚀 FFC Faceless Funnel, Reels Tartalomgyár & Google Automatizáció")
+    st.caption("Teljes Keresztény Értékesítési Ökoszisztéma: Russell Brunson 10-részes Sales Pack, 10 db Arc Nélküli Reels + FLUX.1 B-roll képek, 0 Ft-os Stripe ➔ Sheets ➔ Gmail webhook, Google Sites landing page és 30 napos e-mail tölcsér.")
 
     active_art_style_prompt = render_style_selector("ws_ffc")
 
-    tab_ffc1, tab_ffc2, tab_ffc3, tab_ffc4, tab_ffc5 = st.tabs([
-        "🎯 FFC Célközönség & Hook Generáló",
-        "📜 FFC Teljes Értékesítési Levél (Sales Letter)",
-        "🌐 Google Sites 0 Ft-os Landing Page Generáló",
-        "📧 Automata E-mail Tölcsér (3-Day & 30-Day Funnel)",
-        "📅 30 Napos Marketing & Social SEO Naptár"
+    tab_ffc1, tab_ffc2, tab_ffc3, tab_ffc4, tab_ffc5, tab_ffc6 = st.tabs([
+        "🎯 1. FFC 10-Részes Sales Pack & 3-Tagú Bulletek",
+        "🎬 2. Arc Nélküli Reels & ManyChat Tartalomgyár (10 db)",
+        "⚡ 3. Google Apps Script & Stripe 0 Ft-os Automatizáció",
+        "🌐 4. Google Sites 0 Ft-os Landing Page",
+        "📧 5. Automata E-mail Tölcsér (3 & 30 Napos)",
+        "📅 6. 30 Napos Social SEO Naptár"
     ])
 
     # Get active niche info
     curr_niche_key = st.session_state.get("active_niche_choice", "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)")
     curr_niche_data = get_niche_prompt_context(curr_niche_key)
-    niche_default_aud = curr_niche_data.get("default_audience", "Keresztény hívők és édesanyák")
+    niche_default_aud = curr_niche_data.get("default_audience", "Keresztény édesanyák, alkotók és hívők")
 
     # ─────────────────────────────────────────────────────
-    # AL-FÜL 1: CÉLKÖZÖNSÉG & HOOK GENERÁLÓ
+    # AL-FÜL 1: FFC 10-RÉSZES SALES PACK & 3-TAGÚ BULLETEK
     # ─────────────────────────────────────────────────────
     with tab_ffc1:
-        st.markdown("#### 🎯 FFC Avatar Mélykút-kutatás & Big Domino Horgok")
-        st.caption(f"Feltárja a célközönség mély belső félelmeit, titkos vágyait és 10 db 'Big Domino' horgot készít. (Aktív Niche: **{curr_niche_key}**)")
+        st.markdown("#### 🎯 FFC 10-Részes Értékesítési Csomag & 3-Tagú Bulletek")
+        st.caption("Russell Brunson és Alex Hormozi stílusú, mély lélektani konverziós gépezet: Big Domino, 5 Brunson Főcím, 3-Perces VSL, 3-Tagú Bulletek, Kifogáskezelés és Value Stack.")
 
-        col_f1_in, col_f1_out = st.columns([1, 1.1], gap="large")
+        col_f1_in, col_f1_out = st.columns([1, 1.15], gap="large")
 
         with col_f1_in:
-            st.markdown("<div class='step-label'>Termék & Célközönség Paraméterek</div>", unsafe_allow_html=True)
+            st.markdown("<div class='step-label'>Termék & Transzformáció Paraméterek</div>", unsafe_allow_html=True)
             ffc_prod_name = st.text_input(
-                "Termék Neve:",
-                value="30 Napos Békesség & Fókusz Digitális Napló (Printable PDF)",
-                key="ffc_prod_name"
+                "Termék / Ajánlat Neve:",
+                value="30 Napos Békesség & Fókusz Vezetett Lelki Napló (Printable & Digital)",
+                key="ffc_prod_name_v2"
             )
             ffc_target_aud = st.text_input(
-                "Célközönség / Célcsoport:",
+                "Célközönség / Avatár:",
                 value=niche_default_aud,
-                key="ffc_target_aud"
+                key="ffc_target_aud_v2"
             )
             ffc_main_trans = st.text_area(
-                "Fő Transzformáció / Végső Ígéret (Mit érnek el?):",
-                value="Napi 10 perces vezetett csendességgel és struktúrával megtalálni a lelki békességet, elengedni a szorongást és növelni a belső harmóniát",
-                height=80,
-                key="ffc_main_trans"
+                "Fő Transzformáció (Végső Érzelmi/Szellemi Ígéret):",
+                value="Napi 10 perces vezetett csendességgel elengedni a szorongást, megtalálni a tartós belső békességet és Isten jelenlétében élni a zsúfolt hétköznapokban",
+                height=75,
+                key="ffc_main_trans_v2"
             )
             ffc_vehicle = st.text_input(
-                "Használt Módszer / Eszköz (Vehicle):",
-                value="Vezetett napi önreflexiós kérdések, igék/irányelvek és letisztult nyomtatható lapok",
-                key="ffc_vehicle"
+                "Az Új Módszer / Kulcs (The Vehicle):",
+                value="Mikro-reflexiók, strukturált bibliai igemagyarázatok és letisztult nyomtatható naplólapok",
+                key="ffc_vehicle_v2"
             )
             ffc_extra_notes = st.text_area(
-                "➕ Extra megjegyzés / háttér (opcionális):",
-                placeholder=f"Pl.: Alkalmazkodjon a(z) {curr_niche_data.get('name_en', '')} rétegpiachoz és stílushoz.",
-                height=65,
-                key="ffc_extra_notes"
+                "➕ Extra preferenciák / Különleges részletek (opcionális):",
+                placeholder=f"Pl.: Igazodjon a(z) {curr_niche_data.get('name_en', '')} rétegpiachoz, tartalmazzon 14 napos Áldás-garanciát.",
+                height=60,
+                key="ffc_extra_notes_v2"
             )
 
             col_sub1, col_sub2 = st.columns(2)
             with col_sub1:
-                ffc_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key="ffc_lang")
+                ffc_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key="ffc_lang_v2")
             with col_sub2:
-                ffc_gen_mode = st.selectbox(
-                    "Generálás Módja:",
-                    ["Mindkettő (Avatar + 10 Hook)", "Csak Avatar Kutatás", "Csak 10 Big Domino Hook"],
+                ffc_prod_type = st.selectbox(
+                    "Terméktípus:",
+                    ["30 Napos Áhítat & Napló", "Keresztény Színezőkönyv (KDP)", "Igés Falikép / Clipart Csomag", "Keresztény Tanfolyam / Masterclass"],
                     index=0,
-                    key="ffc_gen_mode"
+                    key="ffc_prod_type_v2"
                 )
 
-            with st.expander("📄 Alap Master Prompt sablonok megtekintése", expanded=False):
-                p_av = build_ffc_avatar_research_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_extra_notes, niche_name=curr_niche_key)
-                p_hk = build_ffc_big_domino_hooks_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_vehicle, language=ffc_lang, niche_name=curr_niche_key)
-                st.markdown("**🎯 Avatar Research Prompt:**")
-                st.code(p_av, language="text")
-                st.markdown("**🎣 Big Domino Hooks Prompt:**")
-                st.code(p_hk, language="text")
-
-            btn_gen_avatar_hooks = st.button("🚀 Célközönség & Hookok Generálása (AI)", key="btn_gen_avatar_hooks", use_container_width=True)
+            btn_gen_sales_pack = st.button("🚀 Teljes FFC Értékesítési Csomag Generálása (AI)", key="btn_gen_sales_pack", use_container_width=True)
 
         with col_f1_out:
-            st.markdown("<div class='step-label'>Generált Elemzés & Horgok</div>", unsafe_allow_html=True)
+            st.markdown("<div class='step-label'>Generált 10-Részes FFC Értékesítési Csomag</div>", unsafe_allow_html=True)
 
-            if btn_gen_avatar_hooks:
-                if client:
-                    with st.spinner("AI végzi a mély pszichológiai avatar kutatást és írja a Big Domino horgokat..."):
-                        if "Avatar" in ffc_gen_mode and "Hook" not in ffc_gen_mode:
-                            combined_prompt = build_ffc_avatar_research_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_extra_notes, niche_name=curr_niche_key)
-                        elif "Hook" in ffc_gen_mode and "Avatar" not in ffc_gen_mode:
-                            combined_prompt = build_ffc_big_domino_hooks_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_vehicle, language=ffc_lang, niche_name=curr_niche_key)
-                        else:
-                            p_av = build_ffc_avatar_research_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_extra_notes, niche_name=curr_niche_key)
-                            p_hk = build_ffc_big_domino_hooks_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_vehicle, language=ffc_lang, niche_name=curr_niche_key)
-                            combined_prompt = f"{p_av}\n\n{'='*50}\n\n{p_hk}"
-
-                        res_text = generate_marketing_copy_live(
-                            client=client,
-                            prompt=combined_prompt,
-                            model_name=text_model,
-                            temp=temperature,
-                            system_instruction="Te egy világklasszis Russell Brunson és FFC stílusú konverziós szakértő és marketing szövegíró vagy. Adj mély, érzelmileg megrendítő, hiteles és gyakorlatias választ."
+            if btn_gen_sales_pack:
+                with st.spinner("AI írja a teljes 10-részes FFC értékesítési csomagot (Big Domino, VSL, 3-tagú bulletek, Value Stack)..."):
+                    if FFC_MODULES_AVAILABLE:
+                        res_pack = generate_ffc_sales_pack(
+                            topic=ffc_prod_name,
+                            target_audience=ffc_target_aud,
+                            core_transformation=ffc_main_trans,
+                            language=ffc_lang,
+                            vehicle=ffc_vehicle,
+                            extra_notes=ffc_extra_notes,
+                            product_type=ffc_prod_type
                         )
-                        st.session_state["ffc_avatar_res"] = res_text
-                        st.session_state["ffc_avatar_prod"] = ffc_prod_name
-                else:
-                    st.warning("⚠️ Nincs aktív AI szolgáltató konfigurálva a Rendszerbeállításokban.")
+                    else:
+                        p_av = build_ffc_avatar_research_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_extra_notes, niche_name=curr_niche_key)
+                        p_hk = build_ffc_big_domino_hooks_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_vehicle, language=ffc_lang, niche_name=curr_niche_key)
+                        p_sl = build_ffc_sales_letter_prompt(ffc_prod_name, ffc_target_aud, ffc_main_trans, ffc_extra_notes, ffc_vehicle, "", "", ffc_lang, curr_niche_key)
+                        ok_call, res_text = km.generate_text_with_fallback(f"{p_av}\n\n{p_hk}\n\n{p_sl}")
+                        res_pack = {"sales_letter_full": res_text, "big_domino": "Big Domino Generálva", "headlines": [], "three_part_bullets": []}
+                    
+                    st.session_state["active_ffc_sales_pack"] = res_pack
+                    st.session_state["active_ffc_prod_name"] = ffc_prod_name
 
-            if st.session_state.get("ffc_avatar_res"):
-                res_content = st.session_state["ffc_avatar_res"]
-                p_name = st.session_state.get("ffc_avatar_prod", ffc_prod_name)
+            if st.session_state.get("active_ffc_sales_pack"):
+                pack = st.session_state["active_ffc_sales_pack"]
+                p_name = st.session_state.get("active_ffc_prod_name", ffc_prod_name)
 
-                with st.container():
-                    st.markdown(f"<div class='prompt-output'>{res_content}</div>", unsafe_allow_html=True)
+                # 1. Big Domino Card
+                if "big_domino" in pack and pack["big_domino"]:
+                    st.markdown(f"""
+                    <div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08)); border-left: 4px solid #10b981; border-radius: 10px; padding: 14px 18px; margin-bottom: 15px;'>
+                        <div style='font-size: 0.85rem; font-weight: 700; color: #34d399; text-transform: uppercase;'>🎯 A Big Domino Állítás:</div>
+                        <div style='font-size: 1.02rem; color: #f8fafc; margin-top: 5px; font-weight: 600;'>{pack["big_domino"]}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # 2. Headlines
+                if "headlines" in pack and isinstance(pack["headlines"], list) and len(pack["headlines"]) > 0:
+                    with st.expander("📢 5 db Russell Brunson Főcím (Headlines)", expanded=True):
+                        for hl in pack["headlines"]:
+                            st.markdown(f"- **{hl}**")
+
+                # 3. 3-Minute VSL Script
+                if "vsl_script" in pack and pack["vsl_script"]:
+                    with st.expander("🎬 3-Perces VSL (Video Sales Letter) Forgatókönyv", expanded=False):
+                        st.markdown(pack["vsl_script"])
+
+                # 4. 3-Part Bullets
+                if "three_part_bullets" in pack and isinstance(pack["three_part_bullets"], list) and len(pack["three_part_bullets"]) > 0:
+                    with st.expander("💎 5 db 3-Tagú Termék Bullet Pont ('Mit kap' + 'Még akkor is ha' + 'Ami azt jelenti')", expanded=True):
+                        for idx, b in enumerate(pack["three_part_bullets"], 1):
+                            if isinstance(b, dict):
+                                st.markdown(f"""
+                                <div style='background: #1e293b; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; border: 1px solid #334155;'>
+                                    <div style='color: #60a5fa; font-weight: 700;'>📦 #{idx}: {b.get('mit_kap', '')}</div>
+                                    <div style='color: #f87171; font-size: 0.92rem; margin-top: 3px;'>🛡️ <em>{b.get('meg_akkor_is_ha', '')}</em></div>
+                                    <div style='color: #34d399; font-size: 0.95rem; font-weight: 600; margin-top: 3px;'>✨ <strong>{b.get('ami_azt_jelenti', '')}</strong></div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"- {b}")
+
+                # 5. Objection Handling & Value Stack
+                if "objection_handling" in pack and isinstance(pack["objection_handling"], dict):
+                    with st.expander("🛡️ 3 Fő Kifogáskezelés (Vehicle, Belső Önbizalom, Külső Időhiány)", expanded=False):
+                        for k, v in pack["objection_handling"].items():
+                            st.markdown(f"- **{k.replace('_', ' ').title()}:** {v}")
+
+                if "value_stack" in pack and isinstance(pack["value_stack"], dict):
+                    vs = pack["value_stack"]
+                    with st.expander("💰 Value Stack Értékkosár & Garancia", expanded=True):
+                        st.markdown(f"""
+                        - 🎁 **Fő Termék:** {vs.get('main_product_value', '')}
+                        - 🎁 **Bónusz #1:** {vs.get('bonus_1', '')}
+                        - 🎁 **Bónusz #2:** {vs.get('bonus_2', '')}
+                        - 🎁 **Bónusz #3:** {vs.get('bonus_3', '')}
+                        - 📊 **Teljes Valós Érték:** `{vs.get('total_value', '')}` ➔ **Ajánlati Ár:** <span style='color:#34d399; font-weight:bold; font-size:1.1rem;'>{vs.get('offer_price', '')}</span>
+                        - 🛡️ **Garancia:** {vs.get('guarantee_text', '')}
+                        """, unsafe_allow_html=True)
+
+                # 6. Full Sales Letter Text
+                full_sl = pack.get("sales_letter_full", "")
+                if not full_sl:
+                    full_sl = f"# {p_name}\n\n## Big Domino:\n{pack.get('big_domino', '')}\n\n## VSL:\n{pack.get('vsl_script', '')}"
+
+                with st.expander("📜 Teljes Formázott Értékesítési Levél (Sales Letter Másolása)", expanded=False):
+                    st.markdown(full_sl)
 
                 st.text_area(
-                    "📋 Másold innen a vágólapra (Ctrl+A → Ctrl+C):",
-                    value=res_content,
-                    height=220,
-                    key="ffc_avatar_copy_area"
+                    "📋 Nyers Sales Pack Szöveg Másolása (Ctrl+A → Ctrl+C):",
+                    value=json.dumps(pack, ensure_ascii=False, indent=2) if isinstance(pack, dict) else str(pack),
+                    height=180,
+                    key="ffc_pack_copy_area"
                 )
 
-                col_dl1, col_dl2 = st.columns(2)
-                with col_dl1:
+                col_dl_p1, col_dl_p2 = st.columns(2)
+                with col_dl_p1:
                     st.download_button(
                         label="⬇️ Letöltés (.txt)",
-                        data=res_content.encode("utf-8"),
-                        file_name=f"Marketing_{sanitize_filename(p_name)}_Avatar_Hooks.txt",
+                        data=full_sl.encode("utf-8"),
+                        file_name=f"Marketing_{sanitize_filename(p_name)}_Sales_Pack.txt",
                         mime="text/plain",
-                        key="dl_ffc_avatar_txt",
+                        key="dl_ffc_pack_txt",
                         use_container_width=True
                     )
-                with col_dl2:
+                with col_dl_p2:
                     if DOCX_AVAILABLE:
-                        docx_bio = create_marketing_docx(p_name, res_content, header_info=f"FFC Avatar Kutatás & Horgok - {p_name}")
+                        docx_bio = create_marketing_docx(p_name, full_sl, header_info=f"FFC 10-Részes Sales Pack - {p_name}")
                         st.download_button(
                             label="⬇️ Letöltés (.docx)",
                             data=docx_bio.getvalue(),
-                            file_name=f"Marketing_{sanitize_filename(p_name)}_Avatar_Hooks.docx",
+                            file_name=f"Marketing_{sanitize_filename(p_name)}_Sales_Pack.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            key="dl_ffc_avatar_docx",
+                            key="dl_ffc_pack_docx",
                             use_container_width=True
                         )
 
                 st.markdown("---")
-                if st.button("💾 Mentés a 06_📌_MARKETING_ES_SEO mappába", key="btn_save_ffc_avatar_drive", use_container_width=True):
+                if st.button("💾 Mentés a 06_📌_MARKETING_ES_SEO Mappába (és Drive-ra)", key="btn_save_ffc_pack_drive", use_container_width=True):
                     ok_s, details, _ = save_marketing_file_to_drive(
                         product_name=p_name,
-                        text_content=res_content,
-                        header_info=f"FFC Avatar Kutatás & Big Domino Horgok - {p_name}",
-                        content_type_tag="Avatar_Kutatas_es_Horgok"
+                        text_content=full_sl,
+                        header_info=f"FFC 10-Részes Sales Pack - {p_name}",
+                        content_type_tag="Sales_Pack"
                     )
                     if ok_s:
-                        st.success(f"💾 **Sikeres mentés Google Drive-ra!**\n\n`{details}`")
+                        st.success(f"💾 **Sikeres mentés!**\n\n`{details}`")
                     else:
                         st.error(f"Hiba a mentéskor: {details}")
             else:
                 st.markdown("""
                 <div style='text-align:center; padding: 50px 20px; border: 2px dashed #333f56; border-radius: 16px; background: #1e2536; color: #94a3b8;'>
                     <div style='font-size: 2.8rem;'>🎯</div>
-                    <div style='margin-top: 12px; font-size: 0.95rem; font-weight: 600; color:#e2e8f0;'>Töltsd ki az adatokat a bal oldalon, majd<br>kattints a <strong style="color:#34d399;">🚀 Célközönség & Hookok Generálása</strong> gombra</div>
+                    <div style='margin-top: 12px; font-size: 0.95rem; font-weight: 600; color:#e2e8f0;'>Add meg a termék adatait a bal oldalon, majd<br>kattints a <strong style="color:#34d399;">🚀 Teljes FFC Értékesítési Csomag Generálása</strong> gombra</div>
                 </div>
                 """, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────
-    # AL-FÜL 2: RUSSELL BRUNSON SALES LETTER
+    # AL-FÜL 2: ARC NÉLKÜLI REELS & MANYCHAT TARTALOMGYÁR
     # ─────────────────────────────────────────────────────
     with tab_ffc2:
-        st.markdown("#### 📜 12-Lépéses Magas Konverziójú Értékesítési Levél (Sales Letter)")
-        st.caption("Russell Brunson és az FFC módszertanára épülő, mély érzelmi hatású eladói levél Google Sites-ra, Gumroadra, Etsy-re vagy weboldalra.")
+        st.markdown("#### 🎬 Arc Nélküli (Faceless) Reels & ManyChat Tartalomgyár (10 db Batch)")
+        st.caption("1 kattintással 10 db 5-7 másodperces virális keresztény Reels forgatókönyv, ManyChat CTA kulcsszó, posztszöveg és 9:16 vertikális FLUX.1 háttérkép prompt CapCut-hoz.")
 
-        col_f2_in, col_f2_out = st.columns([1, 1.1], gap="large")
+        col_r_in, col_r_out = st.columns([1, 1.2], gap="large")
 
-        with col_f2_in:
-            st.markdown("<div class='step-label'>Értékesítési Levél Paraméterek</div>", unsafe_allow_html=True)
-            sl_prod_name = st.text_input(
-                "Termék / Ajánlat Neve:",
-                value="Digitális Békesség & Megújulás Mestercsomag",
-                key="sl_prod_name"
+        with col_r_in:
+            st.markdown("<div class='step-label'>Reels & ManyChat Paraméterek</div>", unsafe_allow_html=True)
+            reels_prod = st.text_input(
+                "Termék / Téma:",
+                value="30 Napos Békesség & Fókusz Vezetett Keresztény Napló",
+                key="reels_prod_input"
             )
-            sl_target_aud = st.text_input(
+            reels_cta_kw = st.selectbox(
+                "ManyChat CTA Kulcsszó (Ezt kell kommentelniük):",
+                ["BÉKESSÉG", "CSODA", "ÁLDÁS", "HIT", "SIKER", "REMÉNY", "SZABADSÁG", "FÓKUSZ", "IRÁNYTŰ"],
+                index=0,
+                key="reels_cta_kw_input"
+            )
+            reels_target = st.text_input(
                 "Célközönség:",
                 value=niche_default_aud,
-                key="sl_target_aud"
+                key="reels_target_input"
             )
-            sl_main_trans = st.text_area(
-                "Fő Ígéret / Életbeli Transzformáció:",
-                value="Hogyan élhetsz át mély belső békességet, magabiztosságot és strukturált fejlődést napi mindössze 10 perces vezetéssel",
-                height=70,
-                key="sl_main_trans"
-            )
-            sl_pain_points = st.text_area(
-                "Fő Fájdalompontok & Frusztrációk:",
-                value="Állandó időhiány, bűntudat a lemaradás miatt, figyelemelterelő digitális zaj, kimerültség a napi rohanásban",
-                height=70,
-                key="sl_pain_points"
-            )
-            sl_vehicle = st.text_input(
-                "Az Új Módszer / Kulcs (Vehicle):",
-                value="100% vezetett, nyomtatható napi napló, ellenőrzőlista és lélekemelő művészi kártyák",
-                key="sl_vehicle"
-            )
-            sl_bonuses = st.text_area(
-                "Ajándék Bónuszok (Értéknövelők):",
-                value="🎁 Bónusz 1: 10 db Keretezhető Művészi Falikép Nyomat (4 990 Ft értékben)\n🎁 Bónusz 2: 30 Napos Hálaadás & Napi Cél Tracker (2 990 Ft értékben)\n🎁 Bónusz 3: Fókusz & Nyugalom Zenei Playlist Ajánló",
-                height=80,
-                key="sl_bonuses"
-            )
-            sl_guarantee = st.text_input(
-                "Kockázatmentes Garancia:",
-                value="30 napos 100% Kockázatmentes Megelégedettségi Garancia (kérdés nélküli teljes pénzvisszafizetés)",
-                key="sl_guarantee"
-            )
-            sl_lang = st.selectbox(
-                "Levél Nyelve:",
-                ["Magyar", "Angol (English US)"],
-                index=0,
-                key="sl_lang"
-            )
+            reels_lang = st.selectbox("Nyelv:", ["Magyar", "Angol (English)"], index=0, key="reels_lang_input")
 
-            with st.expander("📄 Sales Letter Master Prompt sablon megtekintése", expanded=False):
-                p_sl = build_ffc_sales_letter_prompt(
-                    product_name=sl_prod_name,
-                    target_audience=sl_target_aud,
-                    main_transformation=sl_main_trans,
-                    pain_points=sl_pain_points,
-                    vehicle=sl_vehicle,
-                    bonuses=sl_bonuses,
-                    guarantee_type=sl_guarantee,
-                    language=sl_lang,
-                    niche_name=curr_niche_key
-                )
-                st.code(p_sl, language="text")
+            btn_gen_reels = st.button("🎬 10 db Virális Reels & B-roll Prompt Generálása (AI)", key="btn_gen_reels_batch", use_container_width=True)
 
-            btn_gen_sales_letter = st.button("📜 Teljes Értékesítési Levél Generálása (AI)", key="btn_gen_sales_letter", use_container_width=True)
+        with col_r_out:
+            st.markdown("<div class='step-label'>10 db Kész Reels Forgatókönyv & Képgenerátor</div>", unsafe_allow_html=True)
 
-        with col_f2_out:
-            st.markdown("<div class='step-label'>Kész Értékesítési Levél (Sales Letter)</div>", unsafe_allow_html=True)
-
-            if btn_gen_sales_letter:
-                if client:
-                    with st.spinner("AI írja a teljes 12-lépéses Russell Brunson értékesítési levelet..."):
-                        p_sl = build_ffc_sales_letter_prompt(
-                            product_name=sl_prod_name,
-                            target_audience=sl_target_aud,
-                            main_transformation=sl_main_trans,
-                            pain_points=sl_pain_points,
-                            vehicle=sl_vehicle,
-                            bonuses=sl_bonuses,
-                            guarantee_type=sl_guarantee,
-                            language=sl_lang,
-                            niche_name=curr_niche_key
+            if btn_gen_reels:
+                with st.spinner("AI generálja a 10 db virális Reels forgatókönyvet, ManyChat CTA-kat és 9:16 FLUX.1 képpromptokat..."):
+                    if FFC_MODULES_AVAILABLE:
+                        reels_data = generate_faceless_reels_batch(
+                            topic=reels_prod,
+                            cta_keyword=reels_cta_kw,
+                            target_audience=reels_target,
+                            count=10,
+                            language=reels_lang
                         )
-                        res_sl = generate_marketing_copy_live(
-                            client=client,
-                            prompt=p_sl,
-                            model_name=text_model,
-                            temp=temperature,
-                            system_instruction="Te a világ egyik legkiválóbb közvetlen eladási szövegírója (Direct Response Sales Copywriter) vagy. Írj részletes, magával ragadó, lebilincselő, transzformáló értékesítési levelet."
-                        )
-                        st.session_state["ffc_sl_res"] = res_sl
-                        st.session_state["ffc_sl_prod"] = sl_prod_name
-                else:
-                    st.warning("⚠️ Nincs aktív AI szolgáltató konfigurálva a Rendszerbeállításokban.")
+                    else:
+                        reels_data = []
+                    st.session_state["active_reels_batch"] = reels_data
+                    st.session_state["active_reels_prod"] = reels_prod
 
-            if st.session_state.get("ffc_sl_res"):
-                res_sl_content = st.session_state["ffc_sl_res"]
-                p_sl_name = st.session_state.get("ffc_sl_prod", sl_prod_name)
+            if st.session_state.get("active_reels_batch"):
+                r_batch = st.session_state["active_reels_batch"]
+                p_r_name = st.session_state.get("active_reels_prod", reels_prod)
 
-                with st.container():
-                    st.markdown(f"<div class='prompt-output'>{res_sl_content}</div>", unsafe_allow_html=True)
+                st.success(f"✅ **10 db Reels Sikeresen Legenerálva!** (ManyChat Kulcsszó: `{reels_cta_kw}`)")
 
-                st.text_area(
-                    "📋 Másold innen a vágólapra (Ctrl+A → Ctrl+C):",
-                    value=res_sl_content,
-                    height=240,
-                    key="ffc_sl_copy_area"
-                )
+                for item in r_batch:
+                    r_id = item.get("id", 1)
+                    r_title = item.get("title", f"Reels #{r_id}")
+                    r_hook = item.get("hook_text", "")
+                    r_body = item.get("body_text", "")
+                    r_cta = item.get("cta_text", "")
+                    r_caption = item.get("caption_text", "")
+                    r_img_prompt = item.get("image_prompt", "")
 
-                col_dl_sl1, col_dl_sl2 = st.columns(2)
-                with col_dl_sl1:
+                    with st.expander(f"🎬 #{r_id} · {r_hook[:45]}...", expanded=(r_id == 1)):
+                        st.markdown(f"""
+                        <div style='background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-bottom: 8px;'>
+                            <div style='color: #f87171; font-weight: 700;'>🎣 0:00-0:03 Horog (Hook): <span style='color:#f8fafc;'>"{r_hook}"</span></div>
+                            <div style='color: #60a5fa; font-weight: 600; margin-top: 6px;'>💡 0:03-0:07 Megoldás: <span style='color:#cbd5e1;'>{r_body}</span></div>
+                            <div style='color: #34d399; font-weight: 700; margin-top: 6px;'>📲 ManyChat CTA: <span style='color:#a7f3d0;'>"{r_cta}"</span></div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        st.markdown("**📝 Instagram Posztszöveg & Hashtagek:**")
+                        st.code(r_caption, language="text")
+
+                        st.markdown("**🎨 9:16 FLUX.1 Képprompt (B-roll Háttér):**")
+                        st.code(r_img_prompt, language="text")
+
+                        col_gen_img1, col_gen_img2 = st.columns([1.2, 1])
+                        with col_gen_img1:
+                            btn_img_single = st.button(f"🎨 B-roll Kép Generálása (#{r_id})", key=f"btn_gen_img_r_{r_id}", use_container_width=True)
+                        with col_gen_img2:
+                            pass
+
+                        if btn_img_single:
+                            with st.spinner(f"FLUX.1 9:16 vertikális kép generálása (#{r_id})..."):
+                                if FFC_MODULES_AVAILABLE:
+                                    ok_img, img_bytes, img_msg = generate_reels_broll_image(r_img_prompt)
+                                    if ok_img and img_bytes:
+                                        st.session_state[f"reels_img_{r_id}"] = img_bytes
+                                        st.success("✅ Kép sikeresen elkészült!")
+                                    else:
+                                        st.error(f"Hiba a képgeneráláskor: {img_msg}")
+
+                        if st.session_state.get(f"reels_img_{r_id}"):
+                            st.image(st.session_state[f"reels_img_{r_id}"], caption=f"Reels #{r_id} 9:16 FLUX.1 B-roll", use_container_width=True)
+                            st.download_button(
+                                label=f"📥 Kép Letöltése (Reels_{r_id}.png)",
+                                data=st.session_state[f"reels_img_{r_id}"],
+                                file_name=f"Reels_{sanitize_filename(p_r_name)}_{r_id}.png",
+                                mime="image/png",
+                                key=f"dl_r_img_{r_id}",
+                                use_container_width=True
+                            )
+
+                st.markdown("---")
+                all_reels_text = "\n\n" + "="*50 + "\n\n".join([
+                    f"=== REELS #{it.get('id', 1)} ===\nHOOK: {it.get('hook_text','')}\nBODY: {it.get('body_text','')}\nCTA: {it.get('cta_text','')}\n\nCAPTION:\n{it.get('caption_text','')}\n\nB-ROLL PROMPT (FLUX.1 9:16):\n{it.get('image_prompt','')}"
+                    for it in r_batch
+                ])
+
+                col_dl_r1, col_dl_r2 = st.columns(2)
+                with col_dl_r1:
                     st.download_button(
-                        label="⬇️ Letöltés (.txt)",
-                        data=res_sl_content.encode("utf-8"),
-                        file_name=f"Marketing_{sanitize_filename(p_sl_name)}_Sales_Letter.txt",
+                        label="⬇️ Mind a 10 db Reels Szöveg Letöltése (.txt)",
+                        data=all_reels_text.encode("utf-8"),
+                        file_name=f"Marketing_{sanitize_filename(p_r_name)}_10_Reels_Batch.txt",
                         mime="text/plain",
-                        key="dl_ffc_sl_txt",
+                        key="dl_reels_batch_txt",
                         use_container_width=True
                     )
-                with col_dl_sl2:
-                    if DOCX_AVAILABLE:
-                        docx_sl_bio = create_marketing_docx(p_sl_name, res_sl_content, header_info=f"Értékesítési Levél (Sales Letter) - {p_sl_name}")
-                        st.download_button(
-                            label="⬇️ Letöltés (.docx)",
-                            data=docx_sl_bio.getvalue(),
-                            file_name=f"Marketing_{sanitize_filename(p_sl_name)}_Sales_Letter.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            key="dl_ffc_sl_docx",
-                            use_container_width=True
+                with col_dl_r2:
+                    if st.button("💾 Összes Reels Mentése Drive-ra", key="btn_save_all_reels_drive", use_container_width=True):
+                        ok_s, details, _ = save_marketing_file_to_drive(
+                            product_name=p_r_name,
+                            text_content=all_reels_text,
+                            header_info=f"10 db Arc Nélküli Reels Forgatókönyv - {p_r_name}",
+                            content_type_tag="10_Reels_Batch"
                         )
-
-                st.markdown("---")
-                if st.button("💾 Mentés a 06_📌_MARKETING_ES_SEO mappába", key="btn_save_ffc_sl_drive", use_container_width=True):
-                    ok_s, details, _ = save_marketing_file_to_drive(
-                        product_name=p_sl_name,
-                        text_content=res_sl_content,
-                        header_info=f"Értékesítési Levél (Sales Letter) - {p_sl_name}",
-                        content_type_tag="Sales_Letter"
-                    )
-                    if ok_s:
-                        st.success(f"💾 **Sikeres mentés Google Drive-ra!**\n\n`{details}`")
-                    else:
-                        st.error(f"Hiba a mentéskor: {details}")
-
-                # ── 1-KATTINTÁSOS GUMROAD PUBLIKÁLÓ MODUL ──
-                st.markdown("---")
-                st.markdown("##### 🚀 1-Kattintásos Publikálás Gumroadra (API)")
-                col_gum_sl1, col_gum_sl2 = st.columns([1, 1.2])
-                with col_gum_sl1:
-                    gum_sl_price = st.number_input("Termék Ára a Gumroadon ($ USD):", min_value=0.0, max_value=999.0, value=14.99, step=1.0, key="gum_sl_price")
-                    gum_sl_drive = st.text_input("Google Drive Letöltési Link a vevőnek:", value="https://drive.google.com/drive/folders/EXAMPLE", key="gum_sl_drive")
-                with col_gum_sl2:
-                    st.caption("A gombra kattintva a rendszer azonnal létrehozza a terméket a Gumroad fiókodban a fenti értékesítési levéllel és beállított áron!")
-                    if st.button("🚀 1-Kattintásos Publikálás Gumroadra", key="btn_publish_sl_gumroad", use_container_width=True):
-                        with st.spinner("Termék feltöltése a Gumroad fiókodba..."):
-                            ok_g, g_url, raw_g = publish_to_gumroad(
-                                product_name=p_sl_name,
-                                price_usd=gum_sl_price,
-                                description=res_sl_content,
-                                drive_delivery_url=gum_sl_drive
-                            )
-                            if ok_g:
-                                st.balloons()
-                                st.session_state["last_sl_gumroad_url"] = g_url
-                                st.success(f"🎉 **Sikeres Gumroad Publikáció!**\n\n🔗 **Élő Termék URL:** [{g_url}]({g_url})")
-                            else:
-                                st.error(f"❌ {g_url}")
-
-                if st.session_state.get("last_sl_gumroad_url"):
-                    st.markdown(
-                        f"""
-                        <div style='background: linear-gradient(135deg, rgba(244,63,94,0.15), rgba(251,113,133,0.10)); border: 1px solid #f43f5e; border-radius: 8px; padding: 8px 12px; margin-top: 5px;'>
-                            🔗 <b>Gumroad Élő Termék Link:</b> <a href='{st.session_state["last_sl_gumroad_url"]}' target='_blank' style='color:#fda4af; font-weight:bold;'>{st.session_state["last_sl_gumroad_url"]}</a>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                        if ok_s:
+                            st.success(f"💾 **Sikeres mentés!**\n\n`{details}`")
             else:
                 st.markdown("""
                 <div style='text-align:center; padding: 50px 20px; border: 2px dashed #333f56; border-radius: 16px; background: #1e2536; color: #94a3b8;'>
-                    <div style='font-size: 2.8rem;'>📜</div>
-                    <div style='margin-top: 12px; font-size: 0.95rem; font-weight: 600; color:#e2e8f0;'>Add meg az adatokat a bal oldalon, majd<br>kattints a <strong style="color:#34d399;">📜 Teljes Értékesítési Levél Generálása</strong> gombra</div>
+                    <div style='font-size: 2.8rem;'>🎬</div>
+                    <div style='margin-top: 12px; font-size: 0.95rem; font-weight: 600; color:#e2e8f0;'>Add meg a témát és a ManyChat kulcsszót a bal oldalon, majd<br>kattints a <strong style="color:#34d399;">🎬 10 db Virális Reels Generálása</strong> gombra</div>
                 </div>
                 """, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────
-    # AL-FÜL 3: GOOGLE SITES 0 FT-OS LANDING PAGE GENERÁLÓ
+    # AL-FÜL 3: GOOGLE APPS SCRIPT & STRIPE 0 FT-OS AUTOMATIZÁCIÓ
     # ─────────────────────────────────────────────────────
     with tab_ffc3:
+        st.markdown("#### ⚡ Google Apps Script & Stripe 0 Ft-os Értékesítési Automatizáció")
+        st.caption("0 Ft-os, szervermentes digitális értékesítési tölcsér: Stripe fizetés ➔ Google Sheets rendelésnaplózás ➔ Azonnali digitális kézbesítő levél a Gmail fiókodból a privát Google Drive linkkel.")
+
+        col_g_in, col_g_out = st.columns([1, 1.2], gap="large")
+
+        with col_g_in:
+            st.markdown("<div class='step-label'>Automatizáció Paraméterek</div>", unsafe_allow_html=True)
+            wh_prod_name = st.text_input(
+                "Értékesített Termék Neve (ami az e-mailben megjelenik):",
+                value="30 Napos Békesség & Fókusz Vezetett Keresztény Csomag",
+                key="wh_prod_name_input"
+            )
+            wh_drive_link = st.text_input(
+                "Privát Google Drive Mappa Linkje (ezt kapja meg a vásárló a Gmailből):",
+                value=st.session_state.get("last_uploaded_drive_link", "https://drive.google.com/drive/folders/00_VALLALKOZAS_AUDHD_DIGITALIS_BIRODALOM"),
+                key="wh_drive_link_input",
+                help="A vásárló ezt a titkos linket kapja meg közvetlenül a sikeres Stripe fizetés után a saját Gmail fiókodból."
+            )
+            wh_sheet_name = st.text_input("Google Sheets Munkalap Neve:", value="Rendelések", key="wh_sheet_name_input")
+            wh_stripe_url = st.text_input("Stripe Fizetési Link (Buy Button linkje):", value="https://buy.stripe.com/pelda_fizetes", key="wh_stripe_url_input")
+
+        with col_g_out:
+            st.markdown("<div class='step-label'>Kész Google Apps Script Kód & Beállítás</div>", unsafe_allow_html=True)
+
+            if FFC_MODULES_AVAILABLE:
+                apps_script_code = get_apps_script_webhook_template(
+                    drive_folder_url=wh_drive_link,
+                    sheet_name=wh_sheet_name,
+                    product_name=wh_prod_name
+                )
+                setup_guide = get_stripe_setup_guide()
+                embed_btn_html = get_google_sites_embed_button(checkout_url=wh_stripe_url)
+            else:
+                apps_script_code = "// Google Hub modul nem érhető el"
+                setup_guide = ""
+                embed_btn_html = ""
+
+            st.markdown("##### 📋 1. Másold be ezt a kódot a Google Sheets Apps Script felületére:")
+            st.code(apps_script_code, language="javascript")
+
+            with st.expander("🛠️ 2. Lépésről-lépésre Beállítási Útmutató (Google Sheets & Stripe)", expanded=True):
+                st.markdown(setup_guide)
+
+            with st.expander("🌐 3. Google Sites Beágyazható Vásárlás Gomb (HTML Kód)", expanded=False):
+                st.caption("Másold ki ezt a HTML kódot, és a Google Sites felületén válaszd a **Beágyazás (Embed) ➔ Kód beágyazása** lehetőséget!")
+                st.code(embed_btn_html, language="html")
+
+    # ─────────────────────────────────────────────────────
+    # AL-FÜL 4: GOOGLE SITES 0 FT-OS LANDING PAGE GENERÁLÓ
+    # ─────────────────────────────────────────────────────
+    with tab_ffc4:
         st.markdown("#### 🌐 Google Sites 0 Ft-os Landing Page & Értékesítési Szöveg Generáló")
         st.caption("Előállítja a 100%-ban ingyenes Google Sites (sites.google.com) keretrendszerhez szükséges teljes, blokkokra bontott struktúrát és szövegeket (Hero, Ingyenes Csalitermék, Kiemelt Termékkártyák, CTA gombok, és Színtéma Útmutató).")
 
@@ -5874,7 +5957,7 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
             with col_l2:
                 gs_etsy = st.text_input("Etsy Shop:", value="https://etsy.com/listing/EXAMPLE", key="gs_etsy")
             with col_l3:
-                gs_gumroad = st.text_input("Gumroad:", value="https://gumroad.com/l/EXAMPLE", key="gs_gumroad")
+                gs_gumroad = st.text_input("Gumroad / Stripe:", value="https://gumroad.com/l/EXAMPLE", key="gs_gumroad")
 
             btn_gen_gsites = st.button("🌐 Google Sites Landing Page Szöveg Generálása", key="btn_gen_gsites", use_container_width=True)
 
@@ -5898,13 +5981,9 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                         language=gs_lang.lower(),
                         niche_name=curr_niche_key
                     )
-                    
-                    if client:
-                        res_gs = generate_marketing_copy_live(client, p_gs, text_model, temp=temperature)
-                    else:
-                        ok_call, res_gs = km.generate_text_with_fallback(prompt=p_gs, model_name=text_model)
-                        if not ok_call:
-                            res_gs = f"Hiba: {res_gs}"
+                    ok_call, res_gs = km.generate_text_with_fallback(prompt=p_gs, model_name=text_model)
+                    if not ok_call:
+                        res_gs = f"Hiba: {res_gs}"
 
                     st.session_state["gsites_landing_page_res"] = res_gs
                     st.session_state["gsites_prod_name"] = gs_prod_name
@@ -5919,7 +5998,7 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                     1. Nyisd meg a <a href="https://sites.google.com" target="_blank" style="color:#34d399; font-weight:700;">sites.google.com</a> oldalt a Google fiókoddal.<br>
                     2. Kattints az <strong>Üres sablon (+)</strong> gombra az új oldal indításához.<br>
                     3. Másold be az alábbi blokkokat (Hero banner, 2-oszlopos Ingyenes Minta, 3-oszlopos Termékkártyák).<br>
-                    4. Illeszd be az Amazon, Etsy és Gumroad gombokat és publikáld 100%-ban ingyen saját vagy egyedi domain alatt!
+                    4. Illeszd be az Amazon, Etsy és Gumroad/Stripe gombokat és publikáld 100%-ban ingyen saját vagy egyedi domain alatt!
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -5976,9 +6055,9 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                 """, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────
-    # AL-FÜL 4: AUTOMATA E-MAIL TÖLCSÉR (3-DAY & 30-DAY FUNNEL)
+    # AL-FÜL 5: AUTOMATA E-MAIL TÖLCSÉR (3-DAY & 30-DAY FUNNEL)
     # ─────────────────────────────────────────────────────
-    with tab_ffc4:
+    with tab_ffc5:
         st.markdown("#### 📧 Automata E-mail Tölcsér Stúdió (3 Napos Indítás & 30 Napos Életút Csomag)")
         st.caption("Azonnal alkalmazható szekvenciák a '30 Email Marketing Bundle' alapján: Üdvözlés, Értékadás, Ajánlat, Bizonyítékok és Zárás.")
 
@@ -6040,29 +6119,6 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                 key="em_lang"
             )
 
-            with st.expander("📄 Email Funnel Master Prompt sablon megtekintése", expanded=False):
-                if is_30day_mode:
-                    p_em = build_email_funnel_30day_prompt(
-                        product_name=em_paid_prod,
-                        target_audience=em_target_aud,
-                        core_offer=em_core_offer_desc,
-                        lead_magnet=em_lead_magnet,
-                        discount_info=em_discount,
-                        language=em_lang,
-                        niche_name=curr_niche_key
-                    )
-                else:
-                    p_em = build_email_funnel_3day_prompt(
-                        lead_magnet_name=em_lead_magnet,
-                        paid_product_name=em_paid_prod,
-                        target_audience=em_target_aud,
-                        discount_offer=em_discount,
-                        main_story=em_story,
-                        language=em_lang,
-                        niche_name=curr_niche_key
-                    )
-                st.code(p_em, language="text")
-
             btn_gen_email_funnel = st.button(
                 f"📧 {'30 Napos E-mail Csomag' if is_30day_mode else '3 Napos E-mail Szekvencia'} Generálása (AI)",
                 key="btn_gen_email_funnel",
@@ -6073,41 +6129,35 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
             st.markdown(f"<div class='step-label'>Generált {'30 Napos' if is_30day_mode else '3 Napos'} E-mail Sorozat</div>", unsafe_allow_html=True)
 
             if btn_gen_email_funnel:
-                if client:
-                    with st.spinner(f"AI írja a {'30 napos teljes életút e-mail rendszert' if is_30day_mode else '3 napos automata tölcsért'}..."):
-                        if is_30day_mode:
-                            p_em_call = build_email_funnel_30day_prompt(
-                                product_name=em_paid_prod,
-                                target_audience=em_target_aud,
-                                core_offer=em_core_offer_desc,
-                                lead_magnet=em_lead_magnet,
-                                discount_info=em_discount,
-                                language=em_lang,
-                                niche_name=curr_niche_key
-                            )
-                        else:
-                            p_em_call = build_email_funnel_3day_prompt(
-                                lead_magnet_name=em_lead_magnet,
-                                paid_product_name=em_paid_prod,
-                                target_audience=em_target_aud,
-                                discount_offer=em_discount,
-                                main_story=em_story,
-                                language=em_lang,
-                                niche_name=curr_niche_key
-                            )
-
-                        res_em = generate_marketing_copy_live(
-                            client=client,
-                            prompt=p_em_call,
-                            model_name=text_model,
-                            temp=temperature,
-                            system_instruction="Te egy mester e-mail marketing specialista vagy, aki meleg, hiteles, emberi és nagy konverziójú e-mail szekvenciákat ír digitális alkotóknak a 30 Email Marketing Bundle mintájára."
+                with st.spinner(f"AI írja a {'30 napos teljes életút e-mail rendszert' if is_30day_mode else '3 napos automata tölcsért'}..."):
+                    if is_30day_mode:
+                        p_em_call = build_email_funnel_30day_prompt(
+                            product_name=em_paid_prod,
+                            target_audience=em_target_aud,
+                            core_offer=em_core_offer_desc,
+                            lead_magnet=em_lead_magnet,
+                            discount_info=em_discount,
+                            language=em_lang,
+                            niche_name=curr_niche_key
                         )
-                        st.session_state["ffc_em_res"] = res_em
-                        st.session_state["ffc_em_prod"] = em_paid_prod
-                        st.session_state["ffc_em_is_30day"] = is_30day_mode
-                else:
-                    st.warning("⚠️ Nincs aktív AI szolgáltató konfigurálva a Rendszerbeállításokban.")
+                    else:
+                        p_em_call = build_email_funnel_3day_prompt(
+                            lead_magnet_name=em_lead_magnet,
+                            paid_product_name=em_paid_prod,
+                            target_audience=em_target_aud,
+                            discount_offer=em_discount,
+                            main_story=em_story,
+                            language=em_lang,
+                            niche_name=curr_niche_key
+                        )
+
+                    ok_em, res_em = km.generate_text_with_fallback(
+                        prompt=p_em_call,
+                        system_instruction="Te egy mester e-mail marketing specialista vagy, aki meleg, hiteles, emberi és nagy konverziójú e-mail szekvenciákat ír digitális alkotóknak a 30 Email Marketing Bundle mintájára."
+                    )
+                    st.session_state["ffc_em_res"] = res_em
+                    st.session_state["ffc_em_prod"] = em_paid_prod
+                    st.session_state["ffc_em_is_30day"] = is_30day_mode
 
             if st.session_state.get("ffc_em_res"):
                 res_em_content = st.session_state["ffc_em_res"]
@@ -6167,9 +6217,9 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                 """, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────
-    # AL-FÜL 5: 30 NAPOS MARKETING & SOCIAL SEO NAPTÁR
+    # AL-FÜL 6: 30 NAPOS MARKETING & SOCIAL SEO NAPTÁR
     # ─────────────────────────────────────────────────────
-    with tab_ffc5:
+    with tab_ffc6:
         st.markdown("#### 📅 30 Napos Marketing, Pinterest SEO & Social Media Naptár")
         st.caption("Komplett 30 napos organikus forgalomgeneráló stratégia: Pinterest SEO kulcsszavak, Instagram/TikTok horgok és Blog témák.")
 
@@ -6206,44 +6256,27 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                 key="cal_lang"
             )
 
-            with st.expander("📄 Social SEO Calendar Master Prompt sablon megtekintése", expanded=False):
-                p_cal = build_social_seo_calendar_30day_prompt(
-                    product_name=cal_prod_name,
-                    target_audience=cal_target_aud,
-                    main_topics=cal_topics,
-                    platforms=", ".join(cal_platforms),
-                    language=cal_lang,
-                    niche_name=curr_niche_key
-                )
-                st.code(p_cal, language="text")
-
             btn_gen_social_cal = st.button("🚀 30 Napos Social SEO Naptár Generálása (AI)", key="btn_gen_social_cal", use_container_width=True)
 
         with col_f5_out:
             st.markdown("<div class='step-label'>Generált 30 Napos Tartalomterv</div>", unsafe_allow_html=True)
 
             if btn_gen_social_cal:
-                if client:
-                    with st.spinner("AI tervezi a 30 napos Pinterest SEO és Social Media naptárat..."):
-                        p_cal_call = build_social_seo_calendar_30day_prompt(
-                            product_name=cal_prod_name,
-                            target_audience=cal_target_aud,
-                            main_topics=cal_topics,
-                            platforms=", ".join(cal_platforms),
-                            language=cal_lang,
-                            niche_name=curr_niche_key
-                        )
-                        res_cal = generate_marketing_copy_live(
-                            client=client,
-                            prompt=p_cal_call,
-                            model_name=text_model,
-                            temp=temperature,
-                            system_instruction="Te egy mester Social Media Marketing és Pinterest SEO szakértő vagy. Adj strukturált, átlátható és azonnal posztolható 30 napos tartalmi naptárat."
-                        )
-                        st.session_state["ffc_cal_res"] = res_cal
-                        st.session_state["ffc_cal_prod"] = cal_prod_name
-                else:
-                    st.warning("⚠️ Nincs aktív AI szolgáltató konfigurálva a Rendszerbeállításokban.")
+                with st.spinner("AI tervezi a 30 napos Pinterest SEO és Social Media naptárat..."):
+                    p_cal_call = build_social_seo_calendar_30day_prompt(
+                        product_name=cal_prod_name,
+                        target_audience=cal_target_aud,
+                        main_topics=cal_topics,
+                        platforms=", ".join(cal_platforms),
+                        language=cal_lang,
+                        niche_name=curr_niche_key
+                    )
+                    ok_cal, res_cal = km.generate_text_with_fallback(
+                        prompt=p_cal_call,
+                        system_instruction="Te egy mester Social Media Marketing és Pinterest SEO szakértő vagy. Adj strukturált, átlátható és azonnal posztolható 30 napos tartalmi naptárat."
+                    )
+                    st.session_state["ffc_cal_res"] = res_cal
+                    st.session_state["ffc_cal_prod"] = cal_prod_name
 
             if st.session_state.get("ffc_cal_res"):
                 res_cal_content = st.session_state["ffc_cal_res"]
@@ -6300,6 +6333,7 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                     <div style='margin-top: 12px; font-size: 0.95rem; font-weight: 600; color:#e2e8f0;'>Add meg a témákat a bal oldalon, majd<br>kattints a <strong style="color:#34d399;">🚀 30 Napos Naptár Generálása</strong> gombra</div>
                 </div>
                 """, unsafe_allow_html=True)
+
 
 
 # ══════════════════════════════════════════════════════════
