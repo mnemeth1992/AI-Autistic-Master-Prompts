@@ -34,21 +34,37 @@ def load_reels_hooks_data() -> Dict[str, Any]:
     return {}
 
 
-def generate_offline_reels_batch(topic: str, cta_keyword: str, count: int = 10) -> List[Dict[str, Any]]:
-    """Generates 10 pre-engineered, high-converting Christian Reels scripts when offline."""
+def generate_offline_reels_batch(topic: str, cta_keyword: str, count: int = 10, language: str = "Magyar") -> List[Dict[str, Any]]:
+    """Generates 10 pre-engineered, high-converting Christian Reels scripts when offline, strictly matching the requested language."""
+    is_en = "angol" in language.lower() or "english" in language.lower()
     hooks_data = load_reels_hooks_data()
-    sample_hooks = hooks_data.get("christian_viral_hooks", [
-        "Ha ma reggel aggódva ébredtél, ezt az 1 bibliai mondatot hallanod kell...",
-        "A legnagyobb hiba, amit keresztényként a stresszes napokon elkövetünk...",
-        "3 rejtett bibliai ígéret, ami azonnal elcsendesíti a zakatoló elmédet...",
-        "Miért nem működtek az eddigi reggeli csendességeid? (És mi a valódi megoldás)",
-        "Hogyan találd meg a belső békességet napi 10 percben, még ha tele is van a fejed tennivalókkal...",
-        "Ezt az 1 igehelyet olvasd el, amikor úgy érzed, minden összeomlik körülötted...",
-        "Ne kezdd el a napodat anélkül, hogy ezt az egyszerű hálaadó imát elmondanád...",
-        "A titok, amitől a napi bibliaolvasás teher helyett a napod legbékésebb perceivé válik...",
-        "Ha úgy érzed, Isten most csendben van: nézd meg ezt a 3 jelet...",
-        "3 dolog, amit azonnal engedj el ma este a békés alvásért..."
-    ])
+
+    if is_en:
+        sample_hooks = [
+            "If you woke up feeling anxious or overwhelmed today, you need to hear this 1 verse...",
+            "The #1 mistake Christians make during stressful, chaotic mornings...",
+            "3 hidden biblical promises that immediately quiet a racing, overstimulated mind...",
+            "Why generic morning routines didn't work for you (And the real solution)...",
+            "How to experience profound spiritual peace in just 10 minutes, even with a busy schedule...",
+            "Read this 1 powerful scripture passage when you feel everything is falling apart...",
+            "Don't start your morning without saying this simple 10-second prayer of gratitude...",
+            "The secret to making daily scripture reading the most peaceful part of your entire day...",
+            "If you feel like God is silent right now, look for these 3 subtle signs...",
+            "3 heavy thoughts you should surrender tonight for deep, peaceful sleep..."
+        ]
+    else:
+        sample_hooks = hooks_data.get("christian_viral_hooks", [
+            "Ha ma reggel aggódva ébredtél, ezt az 1 bibliai mondatot hallanod kell...",
+            "A legnagyobb hiba, amit keresztényként a stresszes napokon elkövetünk...",
+            "3 rejtett bibliai ígéret, ami azonnal elcsendesíti a zakatoló elmédet...",
+            "Miért nem működtek az eddigi reggeli csendességeid? (És mi a valódi megoldás)",
+            "Hogyan találd meg a belső békességet napi 10 percben, még ha tele is van a fejed tennivalókkal...",
+            "Ezt az 1 igehelyet olvasd el, amikor úgy érzed, minden összeomlik körülötted...",
+            "Ne kezdd el a napodat anélkül, hogy ezt az egyszerű hálaadó imát elmondanád...",
+            "A titok, amitől a napi bibliaolvasás teher helyett a napod legbékésebb perceivé válik...",
+            "Ha úgy érzed, Isten most csendben van: nézd meg ezt a 3 jelet...",
+            "3 dolog, amit azonnal engedj el ma este a békés alvásért..."
+        ])
     
     broll_templates = hooks_data.get("broll_image_prompt_templates", [
         "Aesthetic 9:16 vertical cinematography, peaceful morning sunlight streaming through a window onto an open rustic Bible on a wooden table, warm gentle coffee steam, delicate white flowers, soft bokeh, cozy and serene atmosphere, hyper-realistic 8k --ar 9:16",
@@ -62,13 +78,32 @@ def generate_offline_reels_batch(topic: str, cta_keyword: str, count: int = 10) 
     for i in range(count):
         hook = sample_hooks[i % len(sample_hooks)]
         broll = broll_templates[i % len(broll_templates)]
-        results.append({
-            "id": i + 1,
-            "title": f"Reels #{i+1} · {topic[:25]}",
-            "hook_text": hook,
-            "body_text": f"Nem a körülményeiden kell változtatnod, hanem az első 10 perced fókuszán. A(z) {topic} pontosan ebben ad napi vezetett struktúrát.",
-            "cta_text": f"Kommenteld a(z) '{cta_keyword}' szót ide alulra, és azonnal elküldöm a privát letöltési linket DM-ben!",
-            "caption_text": f"""🌿 {hook}
+        if is_en:
+            results.append({
+                "id": i + 1,
+                "title": f"Reels #{i+1} · {topic[:25]}",
+                "hook_text": hook,
+                "body_text": f"You don't need to fix your entire life all at once—just anchor your first 10 minutes. {topic} provides the exact daily roadmap.",
+                "cta_text": f"Comment '{cta_keyword}' below, and I'll send you the direct download link in DM!",
+                "caption_text": f"""🌿 {hook}
+
+Most people believe finding inner peace requires hours of isolated meditation. In reality, just 10 focused, gratitude-filled minutes changes everything.
+
+✨ We created a 30-day guided digital framework ({topic}) to help you release daily anxiety effortlessly.
+
+👉 Comment "{cta_keyword}" below, and I'll DM you instant access right away!
+
+#christian #faith #peace #prayer #dailydevotional #mindfulness #journaling #biblestudy #growth""",
+                "image_prompt": broll
+            })
+        else:
+            results.append({
+                "id": i + 1,
+                "title": f"Reels #{i+1} · {topic[:25]}",
+                "hook_text": hook,
+                "body_text": f"Nem a körülményeiden kell változtatnod, hanem az első 10 perced fókuszán. A(z) {topic} pontosan ebben ad napi vezetett struktúrát.",
+                "cta_text": f"Kommenteld a(z) '{cta_keyword}' szót ide alulra, és azonnal elküldöm a privát letöltési linket DM-ben!",
+                "caption_text": f"""🌿 {hook}
 
 Sokan azt hiszik, hogy a belső békességhez órákig tartó meditáció vagy tökéletes élethelyzet kell. A valóság az, hogy napi 10 fókuszált, hálával teli perc mindent megváltoztat.
 
@@ -77,21 +112,56 @@ Sokan azt hiszik, hogy a belső békességhez órákig tartó meditáció vagy t
 👉 Kommenteld a(z) "{cta_keyword}" szót kommentben, és privát üzenetben küldöm az azonnali hozzáférést!
 
 #kereszteny #bekesseg #hit #ima #napiige #csendesseg #lelkielet #audhd #fokusz #digitalistermek""",
-            "image_prompt": broll
-        })
+                "image_prompt": broll
+            })
     return results
 
 
 def build_reels_prompt(topic: str, cta_keyword: str, target_audience: str = "", count: int = 10, language: str = "Magyar") -> str:
-    """Creates an AI prompt for generating 10 viral 5-7s Reels scripts with FLUX.1 prompts."""
-    aud_text = f"Célközönség: {target_audience}\n" if target_audience else ""
-    return f"""
+    """Creates an AI prompt for generating 10 viral 5-7s Reels scripts with FLUX.1 prompts with strict language separation."""
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    
+    if is_en:
+        aud_text = f"Target Audience: {target_audience}\n" if target_audience else ""
+        return f"""
+You are a viral Social Media & Faceless Reels marketing expert specialized in ManyChat Instagram/TikTok automations.
+Create {count} viral, faceless, 5-7 second Instagram/TikTok Reels scripts in 100% PURE, NATURAL ENGLISH for the following digital product:
+
+- Product / Core Topic: {topic}
+{aud_text}- ManyChat CTA Keyword: "{cta_keyword}"
+- Language: English (US)
+
+CRITICAL LANGUAGE REQUIREMENT:
+- All titles, hooks, body text, CTAs, and captions MUST be 100% in English!
+- DO NOT mix any foreign words or translations into the JSON output.
+
+Provide the scripts STRICTLY as a valid JSON array matching this structure:
+[
+  {{
+    "id": 1,
+    "title": "Short catchy topic title",
+    "hook_text": "3-second curiosity-inducing / pattern-interrupt on-screen hook",
+    "body_text": "1-sentence deep realization / spiritual insight",
+    "cta_text": "Comment '{cta_keyword}' to get the private download link...",
+    "caption_text": "Complete Instagram caption with line breaks, value delivery, and relevant viral hashtags",
+    "image_prompt": "Cinematic 9:16 vertical photorealistic prompt for peaceful aesthetic B-roll background on FLUX.1 --ar 9:16"
+  }}
+]
+Return ONLY the raw JSON array without any extra conversational filler!
+"""
+    else:
+        aud_text = f"Célközönség: {target_audience}\n" if target_audience else ""
+        return f"""
 Te egy virális közösségi média és Faceless Reels marketing szakértő vagy (ManyChat automatizációval).
-Készíts {count} darab virális, arc nélküli (faceless), 5-7 másodperces Instagram/TikTok Reels forgatókönyvet a következő digitális keresztény termékhez:
+Készíts {count} darab virális, arc nélküli (faceless), 5-7 másodperces Instagram/TikTok Reels forgatókönyvet 100%-BAN TISZTA MAGYAR NYELVEN a következő digitális termékhez:
 
 - Termék / Téma: {topic}
 {aud_text}- ManyChat CTA Kulcsszó: "{cta_keyword}"
-- Nyelv: {language}
+- Nyelv: Magyar
+
+SZIGORÚ NYELVI KÖVETELMÉNY:
+- Minden cím, felirat, szöveg és képaláírás kizárólag hibátlan, természetes magyar nyelven készüljön!
+- Tilos angol és magyar kifejezéseket keverni a szövegtörzsben!
 
 Minden egyes forgatókönyvnek a következő elemeket kell tartalmaznia SZIGORÚAN érvényes JSON listaként:
 [
@@ -99,12 +169,11 @@ Minden egyes forgatókönyvnek a következő elemeket kell tartalmaznia SZIGORÚ
     "id": 1,
     "title": "Rövid téma cím",
     "hook_text": "A videó első 3 másodpercének sokkoló / kíváncsiságkeltő felirata",
-    "body_text": "1 mondatos mély felismerés / bibliai megoldás",
+    "body_text": "1 mondatos mély felismerés / megoldás",
     "cta_text": "Kommenteld a(z) '{cta_keyword}' szót...",
-    "caption_text": "Teljes Instagram posztszöveg releváns keresztény hashtagekkel és CTA-val",
-    "image_prompt": "Cinematic 9:16 vertical photorealistic prompt for peaceful aesthetic Christian B-roll background on FLUX.1 --ar 9:16"
-  }},
-  ...
+    "caption_text": "Teljes Instagram posztszöveg releváns hashtagekkel és CTA-val",
+    "image_prompt": "Cinematic 9:16 vertical photorealistic prompt for peaceful aesthetic B-roll background on FLUX.1 --ar 9:16"
+  }}
 ]
 Csak a tiszta JSON listát add vissza!
 """
@@ -121,13 +190,19 @@ def generate_faceless_reels_batch(
     Main entry point for Reels batch generation.
     Uses multi-provider AI fallback (Groq -> OpenRouter -> Gemini -> Offline).
     """
+    is_en = "angol" in language.lower() or "english" in language.lower()
     prompt = build_reels_prompt(topic, cta_keyword, target_audience, count, language)
 
     if get_key_manager:
         km = get_key_manager()
+        sys_inst = (
+            "You are a professional Instagram Reels and ManyChat marketing strategist. Output strictly valid JSON list in 100% pure English."
+            if is_en else
+            "Te egy professzionális Instagram Reels és ManyChat marketing stratéga vagy. Válaszolj szigorúan érvényes JSON listaként 100%-ban tiszta magyar nyelven."
+        )
         ok, res = km.generate_text_with_fallback(
             prompt=prompt,
-            system_instruction="Te egy professzionális Instagram Reels és ManyChat marketing stratéga vagy. Válaszolj szigorúan érvényes JSON listaként."
+            system_instruction=sys_inst
         )
         if ok and res.strip():
             cleaned = res.strip()
@@ -152,7 +227,7 @@ def generate_faceless_reels_batch(
             except Exception:
                 pass
 
-    return generate_offline_reels_batch(topic, cta_keyword, count)
+    return generate_offline_reels_batch(topic, cta_keyword, count, language=language)
 
 
 def generate_reels_broll_image(prompt: str, seed: Optional[int] = None) -> Tuple[bool, Optional[bytes], str]:

@@ -6063,11 +6063,14 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                     with st.expander("💎 5 db 3-Tagú Termék Bullet Pont ('Mit kap' + 'Még akkor is ha' + 'Ami azt jelenti')", expanded=True):
                         for idx, b in enumerate(pack["three_part_bullets"], 1):
                             if isinstance(b, dict):
+                                f_val = b.get('mit_kap') or b.get('feature') or b.get('what_you_get') or b.get('component') or b.get('title') or ''
+                                e_val = b.get('meg_akkor_is_ha') or b.get('even_if') or b.get('objection') or ''
+                                m_val = b.get('ami_azt_jelenti') or b.get('which_means') or b.get('meaning') or b.get('outcome') or ''
                                 st.markdown(f"""
                                 <div style='background: #1e293b; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; border: 1px solid #334155;'>
-                                    <div style='color: #60a5fa; font-weight: 700;'>📦 #{idx}: {b.get('mit_kap', '')}</div>
-                                    <div style='color: #f87171; font-size: 0.92rem; margin-top: 3px;'>🛡️ <em>{b.get('meg_akkor_is_ha', '')}</em></div>
-                                    <div style='color: #34d399; font-size: 0.95rem; font-weight: 600; margin-top: 3px;'>✨ <strong>{b.get('ami_azt_jelenti', '')}</strong></div>
+                                    <div style='color: #60a5fa; font-weight: 700;'>📦 #{idx}: {f_val}</div>
+                                    <div style='color: #f87171; font-size: 0.92rem; margin-top: 3px;'>🛡️ <em>{e_val}</em></div>
+                                    <div style='color: #34d399; font-size: 0.95rem; font-weight: 600; margin-top: 3px;'>✨ <strong>{m_val}</strong></div>
                                 </div>
                                 """, unsafe_allow_html=True)
                             else:
@@ -6465,7 +6468,17 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                         language=gs_lang.lower(),
                         niche_name=curr_niche_key
                     )
-                    ok_call, res_gs = km.generate_text_with_fallback(prompt=p_gs, model_name=text_model)
+                    is_gs_en_call = "english" in gs_lang.lower() or "angol" in gs_lang.lower()
+                    sys_inst_gs = (
+                        "You are a world-class Conversion Rate Optimization and Landing Page copywriter for Google Sites. Output 100% fluent, natural English without mixing foreign languages."
+                        if is_gs_en_call else
+                        "Te egy világszínvonalú CRO és Landing Page szövegíró szakértő vagy a Google Sites keretrendszerhez. Válaszolj 100%-ban tiszta magyar nyelven."
+                    )
+                    ok_call, res_gs = km.generate_text_with_fallback(
+                        prompt=p_gs,
+                        model_name=text_model,
+                        system_instruction=sys_inst_gs
+                    )
                     if not ok_call:
                         res_gs = f"Hiba: {res_gs}"
 
@@ -6647,9 +6660,15 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                             niche_name=curr_niche_key
                         )
 
+                    is_em_en_call = "english" in em_lang.lower() or "angol" in em_lang.lower()
+                    sys_inst_em = (
+                        "You are an elite lifecycle email marketing expert who writes warm, authentic, high-converting email sequences in 100% fluent English without mixing foreign languages."
+                        if is_em_en_call else
+                        "Te egy mester e-mail marketing specialista vagy, aki meleg, hiteles, emberi és nagy konverziójú e-mail szekvenciákat ír 100%-ban tiszta magyar nyelven."
+                    )
                     ok_em, res_em = km.generate_text_with_fallback(
                         prompt=p_em_call,
-                        system_instruction="Te egy mester e-mail marketing specialista vagy, aki meleg, hiteles, emberi és nagy konverziójú e-mail szekvenciákat ír digitális alkotóknak a 30 Email Marketing Bundle mintájára."
+                        system_instruction=sys_inst_em
                     )
                     st.session_state["ffc_em_res"] = res_em
                     st.session_state["ffc_em_prod"] = em_paid_prod
@@ -6722,34 +6741,46 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
         col_f5_in, col_f5_out = st.columns([1, 1.1], gap="large")
 
         with col_f5_in:
+            cal_lang = st.selectbox(
+                "🌐 Naptár Nyelve (Language):",
+                ["Magyar", "Angol (English)"],
+                index=0,
+                key="cal_lang_select_v2"
+            )
+            is_cal_en = "angol" in cal_lang.lower() or "english" in cal_lang.lower()
+            cal_lang_slug = "en" if is_cal_en else "hu"
+
+            if is_cal_en:
+                def_cal_prod = f"30-Day {curr_niche_data.get('name_en', 'Christian')} Mindful Journal"
+                def_cal_aud = "Parents, creators, and believers seeking daily quiet time and focus"
+                def_cal_top = "Week 1: Overcoming daily anxiety and finding spiritual peace\nWeek 2: Practical morning quiet time routines and focus habits\nWeek 3: Real transformations, gratitude journaling and mindfulness\nWeek 4: The complete bundle walkthrough, exclusive bonuses and limited offer"
+            else:
+                def_cal_prod = get_niche_field("cal_prod_name", curr_niche_key)
+                def_cal_aud = get_niche_field("ffc_aud", curr_niche_key)
+                def_cal_top = f"1. Hét: A(z) {get_niche_field('ffc_prod', curr_niche_key)} fő kihívásai és az akadályok leküzdése\n2. Hét: Gyakorlati lépések, fókusz és {get_niche_field('ffc_vehicle', curr_niche_key)}\n3. Hét: Esettanulmányok, sikerélmények és vizualizáció\n4. Hét: Záró ajánlat, bónuszok és sürgősség"
+
             st.markdown("<div class='step-label'>Tartalomnaptár Paraméterek</div>", unsafe_allow_html=True)
             cal_prod_name = st.text_input(
                 "Termék / Csomag Neve:",
-                value=st.session_state.get(f"cal_prod_{n_slug_ffc}", get_niche_field("cal_prod_name", curr_niche_key)),
-                key=f"cal_prod_{n_slug_ffc}"
+                value=st.session_state.get(f"cal_prod_{n_slug_ffc}_{cal_lang_slug}", def_cal_prod),
+                key=f"cal_prod_{n_slug_ffc}_{cal_lang_slug}"
             )
             cal_target_aud = st.text_input(
                 "Célközönség:",
-                value=st.session_state.get(f"cal_aud_{n_slug_ffc}", get_niche_field("ffc_aud", curr_niche_key)),
-                key=f"cal_aud_{n_slug_ffc}"
+                value=st.session_state.get(f"cal_aud_{n_slug_ffc}_{cal_lang_slug}", def_cal_aud),
+                key=f"cal_aud_{n_slug_ffc}_{cal_lang_slug}"
             )
             cal_topics = st.text_area(
                 "Fő Tartalmi Pillérek / Témák (opcionális):",
-                value=st.session_state.get(f"cal_top_{n_slug_ffc}", f"1. Hét: A(z) {get_niche_field('ffc_prod', curr_niche_key)} fő kihívásai és az akadályok leküzdése\n2. Hét: Gyakorlati lépések, fókusz és {get_niche_field('ffc_vehicle', curr_niche_key)}\n3. Hét: Esettanulmányok, sikerélmények és vizualizáció\n4. Hét: Záró ajánlat, bónuszok és sürgősség"),
+                value=st.session_state.get(f"cal_top_{n_slug_ffc}_{cal_lang_slug}", def_cal_top),
                 height=85,
-                key=f"cal_top_{n_slug_ffc}"
+                key=f"cal_top_{n_slug_ffc}_{cal_lang_slug}"
             )
             cal_platforms = st.multiselect(
                 "Célplatformok:",
                 ["📌 Pinterest SEO", "📸 Instagram / Reels", "📱 TikTok", "📝 Blog / SEO Cikkek", "💌 Hírlevél"],
                 default=["📌 Pinterest SEO", "📸 Instagram / Reels", "📝 Blog / SEO Cikkek"],
                 key="cal_platforms"
-            )
-            cal_lang = st.selectbox(
-                "Naptár Nyelve:",
-                ["Magyar", "Angol (English)"],
-                index=0,
-                key="cal_lang"
             )
 
             btn_gen_social_cal = st.button("🚀 30 Napos Social SEO Naptár Generálása (AI)", key="btn_gen_social_cal", use_container_width=True)
@@ -6767,9 +6798,14 @@ elif "FFC Marketing" in menu_choice or "Google Sites" in menu_choice or "8." in 
                         language=cal_lang,
                         niche_name=curr_niche_key
                     )
+                    sys_inst_cal = (
+                        "You are a master Social Media Marketing and Pinterest SEO expert. Output a structured, clear, highly actionable 30-day content calendar in 100% fluent English without mixing foreign languages."
+                        if is_cal_en else
+                        "Te egy mester Social Media Marketing és Pinterest SEO szakértő vagy. Adj strukturált, átlátható és azonnal posztolható 30 napos tartalmi naptárat 100%-ban tiszta magyar nyelven."
+                    )
                     ok_cal, res_cal = km.generate_text_with_fallback(
                         prompt=p_cal_call,
-                        system_instruction="Te egy mester Social Media Marketing és Pinterest SEO szakértő vagy. Adj strukturált, átlátható és azonnal posztolható 30 napos tartalmi naptárat."
+                        system_instruction=sys_inst_cal
                     )
                     st.session_state["ffc_cal_res"] = res_cal
                     st.session_state["ffc_cal_prod"] = cal_prod_name

@@ -605,135 +605,138 @@ def build_ffc_avatar_research_prompt(product_name: str, target_audience: str, ma
 
 def build_ffc_big_domino_hooks_prompt(product_name: str, target_audience: str, main_transformation: str, vehicle: str = "ezzel a kész digitális kiadvánnyal", language: str = "magyar", niche_name: str = "") -> str:
     """
-    FFC Big Domino Hooks & Headlines Generator Prompt.
+    FFC Big Domino Hooks & Headlines Generator Prompt with strict language separation.
     Generates 10 high-converting headlines in the format:
     'Get [Desire] without [Pain], even if [Objection], using [Vehicle]'
     """
-    lang_instruction = "magyar nyelven" if language.lower().startswith("magy") else "angol nyelven (English)"
-    niche_clause = f"\nPiaci Niche: {niche_name}" if niche_name else ""
-    return (
-        f"Te egy mester szövegíró (Master Copywriter) vagy, aki a világ legmagasabb konverziójú horgait (Hooks & Headlines) készíti el.{niche_clause}\n\n"
-        f"Készíts pontosan 10 db pszichológiailag ellenállhatatlan BIG DOMINO HORGOT ÉS FŐCÍMET {lang_instruction} az alábbi termékhez:\n\n"
-        f"📌 TERMÉK: {product_name}\n"
-        f"🎯 CÉLCSOPORT: {target_audience}\n"
-        f"✨ FŐ VÁGY / TRANSZFORMÁCIÓ: {main_transformation}\n"
-        f"🚀 MÓDSZER / ESZKÖZ (VEHICLE): {vehicle}\n\n"
-        f"KÖVETELMÉNYEK ÉS FORMÁTUM:\n"
-        f"Minden egyes horgot pontosan az FFC (Faceless Funnel) Big Domino aranyformulájára építs fel:\n"
-        f"👉 'Hogyan érheted el a(z) [Áhított Vágyat] a(z) [Frusztráló Fájdalom/Erőfeszítés] NÉLKÜL, MÉG AKKOR IS, HA [Legfőbb Kifogás/Korlát], a(z) [Eszköz/Módszer] segítségével!'\n"
-        f"(Angolul: 'How to Get [Desire] without [Pain], even if [Objection], using [Vehicle]')\n\n"
-        f"Készíts 10 egyedi variációt:\n"
-        f"- 1-3. Közvetlen Transzformációs Horgok (Erős, tiszta ígéret)\n"
-        f"- 4-6. 'Még akkor is ha...' Kifogásromboló Horgok (Időhiány, fáradtság, kezdő szint)\n"
-        f"- 7-8. Kíváncsiság- és Titok-alapú Horgok (A rejtett kulcs)\n"
-        f"- 9-10. Rövid, ütős Social Media & E-mail Tárgymező Horgok (Max 10 szó)"
-    )
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    niche_clause = f"\nNiche: {niche_name}" if niche_name else ""
+
+    if is_en:
+        return (
+            f"You are an elite Direct Response Copywriter specialized in crafting world-class Big Domino hooks and headlines.{niche_clause}\n\n"
+            f"Craft exactly 10 high-converting BIG DOMINO HOOKS AND HEADLINES in 100% PURE, NATURAL ENGLISH (US) for the following product:\n\n"
+            f"📌 PRODUCT: {product_name}\n"
+            f"🎯 TARGET AUDIENCE: {target_audience}\n"
+            f"✨ DESIRE / TRANSFORMATION: {main_transformation}\n"
+            f"🚀 VEHICLE / MECHANISM: {vehicle}\n\n"
+            f"CRITICAL LANGUAGE RULE: Output ONLY 100% fluent English. Do NOT mix any Hungarian words or characters.\n\n"
+            f"HEADLINE CATEGORIES TO GENERATE:\n"
+            f"- 1-3. Direct Transformation & Big Promise Headlines\n"
+            f"- 4-6. 'Even If' Objection-Crushing Headlines (Time constraints, doubts, beginners)\n"
+            f"- 7-8. Curiosity & Secret-Based Discovery Headlines\n"
+            f"- 9-10. Short, Punchy Social Media & Email Subject Line Hooks (Max 10 words)"
+        )
+    else:
+        return (
+            f"Te egy mester szövegíró (Master Copywriter) vagy, aki a világ legmagasabb konverziójú horgait (Hooks & Headlines) készíti el.{niche_clause}\n\n"
+            f"Készíts pontosan 10 db pszichológiailag ellenállhatatlan BIG DOMINO HORGOT ÉS FŐCÍMET 100%-BAN TISZTA MAGYAR NYELVEN az alábbi termékhez:\n\n"
+            f"📌 TERMÉK: {product_name}\n"
+            f"🎯 CÉLCSOPORT: {target_audience}\n"
+            f"✨ FŐ VÁGY / TRANSZFORMÁCIÓ: {main_transformation}\n"
+            f"🚀 MÓDSZER / ESZKÖZ (VEHICLE): {vehicle}\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen szavakat keverni.\n\n"
+            f"KÉSZÍTS 10 EGYEDI VARIÁCIÓT:\n"
+            f"- 1-3. Közvetlen Transzformációs Horgok (Erős, tiszta ígéret)\n"
+            f"- 4-6. 'Még akkor is ha...' Kifogásromboló Horgok (Időhiány, fáradtság, kezdő szint)\n"
+            f"- 7-8. Kíváncsiság- és Titok-alapú Horgok (A rejtett kulcs)\n"
+            f"- 9-10. Rövid, ütős Social Media & E-mail Tárgymező Horgok (Max 10 szó)"
+        )
 
 
 def build_ffc_value_stack_prompt(product_name: str, target_audience: str, core_features: str, bonuses: str = "", regular_price: str = "19 990 Ft", language: str = "magyar") -> str:
     """
-    FFC Value Stack & Feature-Benefit-Meaning Matrix Generator.
-    Generates bullet points following: 'You get [feature] so that you can [benefit]... even if [objection]... which means [outcome]'
+    FFC Value Stack & Feature-Benefit-Meaning Matrix Generator with strict language purity.
     """
-    lang_inst = "magyar nyelven" if language.lower().startswith("magy") else "in English"
-    bonus_part = f"\nBónuszok: {bonuses}" if bonuses.strip() else ""
-    return (
-        f"Készíts egy profi, Russell Brunson-stílusú ÉRTÉKHALMOZÁST (Value Stack) és termék-bulletpont rendszert {lang_inst} az alábbi termékhez:\n\n"
-        f"📌 TERMÉK: {product_name}\n"
-        f"🎯 CÉLCSOPORT: {target_audience}\n"
-        f"📦 FŐ TULAJDONSÁGOK / CSOMAG ELEMEI: {core_features}{bonus_part}\n"
-        f"💰 NÉVLEGES PIACI ÉRTÉK: {regular_price}\n\n"
-        f"STRUKTÚRA KÖVETELMÉNYEK:\n\n"
-        f"1. ✨ 5-7 DB MASTER BULLETPOINT AZ FFC NÉGYFÁZISÚ FORMULÁVAL:\n"
-        f"   Minden pont így épüljön fel:\n"
-        f"   'Megkapod a(z) [Funkció/Anyag], hogy [Közvetlen Haszon/Előny]... még akkor is, ha [Kifogás/Félelem]... ami azt jelenti, hogy [Mélyebb Lelki/Gyakorlati Eredmény].'\n\n"
-        f"2. 📊 TELJES ÉRTÉKHALMOZÁSI TÁBLÁZAT (THE VALUE STACK TABLE):\n"
-        f"   - Tétel 1 + Reális Piaci Érték\n"
-        f"   - Tétel 2 + Reális Piaci Érték\n"
-        f"   - Bónuszok + Reális Piaci Érték\n"
-        f"   - ----------------------------------------\n"
-        f"   - TELJES BECSÜLT ÉRTÉK (Total Real Value): [Összeg]\n"
-        f"   - MAI AJÁNDÉK / KEDVEZMÉNYES ÁR (Today's Offer): [Végleges Kedvezményes Ár]\n\n"
-        f"3. 💥 'WHY IT'S A NO-BRAINER' (1 bekezdéses indoklás, miért elképesztő üzlet ez most a vásárlónak)."
-    )
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    bonus_part = f"\nBonuses: {bonuses}" if bonuses.strip() else ""
+
+    if is_en:
+        return (
+            f"Create a high-converting Russell Brunson style VALUE STACK and feature-benefit matrix in 100% PURE ENGLISH (US) for the following product:\n\n"
+            f"📌 PRODUCT: {product_name}\n"
+            f"🎯 TARGET AUDIENCE: {target_audience}\n"
+            f"📦 CORE FEATURES & DELIVERABLES: {core_features}{bonus_part}\n"
+            f"💰 TOTAL ESTIMATED VALUE: {regular_price}\n\n"
+            f"CRITICAL LANGUAGE RULE: Output ONLY 100% fluent English. Do NOT mix any foreign words.\n\n"
+            f"STRUCTURE REQUIREMENTS:\n"
+            f"1. 5-7 MASTER BULLET POINTS (Feature + Benefit + Even If + Meaning)\n"
+            f"2. THE COMPLETE VALUE STACK TABLE (Items + Real Market Values + Total Real Value + Today's Discount Price)\n"
+            f"3. 'WHY IT'S A NO-BRAINER' (1 compelling paragraph justifying why this offer is irresistible)."
+        )
+    else:
+        return (
+            f"Készíts egy profi, Russell Brunson-stílusú ÉRTÉKHALMOZÁST (Value Stack) és termék-bulletpont rendszert 100%-BAN TISZTA MAGYAR NYELVEN az alábbi termékhez:\n\n"
+            f"📌 TERMÉK: {product_name}\n"
+            f"🎯 CÉLCSOPORT: {target_audience}\n"
+            f"📦 FŐ TULAJDONSÁGOK / CSOMAG ELEMEI: {core_features}{bonus_part}\n"
+            f"💰 NÉVLEGES PIACI ÉRTÉK: {regular_price}\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen kifejezéseket keverni.\n\n"
+            f"STRUKTÚRA KÖVETELMÉNYEK:\n"
+            f"1. ✨ 5-7 DB MASTER BULLETPOINT AZ FFC NÉGYFÁZISÚ FORMULÁVAL (Funkció + Haszon + Még akkor is ha + Ami azt jelenti)\n"
+            f"2. 📊 TELJES ÉRTÉKHALMOZÁSI TÁBLÁZAT (Tételek + Piaci Értékek + Teljes Érték + Kedvezményes Ár)\n"
+            f"3. 💥 'MIÉRT VISSZAUTASÍTHATATLAN AJÁNLAT EZ' (1 meggyőző bekezdés)."
+        )
 
 
 def build_ffc_sales_letter_prompt(product_name: str, target_audience: str, main_transformation: str, pain_points: str = "", vehicle: str = "", bonuses: str = "", guarantee_type: str = "30 napos 100% elégedettségi garancia", language: str = "magyar", niche_name: str = "") -> str:
     """
-    FFC 12-Step Master Sales Letter Generator Prompt (Russell Brunson High-Converting Model).
-    Includes Hook, Shocking Statement, Pain/Desire, Method, Credibility, Proof, Product Overview, Pitch, Bonuses, Guarantee, CTA, and P.S.
+    FFC 12-Step Master Sales Letter Generator Prompt with strict language purity.
     """
-    lang_inst = "magyar nyelven" if language.lower().startswith("magy") else "in English (US)"
-    niche_clause = f"\nPiaci Niche: {niche_name}" if niche_name else ""
-    pains = f"\nFő fájdalompontok/frusztrációk: {pain_points}" if pain_points.strip() else ""
-    veh = f"\nHasznált módszer/eszköz: {vehicle}" if vehicle.strip() else ""
-    bon = f"\nAjándék bónuszok: {bonuses}" if bonuses.strip() else ""
-    
-    return (
-        f"Te a világ egyik legelismertebb elit szövegírója vagy, aki Russell Brunson ('DotCom Secrets', 'Expert Secrets') és a modern "
-        f"Faceless Funnel Challenge (FFC) közvetlen eladási stratégiájának legmagasabb szintű mestere.{niche_clause}\n\n"
-        f"Írj egy teljes, magával ragadó, lebilincselő és rendkívül magas konverziójú ÉRTÉKESÍTÉSI LEVELET (Long-Form Sales Letter) {lang_inst} az alábbi adatok alapján:\n\n"
-        f"📌 TERMÉK NEVE: {product_name}\n"
-        f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
-        f"✨ FŐ TRANSZFORMÁCIÓ: {main_transformation}{pains}{veh}{bon}\n"
-        f"🛡️ GARANCIA TÍPUSA: {guarantee_type}\n\n"
-        f"A LEVÉLNEK PONTOSAN AZ ALÁBBI 12 LÉPÉSES PSZICHOLÓGIAI ÍVET KELL KÖVETNIE:\n\n"
-        f"1. 🎣 THE BIG HOOK & PRE-HEADLINE: Figyelemfelkeltő felütés és főcím a Big Domino formátumban.\n"
-        f"2. ⚡ SHOCKING STATEMENT / BOLD CLAIM: Egy bátor, meglepő állítás, ami megtöri az olvasó közönyét.\n"
-        f"3. 💔 DEEP PAIN & BURNING DESIRE (Empathy Bridge): Mély együttérzés, a mindennapi nehézségek, elakadások és a vágyott cél ábrázolása.\n"
-        f"4. 💡 THE EPIPHANY BRIDGE & THE NEW VEHICLE: A felismerés pillanata — miért a régi módszerek vallottak kudarcot, és miért ez az új út a valódi megoldás.\n"
-        f"5. 🤝 CREATOR CREDIBILITY & ORIGIN STORY: Rövid, szimpatikus, hiteles alkotói bemutatkozás.\n"
-        f"6. 🕊️ SOCIAL PROOF & VALIDATION: Visszajelzések, esettanulmányok és gyakorlati megerősítés.\n"
-        f"7. 🎁 INTRODUCING THE SOLUTION: A(z) {product_name} hivatalos bemutatása, mi ez pontosan és hogyan működik.\n"
-        f"8. 📋 THE VALUE STACK & BULLET POINTS: 5-7 db erőteljes bulletpont (Feature + Benefit + Even If + Meaning).\n"
-        f"9. 🌟 IRRESISTIBLE BONUSES: Az ingyenes bónuszok bemutatása, amelyek önmagukban is értékesebbek a fő árnál.\n"
-        f"10. 🛡️ IRON-CLAD 100% GUARANTEE: Teljesen kockázatmentes garancia leírása (pl. {guarantee_type}).\n"
-        f"11. 🚀 URGENT CALL TO ACTION (CTA): Egyértelmű, meleg hangvételű, de sürgető vásárlási felszólítás link-gomb helyőrzőkkel.\n"
-        f"12. ✍️ P.S. (POST SCRIPTUM) & CLOSING INSPIRATION: 2 db ütős P.S. (1. Emlékeztető a kockázatmentességre; 2. Mi történik, ha nem lépsz ma: a helyzet nem változik magától).\n\n"
-        f"TÓNUS: Meleg, meggyőző, mélyen hiteles, tiszteletteljes, de határozott és cselekvésre ösztönző! Kerüld az olcsó 'teleshop' kliséket."
-    )
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    niche_clause = f"\nNiche: {niche_name}" if niche_name else ""
+    pains = f"\nFrustrations/Pains: {pain_points}" if pain_points.strip() else ""
+    veh = f"\nMechanism/Vehicle: {vehicle}" if vehicle.strip() else ""
+    bon = f"\nBonuses: {bonuses}" if bonuses.strip() else ""
 
-
-GOOGLE_SITES_LANDING_PAGE_PROMPT = """
-Te egy világszínvonalú Conversion Rate Optimization (CRO) és Landing Page szövegíró szakértő vagy, aki kifejezetten a 100%-ban ingyenes Google Sites (sites.google.com) keretrendszerhez készít magas konverziójú, elegáns, kész weboldal struktúrákat és szövegeket.
-
-A feladatod: Készítsd el a teljes, blokkonként közvetlenül átmásolható tartalmat egy 0 Ft-os Google Sites értékesítési és feliratkozógyűjtő landing page-hez.
-
-A generált anyagnak kötelezően tartalmaznia kell az alábbi 5 fő blokkot részletesen, igényes és meggyőző megfogalmazásban:
-
-1. 🌟 HERO SECTION (Felső Fő Blokkat & Banner)
-   - Felső Bejelentő Csík (Announcement Bar): '✨ Azonnali Digitális Letöltés · 100% Kockázatmentes Békesség'
-   - Főcímsor (Main Headline): Figyelemfelkeltő, érzelmi hatású főcím (H1)
-   - Alcím (Subheadline): A termék által nyújtott életérzés és transzformáció összefoglalása (H2)
-   - Hívogató Bevezető Szöveg (Introduction): 2-3 bekezdésnyi meleg, megnyugtató, értékközpontú bevezető
-   - Elsődleges CTA Gomb (Fő Gomb Szöveg & Link helyőrző)
-   - Bizalmi Elemek (Trust Badges): 🔒 Biztonságos Fizetés | ⚡ Azonnali Hozzáférés | 🕊️ 100% Garancia
-
-2. 🎁 LEAD MAGNET SECTION (0 Ft-os Ingyenes Csalitermék Blokkat)
-   - Csalitermék Címe & Leírása: Ingyenes 3-oldalas minta / mini áhítat / kifestő letöltő felhívás
-   - 'Mit tartalmaz az ingyenes minta?': 3 db konkrét, azonnali értéket adó pont
-   - Gumroad 0 Ft-os Letöltési Gomb: Pontos gombszöveg és Gumroad hivatkozási struktúra (pl. '📥 Ingyenes Minta Letöltése Gumroadon (0 Ft)')
-
-3. 🛍️ FEATURED PRODUCTS (Kiemelt Termékek Bemutató Kártyái)
-   - 1. Kártya: 📚 Amazon KDP Kiadás (Fizikai nyomtatott színezőkönyv / napló leírása, előnyök és '📖 Megtekintés Amazonon' gomb)
-   - 2. Kártya: 🖼️ Etsy Digitális Csomag (Azonnal nyomtatható 300 DPI faliképek / clipart csomag és '🛍️ Vásárlás Etsy-n' gomb)
-   - 3. Kártya: 📖 Gumroad Teljes Digitális Életmód Csomag (Komplett vezetett áhítat, bónuszok, azonnali PDF és '⚡ Letöltés Gumroadon' gomb)
-
-4. 🚀 CTA BUTTONS & ACTION LINKS (Összesített Gombtár & Hivatkozások)
-   - Exact gombfeliratok és célpontok összefoglaló táblázata (Amazon KDP, Etsy, Gumroad)
-   - Végleges sürgető záró CTA felhívás és 100% elégedettségi garancia nyilatkozat
-
-5. 🎨 VISUAL THEME GUIDE (Google Sites Téma & Beállítási Útmutató)
-   - Javasolt Színpaletta (Hex kódokkal):
-     * Háttér / Alapszín: Pasztell meleg bézs (`#F9F6F0`)
-     * Fő Márkaszín: Zsályazöld (`#8A9A86` vagy `#34D399`)
-     * Kiemelő / Arany Akcentus: Puha meleg arany (`#D4AF37`)
-     * Szövegszín: Mély pala / Antracit (`#1E293B`)
-   - Javasolt Google Fonts Betűtípus-párok:
-     * Címsorok: Merriweather vagy Playfair Display
-     * Kenyérszöveg: Montserrat vagy Open Sans
-   - Lépésről-lépésre Google Sites Építési Útmutató (Blokk típusok: Banner, 2-oszlopos tartalomblokk, 3-oszlopos kártyarács, Elválasztó vonalak, Gombok).
-"""
+    if is_en:
+        return (
+            f"You are a world-class Direct Response Copywriter in the style of Russell Brunson and Alex Hormozi.{niche_clause}\n\n"
+            f"Write a complete, deeply engaging, highly converting Long-Form Sales Letter in 100% PURE, NATURAL ENGLISH (US) for this product:\n\n"
+            f"📌 PRODUCT NAME: {product_name}\n"
+            f"🎯 TARGET AUDIENCE: {target_audience}\n"
+            f"✨ CORE TRANSFORMATION: {main_transformation}{pains}{veh}{bon}\n"
+            f"🛡️ GUARANTEE TYPE: {guarantee_type}\n\n"
+            f"CRITICAL LANGUAGE RULE: Output strictly 100% natural, polished English. Do NOT mix in any Hungarian or other foreign words.\n\n"
+            f"STRUCTURE TO FOLLOW (12-STEP PSYCHOLOGICAL ARC):\n"
+            f"1. THE BIG HOOK & PRE-HEADLINE\n"
+            f"2. SHOCKING STATEMENT / BOLD CLAIM\n"
+            f"3. DEEP PAIN & BURNING DESIRE (Empathy Bridge)\n"
+            f"4. THE EPIPHANY BRIDGE & THE NEW VEHICLE\n"
+            f"5. CREATOR CREDIBILITY & ORIGIN STORY\n"
+            f"6. SOCIAL PROOF & TESTIMONIALS\n"
+            f"7. INTRODUCING THE SOLUTION ({product_name})\n"
+            f"8. THE VALUE STACK & 5-7 HIGH-IMPACT BULLET POINTS\n"
+            f"9. IRRESISTIBLE BONUSES\n"
+            f"10. IRON-CLAD 100% MONEY-BACK GUARANTEE\n"
+            f"11. URGENT CALL TO ACTION (CTA Buttons)\n"
+            f"12. P.S. (POST SCRIPTUM) & CLOSING REMINDERS\n\n"
+            f"TONE: Warm, authentic, empathetic, persuasive, and completely free of cheesy gimmicks."
+        )
+    else:
+        return (
+            f"Te a világ egyik legelismertebb elit szövegírója vagy, aki Russell Brunson és a Faceless Funnel Challenge közvetlen eladási stratégiájának mestere.{niche_clause}\n\n"
+            f"Írj egy teljes, magával ragadó, rendkívül magas konverziójú ÉRTÉKESÍTÉSI LEVELET 100%-BAN TISZTA MAGYAR NYELVEN az alábbi adatok alapján:\n\n"
+            f"📌 TERMÉK NEVE: {product_name}\n"
+            f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
+            f"✨ FŐ TRANSZFORMÁCIÓ: {main_transformation}{pains}{veh}{bon}\n"
+            f"🛡️ GARANCIA TÍPUSA: {guarantee_type}\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen szavakat keverni.\n\n"
+            f"A LEVÉLNEK PONTOSAN AZ ALÁBBI 12 LÉPÉSES PSZICHOLÓGIAI ÍVET KELL KÖVETNIE:\n"
+            f"1. 🎣 THE BIG HOOK & PRE-HEADLINE (Figyelemfelkeltő felütés)\n"
+            f"2. ⚡ SHOCKING STATEMENT (Bátor, meglepő állítás)\n"
+            f"3. 💔 DEEP PAIN & DESIRE (Mély együttérzés és a vágyott cél)\n"
+            f"4. 💡 THE EPIPHANY BRIDGE & NEW VEHICLE (A felismerés és az új módszer)\n"
+            f"5. 🤝 ALKOTÓI BEMUTATKOZÁS (Hitelesség)\n"
+            f"6. 🕊️ TÁRSADALMI BIZONYÍTÉK (Vélemények, tapasztalatok)\n"
+            f"7. 🎁 A MEGOLDÁS HIVATALOS BEMUTATÁSA ({product_name})\n"
+            f"8. 📋 VALUE STACK & BULLET PONTOK (5-7 db négyfázisú bullet)\n"
+            f"9. 🌟 INGYENES AJÁNDÉK BÓNUSZOK\n"
+            f"10. 🛡️ 100% KOCKÁZATMENTES GARANCIA\n"
+            f"11. 🚀 SÜRGŐS CALL TO ACTION (CTA gombok)\n"
+            f"12. ✍️ P.S. (POST SCRIPTUM) & ZÁRÓ GONDOLATOK\n\n"
+            f"TÓNUS: Meleg, meggyőző, mélyen hiteles, tiszteletteljes és határozott!"
+        )
 
 
 def build_google_sites_landing_page_prompt(
@@ -752,35 +755,65 @@ def build_google_sites_landing_page_prompt(
     niche_name: str = ""
 ) -> str:
     """
-    100% Free Google Sites (sites.google.com) Landing Page Master Prompt.
-    Generates structured, high-converting copy and visual layout guidelines for building
-    a free Google Sites landing page routing customers to Amazon, Etsy, and Gumroad.
+    100% Free Google Sites (sites.google.com) Landing Page Master Prompt with strict language separation.
     """
-    niche_ctx = f"\nRELEVÁNS RÉTEGPIAC KONTEXTUS:\n{get_niche_prompt_context(niche_name)}\n" if niche_name else ""
-    head = headline if headline.strip() else f"Találd meg a napi békességet és inspirációt: {product_name}"
-    tag = tagline if tagline.strip() else f"Prémium keresztény digitális alkotások {target_audience} számára a mindennapi lelki feltöltődéshez."
-    lm_desc = lead_magnet_desc if lead_magnet_desc.strip() else "3-oldalas ingyenes nyomtatható kifestő és mini áhítat mintacsomag azonnali letöltéssel."
-    feat = features if features.strip() else "30 napos vezetett áhítat és napló, 4K felbontású nyomtatható színező lapok, 300 DPI faliképek, azonnali digitális hozzáférés."
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    niche_ctx = f"\nNICHE CONTEXT:\n{get_niche_prompt_context(niche_name)}\n" if niche_name else ""
 
-    return (
-        f"{GOOGLE_SITES_LANDING_PAGE_PROMPT}\n\n"
-        f"TERMÉK ÉS PROJEKT ADATOK:\n"
-        f"- Termék Neve: {product_name}\n"
-        f"- Célközönség: {target_audience}\n"
-        f"- Fő Címsor / Horog: \"{head}\"\n"
-        f"- Alcím / Életérzés: \"{tag}\"\n"
-        f"- Ingyenes Csalitermék (Lead Magnet) Leírása: {lm_desc}\n"
-        f"- Főbb Tartalmi Elemek & Előnyök: {feat}\n"
-        f"- Ajánlat Ára (Gumroad Teljes Csomag): {offer_price}\n"
-        f"- Vizuális & Hangulati Téma: {style_theme}\n"
-        f"- Hivatkozási Linkek:\n"
-        f"  * Amazon KDP Nyomtatott Könyv Link: {amazon_url}\n"
-        f"  * Etsy Digitális Letöltés Link: {etsy_url}\n"
-        f"  * Gumroad Közvetlen Vásárlás Link: {gumroad_url}\n"
-        f"{niche_ctx}\n"
-        f"KÉRLEK KÉSZÍTSD EL A TELJES GOOGLE SITES TARTALMAT {language.upper()} NYELVEN! "
-        f"Minden egyes szekció legyen teljesen készre írva, sablonos szövegek nélkül, közvetlenül a Google Sites oldalra beilleszthető formában!"
-    )
+    if is_en:
+        head = headline if headline.strip() else f"Find Daily Peace and Purpose with {product_name}"
+        tag = tagline if tagline.strip() else f"A premium digital mindfulness framework crafted for {target_audience}."
+        lm_desc = lead_magnet_desc if lead_magnet_desc.strip() else "Free 3-page printable sample workbook with instant download."
+        feat = features if features.strip() else "30-day guided workbook, 4K printable coloring templates, and instant digital access."
+
+        return (
+            f"You are a world-class Conversion Rate Optimization (CRO) and Landing Page copywriter specialized in creating free Google Sites (sites.google.com) high-converting page structures.\n\n"
+            f"Your task is to generate complete, ready-to-paste landing page copy in 100% PURE ENGLISH (US) covering these 5 sections:\n\n"
+            f"1. 🌟 HERO SECTION (Announcement bar, Headline H1, Subheadline H2, Introduction, Primary CTA, Trust Badges)\n"
+            f"2. 🎁 LEAD MAGNET SECTION (Free Sample Offer, 'What's Inside', Gumroad Free Download CTA Button)\n"
+            f"3. 🛍️ FEATURED PRODUCTS (3-card showcase: Amazon KDP Physical, Etsy Wall Art, Gumroad Complete Master Bundle)\n"
+            f"4. 🚀 CTA BUTTONS & ACTION LINKS TABLE (Amazon, Etsy, Gumroad URLs & 100% Guarantee Statement)\n"
+            f"5. 🎨 VISUAL THEME GUIDE (Hex color palette, Google Fonts pairings, block layout guide)\n\n"
+            f"CRITICAL LANGUAGE RULE: Output ONLY 100% fluent, natural English without any foreign words.\n\n"
+            f"=== PROJECT DATA ===\n"
+            f"- Product Name: {product_name}\n"
+            f"- Target Audience: {target_audience}\n"
+            f"- Main Headline: \"{head}\"\n"
+            f"- Subheadline: \"{tag}\"\n"
+            f"- Free Lead Magnet: {lm_desc}\n"
+            f"- Key Deliverables: {feat}\n"
+            f"- Offer Price: {offer_price}\n"
+            f"- Visual Theme: {style_theme}\n"
+            f"- Links: Amazon ({amazon_url}), Etsy ({etsy_url}), Gumroad ({gumroad_url})\n"
+            f"{niche_ctx}"
+        )
+    else:
+        head = headline if headline.strip() else f"Találd meg a napi békességet és inspirációt: {product_name}"
+        tag = tagline if tagline.strip() else f"Prémium keresztény digitális alkotások {target_audience} számára."
+        lm_desc = lead_magnet_desc if lead_magnet_desc.strip() else "3-oldalas ingyenes nyomtatható kifestő és mini áhítat mintacsomag azonnali letöltéssel."
+        feat = features if features.strip() else "30 napos vezetett áhítat és napló, 4K felbontású nyomtatható lapok, azonnali digitális hozzáférés."
+
+        return (
+            f"Te egy világszínvonalú CRO és Landing Page szövegíró szakértő vagy a Google Sites (sites.google.com) keretrendszerhez.\n\n"
+            f"Készítsd el a teljes, blokkonként közvetlenül átmásolható tartalmat 100%-BAN TISZTA MAGYAR NYELVEN az alábbi 5 fő blokkhoz:\n\n"
+            f"1. 🌟 HERO SECTION (Bejelentő csík, Főcímsor, Alcím, Bevezető szöveg, Elsődleges CTA, Bizalmi elemek)\n"
+            f"2. 🎁 LEAD MAGNET SECTION (Ingyenes csalitermék címe, 'Mit tartalmaz', Gumroad 0 Ft-os letöltés gomb)\n"
+            f"3. 🛍️ FEATURED PRODUCTS (3 kiemelt kártya: Amazon KDP, Etsy Csomag, Gumroad Mestercsomag)\n"
+            f"4. 🚀 CTA BUTTONS & ACTION LINKS (Gombtár és 100% garancia nyilatkozat)\n"
+            f"5. 🎨 VISUAL THEME GUIDE (Hex színpaletta, Google Fonts betűtípusok, építési útmutató)\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen kifejezéseket keverni.\n\n"
+            f"=== TERMÉK ADATOK ===\n"
+            f"- Termék Neve: {product_name}\n"
+            f"- Célközönség: {target_audience}\n"
+            f"- Fő Címsor: \"{head}\"\n"
+            f"- Alcím: \"{tag}\"\n"
+            f"- Ingyenes Csalitermék: {lm_desc}\n"
+            f"- Főbb Tartalom: {feat}\n"
+            f"- Ajánlat Ára: {offer_price}\n"
+            f"- Vizuális Téma: {style_theme}\n"
+            f"- Linkek: Amazon ({amazon_url}), Etsy ({etsy_url}), Gumroad ({gumroad_url})\n"
+            f"{niche_ctx}"
+        )
 
 
 def build_polsia_landing_page_prompt(*args, **kwargs) -> str:
@@ -790,130 +823,135 @@ def build_polsia_landing_page_prompt(*args, **kwargs) -> str:
 
 def build_email_funnel_3day_prompt(lead_magnet_name: str, paid_product_name: str, target_audience: str, discount_offer: str = "20% exkluzív kedvezmény", main_story: str = "", language: str = "magyar", niche_name: str = "") -> str:
     """
-    3-Day Automated Email Funnel Generator Prompt for Lead Magnets to Paid Digital Products.
-    Day 1: Free Sample Delivery + Warm Welcome + Quick Win
-    Day 2: Pure Value + Origin Story (Chaos to Clarity) + Relatable Connection
-    Day 3: Paid Pitch + Special Limited Discount + Urgency/Closing
+    3-Day Automated Email Funnel Generator Prompt with strict language separation.
     """
-    lang_inst = "magyar nyelven" if language.lower().startswith("magy") else "in English"
-    niche_clause = f"\nPiaci Niche: {niche_name}" if niche_name else ""
-    story_clause = f"\nHáttér történet / tanulság: {main_story}" if main_story.strip() else ""
-    
-    return (
-        f"Te egy professzionális e-mail marketing és tölcsér-építő (Funnel Copywriting) specialista vagy.{niche_clause}\n\n"
-        f"Írj egy teljes, nagy megnyitási és átkattintási arányú 3 NAPOS AUTOMATA E-MAIL SZEKVENCIÁT {lang_inst} az alábbi adatok alapján:\n\n"
-        f"🎁 INGYENES CSALITERMÉK (LEAD MAGNET): {lead_magnet_name}\n"
-        f"💎 FIZETŐS AJÁNLAT / TERMÉK: {paid_product_name}\n"
-        f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
-        f"🏷️ EXKLUZÍV AJÁNLAT / KEDVEZMÉNY: {discount_offer}{story_clause}\n\n"
-        f"MINDEN EGYES E-MAILNÉL ADJ MEG:\n"
-        f"- 2 db A/B Tesztelhető Tárgymezőt (Subject Lines: 1 db Érzelmi/Kíváncsiság alapú + 1 db Közvetlen/Haszon alapú)\n"
-        f"- Előnézeti Szöveget (Preview Text - max 90 karakter)\n"
-        f"- A teljes, formázott Levéltörzset (megszólítás, bekezdések, CTA linkek és P.S.)\n\n"
-        f"A 3 NAP PONTOS STRUKTÚRÁJA:\n\n"
-        f"📧 1. NAP: AZ AJÁNDÉK MEGFÉRKEZETT + GYORS SIKERÉLMÉNY & KÖSZÖNET\n"
-        f"   - Cél: Kézbesíteni a(z) '{lead_magnet_name}' ingyenes anyagot, azonnali örömet és hálát ébreszteni, és 1 egyszerű tippel segíteni az azonnali használatát.\n\n"
-        f"📧 2. NAP: ÉRTÉKADÁS ÉS SZEMÉLYES TÖRTÉNET (A Káoszból a Megoldásig)\n"
-        f"   - Cél: Kapcsolódás mély érzelmekkel — hogyan jutottunk el a nehézségekből a valódi megoldásig. 3 gyakorlati tipp. Nincs kemény eladás, csak finom utalás a holnapi meglepetésre!\n\n"
-        f"📧 3. NAP: A TELJES MEGOLDÁS + EXKLUZÍV KEDVEZMÉNY ÉS SÜRGŐSSÉG\n"
-        f"   - Cél: A(z) '{paid_product_name}' bemutatása mint a következő természetes lépés. A(z) {discount_offer} átadása korlátozott határidővel. Kockázatmentes garancia és közvetlen kattintási felhívás.\n\n"
-        f"TÓNUS: Meleg, őszinte, támogató, emberi és felemelő."
-    )
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    niche_clause = f"\nNiche: {niche_name}" if niche_name else ""
+    story_clause = f"\nOrigin story / Lesson: {main_story}" if main_story.strip() else ""
+
+    if is_en:
+        return (
+            f"You are a world-class Email Marketing & Funnel Copywriting expert.{niche_clause}\n\n"
+            f"Write a high-converting 3-DAY AUTOMATED EMAIL SEQUENCE in 100% PURE, NATURAL ENGLISH (US) for the following product:\n\n"
+            f"🎁 FREE LEAD MAGNET: {lead_magnet_name}\n"
+            f"💎 PAID CORE PRODUCT: {paid_product_name}\n"
+            f"🎯 TARGET AUDIENCE: {target_audience}\n"
+            f"🏷️ SPECIAL DISCOUNT OFFER: {discount_offer}{story_clause}\n\n"
+            f"CRITICAL LANGUAGE RULE: Output strictly 100% natural English. Do NOT include any foreign words.\n\n"
+            f"FOR EACH EMAIL (DAYS 1-3), PROVIDE:\n"
+            f"- 2 A/B Subject Lines (1 Curiosity/Emotional + 1 Direct/Benefit)\n"
+            f"- Preview Text (Max 90 chars)\n"
+            f"- Complete Formatted Body Text (Salutation, paragraphs, bullet points, CTA links, P.S.)\n\n"
+            f"THE 3-DAY STRUCTURE:\n"
+            f"📧 DAY 1: GIFT DELIVERY + WARM WELCOME + QUICK WIN\n"
+            f"📧 DAY 2: PURE VALUE & ORIGIN STORY (From Chaos to Clarity)\n"
+            f"📧 DAY 3: THE COMPLETE SOLUTION + EXCLUSIVE DISCOUNT & URGENT CTA"
+        )
+    else:
+        return (
+            f"Te egy professzionális e-mail marketing és tölcsér-építő specialista vagy.{niche_clause}\n\n"
+            f"Írj egy teljes 3 NAPOS AUTOMATA E-MAIL SZEKVENCIÁT 100%-BAN TISZTA MAGYAR NYELVEN az alábbi adatok alapján:\n\n"
+            f"🎁 INGYENES CSALITERMÉK (LEAD MAGNET): {lead_magnet_name}\n"
+            f"💎 FIZETŐS AJÁNLAT / TERMÉK: {paid_product_name}\n"
+            f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
+            f"🏷️ EXKLUZÍV KEDVEZMÉNY: {discount_offer}{story_clause}\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen szavakat keverni.\n\n"
+            f"MINDEN EGYES E-MAILNÉL ADJ MEG:\n"
+            f"- 2 db A/B Tesztelhető Tárgymezőt\n"
+            f"- Előnézeti Szöveget (Preview Text)\n"
+            f"- A teljes, formázott Levéltörzset (megszólítás, bekezdések, CTA linkek és P.S.)\n\n"
+            f"A 3 NAP PONTOS STRUKTÚRÁJA:\n"
+            f"📧 1. NAP: AZ AJÁNDÉK MEGFÉRKEZETT + GYORS SIKERÉLMÉNY & KÖSZÖNET\n"
+            f"📧 2. NAP: ÉRTÉKADÁS ÉS SZEMÉLYES TÖRTÉNET\n"
+            f"📧 3. NAP: A TELJES MEGOLDÁS + EXKLUZÍV KEDVEZMÉNY ÉS SÜRGŐSSÉG"
+        )
 
 
 def build_email_funnel_30day_prompt(product_name: str, target_audience: str, core_offer: str, lead_magnet: str = "Ingyenes Letölthető Minta / Munkafüzet", discount_info: str = "25% kedvezmény az ÜDVÖZÖLLEK kuponnal", language: str = "magyar", niche_name: str = "") -> str:
     """
-    30-Day Complete Automated Email Marketing Funnel Master Prompt (Based on '30 Email Marketing Bundle').
-    Divides into 5 structured phases:
-    Phase 1 (Days 1-5): Welcome, Lead Magnet Delivery & Indoctrination
-    Phase 2 (Days 6-12): Pure Value, Epiphany Stories & Authority Building
-    Phase 3 (Days 13-18): Core Offer Pitch, Feature-Benefit Stack & Bonuses
-    Phase 4 (Days 19-24): Social Proof, Case Studies & Objection Crushing
-    Phase 5 (Days 25-30): Urgency, Scarcity, Price Increase Warning & Last Call
+    30-Day Complete Automated Email Marketing Funnel Master Prompt with strict language separation.
     """
-    lang_inst = "magyar nyelven" if language.lower().startswith("magy") else "in English"
-    niche_clause = f"\nPiaci Niche: {niche_name}" if niche_name else ""
-    return (
-        f"Te egy világklasszis e-mail marketing és ügyfélgondozási (Lifecycle Email Marketing) szakértő vagy, aki a '30 Email Marketing Bundle' rendszer mestere.{niche_clause}\n\n"
-        f"Tervezz meg és írj meg egy TELJES 30 NAPOS AUTOMATA E-MAIL TÖLCSÉR STRUKTÚRÁT ÉS SZEKVENCIÁT {lang_inst} az alábbi digitális termékhez:\n\n"
-        f"📌 TERMÉK / FŐ AJÁNLAT: {product_name}\n"
-        f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
-        f"🎁 INGYENES CSALITERMÉK: {lead_magnet}\n"
-        f"💎 FŐ AJÁNLAT LEÍRÁSA: {core_offer}\n"
-        f"🏷️ KEDVEZMÉNY / AJÁNLAT: {discount_info}\n\n"
-        f"A 30 NAPOS SZEKVENCIÁNAK AZ ALÁBBI 5 FÁZIST KELL LEFEDNIE:\n\n"
-        f"🔹 1. FÁZIS: ÜDVÖZLÉS & BEVEZETÉS (1-5. NAP)\n"
-        f"   - 1. nap: Lead magnet kézbesítése + Üdvözlés + 'Miért vagy itt?'\n"
-        f"   - 2. nap: Gyors győzelem (Quick Win) — 1 azonnal alkalmazható lépés\n"
-        f"   - 3. nap: Az én történetem (Hogyan voltam én is ebben a helyzetben)\n"
-        f"   - 4. nap: A leggyakoribb hiba, amit 90% elkövet\n"
-        f"   - 5. nap: Kérdezz-felelek (Visszajelzés kérése, közvetlen kapcsolat)\n\n"
-        f"🔹 2. FÁZIS: TISZTA ÉRTÉKADÁS & HITELESSÉG (6-12. NAP)\n"
-        f"   - 6. nap: Stratégiai tipp #1 (Gyakorlati megvalósítás)\n"
-        f"   - 7. nap: Esettanulmány / Bizonyság (Hogyan változott meg valakinek az élete)\n"
-        f"   - 8. nap: 'A titok, amiről senki sem beszél'\n"
-        f"   - 9. nap: Ellenőrzőlista & Napi rutin tipp\n"
-        f"   - 10. nap: Mi a különbség a sikeres és sikertelen próbálkozók között?\n"
-        f"   - 11. nap: Ingyenes forrásajánló / Bónusz gondolat\n"
-        f"   - 12. nap: Felvezetés: 'Holnap valami különleges érkezik...'\n\n"
-        f"🔹 3. FÁZIS: A FŐ AJÁNLAT & ÉRTÉKHALMOZÁS (13-18. NAP)\n"
-        f"   - 13. nap: A(z) {product_name} hivatalos bemutatása (A New Vehicle)\n"
-        f"   - 14. nap: Mi van a csomagban? (Részletes Value Stack bemutatás)\n"
-        f"   - 15. nap: Az exkluzív bónuszok leleplezése\n"
-        f"   - 16. nap: Kockázatmentes garancia (Miért nem veszíthetsz semmit?)\n"
-        f"   - 17. nap: Hogyan működik a gyakorlatban? (Lépésről lépésre betekintés)\n"
-        f"   - 18. nap: Gyakori kérdések (FAQ) és kifogásrombolás\n\n"
-        f"🔹 4. FÁZIS: BIZONYÍTÉKOK & KIFOGÁSKEZELÉS (19-24. NAP)\n"
-        f"   - 19. nap: 'Nincs időm' kifogás eloszlatása\n"
-        f"   - 20. nap: Vásárlói visszajelzések és tapasztalatok\n"
-        f"   - 21. nap: 'Mi van, ha nem vagyok elég tehetséges / tapasztalt?'\n"
-        f"   - 22. nap: Összehasonlítás: Más alternatívák vs. Ez a megoldás\n"
-        f"   - 23. nap: Egy személyes vallomás / Miért fontos ez nekem?\n"
-        f"   - 24. nap: A döntés pillanata (2 út áll előtted)\n\n"
-        f"🔹 5. FÁZIS: SÜRGŐSSÉG & UTOLSÓ HÍVÁS (25-30. NAP)\n"
-        f"   - 25. nap: Figyelmeztetés: A kedvezmény / bónusz hamarosan lejár\n"
-        f"   - 26. nap: Mit veszítesz, ha most nem lépsz?\n"
-        f"   - 27. nap: 48 óra van hátra — Utolsó esély a kedvezményre\n"
-        f"   - 28. nap: 24 órás visszaszámlálás\n"
-        f"   - 29. nap: MA ÉJFÉLKOR ZÁRUL: Utolsó lehetőség a bónuszokkal\n"
-        f"   - 30. nap: Zárás & Köszönet (Új fejezet kezdete + következő lépések)\n\n"
-        f"KIMENETI FORMÁTUM:\n"
-        f"Adjad meg a 30 nap teljes áttekintését sorszámozva, minden naphoz:\n"
-        f"- Tárgymező javaslattal\n"
-        f"- Cél / Fő üzenet 2-3 mondatban\n"
-        f"- Mintaszöveg / Levélvázlat lényegi bekezdésekkel és Call-to-Actionnel."
-    )
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    niche_clause = f"\nNiche: {niche_name}" if niche_name else ""
+
+    if is_en:
+        return (
+            f"You are an elite Lifecycle Email Marketing strategist specialized in crafting 30-day automated customer journey sequences.{niche_clause}\n\n"
+            f"Design and write a COMPLETE 30-DAY AUTOMATED EMAIL FUNNEL in 100% PURE, NATURAL ENGLISH (US) for this product:\n\n"
+            f"📌 PRODUCT / CORE OFFER: {product_name}\n"
+            f"🎯 TARGET AUDIENCE: {target_audience}\n"
+            f"🎁 FREE LEAD MAGNET: {lead_magnet}\n"
+            f"💎 CORE VALUE OFFER: {core_offer}\n"
+            f"🏷️ SPECIAL DISCOUNT: {discount_info}\n\n"
+            f"CRITICAL LANGUAGE RULE: Output strictly 100% natural English. Do NOT mix in any foreign words.\n\n"
+            f"COVER ALL 5 PHASES (DAYS 1-30):\n"
+            f"🔹 PHASE 1: WELCOME & INDOCTRINATION (Days 1-5)\n"
+            f"🔹 PHASE 2: PURE VALUE & AUTHORITY (Days 6-12)\n"
+            f"🔹 PHASE 3: CORE OFFER & VALUE STACK (Days 13-18)\n"
+            f"🔹 PHASE 4: SOCIAL PROOF & OBJECTION CRUSHING (Days 19-24)\n"
+            f"🔹 PHASE 5: URGENCY & FINAL CALL (Days 25-30)\n\n"
+            f"FOR EACH DAY, PROVIDE:\n"
+            f"- Subject Line\n"
+            f"- Core Goal / Objective\n"
+            f"- Full Email Body with Hook, Content, and CTA."
+        )
+    else:
+        return (
+            f"Te egy világklasszis e-mail marketing szakértő vagy, aki a 30 napos életút e-mail rendszerek mestere.{niche_clause}\n\n"
+            f"Tervezz meg és írj meg egy TELJES 30 NAPOS AUTOMATA E-MAIL TÖLCSÉR STRUKTÚRÁT ÉS SZEKVENCIÁT 100%-BAN TISZTA MAGYAR NYELVEN az alábbi termékhez:\n\n"
+            f"📌 TERMÉK / FŐ AJÁNLAT: {product_name}\n"
+            f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
+            f"🎁 INGYENES CSALITERMÉK: {lead_magnet}\n"
+            f"💎 FŐ AJÁNLAT LEÍRÁSA: {core_offer}\n"
+            f"🏷️ KEDVEZMÉNY / AJÁNLAT: {discount_info}\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen szavakat keverni.\n\n"
+            f"A 30 NAPOS SZEKVENCIÁNAK AZ ALÁBBI 5 FÁZIST KELL LEFEDNIE:\n"
+            f"🔹 1. FÁZIS: ÜDVÖZLÉS & BEVEZETÉS (1-5. NAP)\n"
+            f"🔹 2. FÁZIS: TISZTA ÉRTÉKADÁS & HITELESSÉG (6-12. NAP)\n"
+            f"🔹 3. FÁZIS: A FŐ AJÁNLAT & ÉRTÉKHALMOZÁS (13-18. NAP)\n"
+            f"🔹 4. FÁZIS: BIZONYÍTÉKOK & KIFOGÁSKEZELÉS (19-24. NAP)\n"
+            f"🔹 5. FÁZIS: SÜRGŐSSÉG & UTOLSÓ HÍVÁS (25-30. NAP)\n\n"
+            f"MINDEN NAPHOZ ADJ MEG:\n"
+            f"- Tárgymező javaslatot\n"
+            f"- Cél / Fő üzenetet 2-3 mondatban\n"
+            f"- Levélvázlatot lényegi bekezdésekkel és Call-to-Actionnel."
+        )
 
 
 def build_social_seo_calendar_30day_prompt(product_name: str, target_audience: str, main_topics: str = "", platforms: str = "Pinterest, Instagram, Blog", language: str = "magyar", niche_name: str = "") -> str:
     """
-    30-Day Multi-Platform Social Media & SEO Content Calendar Master Prompt.
-    Generates structured daily posts with Pinterest SEO titles/descriptions/tags, Instagram hooks/carousels, and Blog keywords.
+    30-Day Multi-Platform Social Media & SEO Content Calendar Master Prompt with strict language separation.
     """
-    lang_inst = "magyar nyelven" if language.lower().startswith("magy") else "in English"
-    niche_clause = f"\nPiaci Niche: {niche_name}" if niche_name else ""
-    topics = f"\nFő témakörök / pillérek: {main_topics}" if main_topics.strip() else ""
-    
-    return (
-        f"Te egy mester Social Media & Organikus Keresőoptimalizálási (SEO & Content Strategy) szakértő vagy.{niche_clause}\n\n"
-        f"Készíts egy strukturált, azonnal végrehajtható 30 NAPOS TARTALOMNAPTÁRAT ÉS SOCIAL SEO STRATÉGIÁT {lang_inst} az alábbi termékhez:\n\n"
-        f"📌 TERMÉK: {product_name}\n"
-        f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
-        f"📱 CÉLPLATFORMOK: {platforms}{topics}\n\n"
-        f"STRUKTÚRA KÖVETELMÉNYEK:\n\n"
-        f"Oszd fel a 30 napot 4 heti tematikus blokkra (Hét 1: Tudatosság & Fájdalompontok; Hét 2: Gyakorlati Tippek & Oktatás; Hét 3: Esettanulmányok & Ajánlat; Hét 4: Sürgősség & Közösségépítés).\n\n"
-        f"MINDEN NAPHOZ (1–30. NAP) ADJ MEG:\n"
-        f"1. 📌 PINTEREST PIN SEO:\n"
-        f"   - Kattintásmágnes Pin Cím\n"
-        f"   - 2 mondatos SEO Leírás releváns kulcsszavakkal\n"
-        f"   - 5 db pontos keresési címke / hashtag\n\n"
-        f"2. 📸 INSTAGRAM / TIKTOK POSZT:\n"
-        f"   - 3 másodperces Horog (Hook) Reelhez vagy Carousel 1. diához\n"
-        f"   - Tartalom lényege (3 bulletpoint)\n"
-        f"   - Call To Action (pl. 'Írd meg kommentben a BÉKE szót és elküldöm a linket')\n\n"
-        f"3. 📝 BLOG / EMAIL MIKRO-TÉMA:\n"
-        f"   - 1 mondatos keresőbarát blogcím vagy hírlevél téma."
-    )
+    is_en = "angol" in language.lower() or "english" in language.lower()
+    niche_clause = f"\nNiche: {niche_name}" if niche_name else ""
+    topics = f"\nCore Topics / Pillars: {main_topics}" if main_topics.strip() else ""
+
+    if is_en:
+        return (
+            f"You are a master Social Media & Organic Search Engine Optimization (SEO) Content Strategist.{niche_clause}\n\n"
+            f"Create a structured, actionable 30-DAY SOCIAL MEDIA & SEO CONTENT CALENDAR in 100% PURE, NATURAL ENGLISH (US) for this product:\n\n"
+            f"📌 PRODUCT: {product_name}\n"
+            f"🎯 TARGET AUDIENCE: {target_audience}\n"
+            f"📱 TARGET PLATFORMS: {platforms}{topics}\n\n"
+            f"CRITICAL LANGUAGE RULE: Output strictly 100% natural English. Do NOT mix in any foreign words.\n\n"
+            f"FOR EACH DAY (DAYS 1-30), PROVIDE:\n"
+            f"1. 📌 PINTEREST PIN SEO (Click-magnet Title + 2-sentence SEO Description + 5 search tags)\n"
+            f"2. 📸 INSTAGRAM / TIKTOK REELS POST (3-second Hook + 3 bullet takeaways + Clear CTA)\n"
+            f"3. 📝 BLOG / NEWSLETTER MICRO-TOPIC (1-sentence SEO-optimized headline)."
+        )
+    else:
+        return (
+            f"Te egy mester Social Media & Organikus Keresőoptimalizálási (SEO & Content Strategy) szakértő vagy.{niche_clause}\n\n"
+            f"Készíts egy strukturált, azonnal végrehajtható 30 NAPOS TARTALOMNAPTÁRAT ÉS SOCIAL SEO STRATÉGIÁT 100%-BAN TISZTA MAGYAR NYELVEN az alábbi termékhez:\n\n"
+            f"📌 TERMÉK: {product_name}\n"
+            f"🎯 CÉLKÖZÖNSÉG: {target_audience}\n"
+            f"📱 CÉLPLATFORMOK: {platforms}{topics}\n\n"
+            f"SZIGORÚ NYELVI KÖVETELMÉNY: Kizárólag hibátlan, természetes magyar nyelven írj! Tilos idegen szavakat keverni.\n\n"
+            f"MINDEN NAPHOZ (1–30. NAP) ADJ MEG:\n"
+            f"1. 📌 PINTEREST PIN SEO (Kattintásmágnes Cím + 2 mondatos SEO Leírás + 5 db címke)\n"
+            f"2. 📸 INSTAGRAM / TIKTOK POSZT (3 mp-es Horog + Tartalom lényege + Call To Action)\n"
+            f"3. 📝 BLOG / EMAIL MIKRO-TÉMA (1 mondatos keresőbarát cím)."
+        )
 
 
 # Aliases for backwards compatibility with any legacy imports
