@@ -671,9 +671,9 @@ def render_kdp_pipeline_wizard(km):
             <div class='zen-card'>
                 <strong style='color:#38bdf8;'>📐 {'Nyomdai Méretek' if is_hu else 'Print Dimensions'} (8.5×11 Bleed, {target_p} {'oldal' if is_hu else 'pages'}):</strong><br>
                 • <strong>{'Belső terjedelme' if is_hu else 'Interior Volume'}:</strong> <span style='color:#10b981; font-weight:800;'>{target_p} {'oldal' if is_hu else 'pages'}</span><br>
-                • <strong>{'Teljes borítószélesség' if is_hu else 'Total Cover Width'}:</strong> {cov_calc['total_width_in']:.3f} in ({cov_calc['pixel_width_300dpi']} px)<br>
-                • <strong>{'Teljes borítómagasság' if is_hu else 'Total Cover Height'}:</strong> {cov_calc['total_height_in']:.3f} in ({cov_calc['pixel_height_300dpi']} px)<br>
-                • <strong>{'Számított gerincvastagság' if is_hu else 'Spine Thickness'}:</strong> <span style='color:#f59e0b; font-weight:800;'>{cov_calc['spine_width_in']:.4f} in</span><br>
+                • <strong>{'Teljes borítószélesség' if is_hu else 'Total Cover Width'}:</strong> {cov_calc.get('total_cover_width_in', cov_calc.get('total_width_in', 17.412)):.3f} in ({cov_calc.get('width_px_300dpi', cov_calc.get('pixel_width_300dpi', 5224))} px)<br>
+                • <strong>{'Teljes borítómagasság' if is_hu else 'Total Cover Height'}:</strong> {cov_calc.get('total_cover_height_in', cov_calc.get('total_height_in', 11.25)):.3f} in ({cov_calc.get('height_px_300dpi', cov_calc.get('pixel_height_300dpi', 3375))} px)<br>
+                • <strong>{'Számított gerincvastagság' if is_hu else 'Spine Thickness'}:</strong> <span style='color:#f59e0b; font-weight:800;'>{cov_calc.get('spine_width_in', 0.0225):.4f} in</span><br>
                 • <strong>{'Képarány' if is_hu else 'Aspect Ratio'}:</strong> <code>17.412:11.25</code>
             </div>
             """, unsafe_allow_html=True)
