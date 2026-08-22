@@ -2,8 +2,8 @@
 Keresztény AI Munkaállomás · Zen & Flow Edition (AuDHD Optimalizált)
 ===================================================================
 3 Zárt Pipeline (Wizard) + 1 Központi Vezérlőközpont & Adótervező Hub:
-- 📘 1. Útvonal: Amazon KDP Könyv Pipeline (Niche -> Vázlat -> Képek -> Borító -> Nyomdai PDF)
-- 🖼️ 2. Útvonal: Etsy Wall Art & Clipart Pipeline (Koncepció -> FLUX 300 DPI -> Háttéreltávolítás -> 2026 SEO & CSV)
+- 📘 1. Útvonal: Amazon KDP Könyv Pipeline (Niche -> Vázlat -> Gemini Custom Gem & 4K Promptek -> Borító & Gerinc -> Nyomdai PDF)
+- 🖼️ 2. Útvonal: Etsy Wall Art & Clipart Pipeline (Koncepció -> Gemini Custom Gem & Művészi Promptek -> Háttéreltávolítás -> 2026 SEO & CSV)
 - 🎙️ 3. Útvonal: Gumroad Áhítat & Podcast Pipeline (NotebookLM RAG -> 30 Napos Kézirat -> Sales Letter & Audio Upsell -> API Publikálás)
 - ⚙️ 0. Hub: Vezérlőközpont, AuDHD Időzítő, 2026 Adótervező, FFC Marketing & Beállítások
 """
@@ -48,7 +48,7 @@ st.set_page_config(
 
 # Core engine imports
 import key_manager
-from key_manager import get_key_manager, generate_image_with_fallback
+from key_manager import get_key_manager
 import prompts
 
 try:
@@ -57,6 +57,7 @@ try:
         KDP_TASK_STYLES,
         ETSY_TASK_STYLES,
         GUMROAD_TASK_STYLES,
+        build_gemini_custom_gem_instructions,
         IMAGE_MODEL_PROFILES,
         build_kdp_autopilot_manifest_prompt,
         parse_kdp_autopilot_manifest_json,
@@ -71,7 +72,6 @@ try:
         build_gumroad_devotional_master_prompt
     )
 except ImportError:
-    # Safe inline fallbacks if an older version of prompts.py is cached in memory
     CHRISTIAN_SUB_NICHES = getattr(prompts, "CHRISTIAN_SUB_NICHES", {
         "👶 Gyermekek & Családok (Bible Stories & Coloring)": {
             "default_kdp_title_en": "Noah's Ark Bible Adventures",
@@ -89,6 +89,7 @@ except ImportError:
     GUMROAD_TASK_STYLES = getattr(prompts, "GUMROAD_TASK_STYLES", {
         "🕊️ Meleg, Bátorító Lelkigondozói (Section 5.3)": {"instruction": "Írj meleg, mélyen bátorító tónusban."}
     })
+    build_gemini_custom_gem_instructions = getattr(prompts, "build_gemini_custom_gem_instructions", lambda *a, **k: "")
     IMAGE_MODEL_PROFILES = getattr(prompts, "IMAGE_MODEL_PROFILES", {})
     build_kdp_autopilot_manifest_prompt = getattr(prompts, "build_kdp_autopilot_manifest_prompt", lambda **k: "")
     parse_kdp_autopilot_manifest_json = getattr(prompts, "parse_kdp_autopilot_manifest_json", lambda r: [])
@@ -260,20 +261,13 @@ def render_ai_tool_badge(tool_type: str, note: str = ""):
         name = "GOOGLE NOTEBOOKLM (RAG Forrásalapú Kutató & Podcast)"
         action_url = "https://notebooklm.google.com"
         btn_text = "🚀 NotebookLM Megnyitása"
-    elif "gemini" in t_lower:
+    elif "gemini" in t_lower or "web" in t_lower:
         bg = "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)"
         border = "#60a5fa"
         icon = "💎"
-        name = "GOOGLE GEMINI ADVANCED (Kreatív Szöveg & Képszerkesztő)"
+        name = "GOOGLE GEMINI ADVANCED (Webes Képgeneráló & Custom Gem)"
         action_url = "https://gemini.google.com"
         btn_text = "🚀 Gemini Megnyitása"
-    elif "flux" in t_lower:
-        bg = "linear-gradient(135deg, #064e3b 0%, #059669 100%)"
-        border = "#34d399"
-        icon = "⚡"
-        name = "POLLINATIONS FLUX.1 (300 DPI Nyomdai Képmotor)"
-        action_url = None
-        btn_text = ""
     elif "reportlab" in t_lower or "pdf" in t_lower:
         bg = "linear-gradient(135deg, #78350f 0%, #d97706 100%)"
         border = "#fbbf24"
@@ -358,7 +352,7 @@ def render_kdp_pipeline_wizard(km):
     st.markdown("""
     <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #0284c7; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;'>
         <h3 style='margin:0; color:#38bdf8; font-size:1.3rem;'>📘 1. Útvonal: Amazon KDP Könyv Pipeline</h3>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 5-lépéses munkafolyamat: Niche & Ötlet ➔ Vázlat & Igék ➔ 4K Képgenerálás ➔ Borító & Gerinc ➔ Nyomdai PDF</p>
+        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 5-lépéses munkafolyamat: Niche & Stílus ➔ Vázlat & Igék ➔ Gemini Custom Gem & 4K Promptek ➔ Borító & Gerinc ➔ Nyomdai PDF</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -382,7 +376,7 @@ def render_kdp_pipeline_wizard(km):
     kdp_steps = [
         "1. Niche & Stílus",
         "2. Vázlat & Igék",
-        "3. Képgenerálás",
+        "3. Gemini Gem & Promptek",
         "4. Borító & Gerinc",
         "5. Nyomdai PDF"
     ]
@@ -403,7 +397,6 @@ def render_kdp_pipeline_wizard(km):
             title = st.text_input("Könyv Főcíme:", key="wiz_kdp_title")
             subtitle = st.text_input("Alcím:", key="wiz_kdp_sub")
             
-            # Feladat-specifikus KDP stílusválasztó
             kdp_style = st.selectbox(
                 "🎨 KDP Művészeti & Vizuális Stílus:",
                 options=list(KDP_TASK_STYLES.keys()),
@@ -479,33 +472,47 @@ def render_kdp_pipeline_wizard(km):
                 st.session_state["kdp_step"] = 0
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a Képgeneráláshoz ➔", type="primary", use_container_width=True):
+            if st.button("Tovább a Gemini Custom Gem-hez & Képpromptokhoz ➔", type="primary", use_container_width=True):
                 st.session_state["kdp_step"] = 2
                 st.rerun()
 
-    # ── 3. LÉPÉS: KÉPGENERÁLÁS ──
+    # ── 3. LÉPÉS: GEMINI CUSTOM GEM & 4K PROMPTEK ──
     elif cur_step == 2:
-        render_ai_tool_badge("flux", "A 8.5x11 4K fekete-fehér színező oldalakat a beépített Pollinations FLUX.1 vagy a Gemini Web generálja.")
-        st.markdown("#### 🎨 3. Lépés: 4K Színező Képek Generálása (FLUX / Gemini)")
-        scenes = st.session_state.get("kdp_scenes_manifest", [{"visual_prompt": build_kdp_coloring_interior_master_prompt("Noah with animals")}])
+        render_ai_tool_badge("gemini", "A 4K képeket mindig a Gemini webes felületén hozzuk létre a lenti Custom Gem leírással, így a stílus és a karakterek 100%-ban azonosak maradnak.")
         
-        sel_page = st.selectbox("Válassz jelenetet teszteléshez / generáláshoz:", [f"Oldal {sc.get('page_number', i+1)}: {sc.get('title', 'Jelenet')}" for i, sc in enumerate(scenes)])
-        sel_idx = int(sel_page.split()[1].replace(":", "")) - 1 if "Oldal" in sel_page else 0
-        cur_sc = scenes[min(sel_idx, len(scenes)-1)]
+        book_title = st.session_state.get('kdp_title', st.session_state.get('wiz_kdp_title', 'Coloring Book'))
+        style_choice = st.session_state.get("kdp_chosen_style", list(KDP_TASK_STYLES.keys())[0])
+        style_prompt = KDP_TASK_STYLES.get(style_choice, {}).get("prompt_mod", "")
 
-        prompt_in = st.text_area("4K Master Prompt (Section 5.1 szerint):", value=cur_sc.get("visual_prompt", ""), height=100)
+        gem_instruction = build_gemini_custom_gem_instructions(
+            gem_type="kdp_coloring",
+            project_title=book_title,
+            style_name=style_prompt
+        )
 
-        if st.button("🚀 Kép Generálása (Pollinations FLUX 300 DPI)", type="primary", use_container_width=True):
-            with st.spinner("4K Fekete-fehér színező oldal generálása..."):
-                ok_img, imgs, err = km.generate_image_with_fallback(prompt=prompt_in, aspect_ratio="3:4", model_name="flux")
-                if ok_img and imgs:
-                    st.session_state["last_kdp_coloring_img"] = imgs[0]
-                    st.success("✅ Színező oldal sikeresen legenerálva!")
-                else:
-                    st.error(f"Hiba: {err}")
+        st.markdown("#### 💎 Gemini Custom Gem Rendszerutasítás (System Prompt)")
+        st.caption("Másold be ezt az utasítást a Gemini 'Custom Gems' létrehozó felületére, hogy minden kép garantáltan ugyanolyan stílusú legyen:")
+        st.code(gem_instruction, language="markdown")
 
-        if "last_kdp_coloring_img" in st.session_state:
-            st.image(st.session_state["last_kdp_coloring_img"], caption="Legenerált KDP színező oldal (300 DPI)", width=350)
+        st.markdown("---")
+        st.markdown("#### 📋 Oldalankénti 4K Képpromptok a Gemini Webhez:")
+
+        scenes = st.session_state.get("kdp_scenes_manifest", [
+            {"page_number": 1, "title": "Noah building the ark", "visual_prompt": f"Noah building the ark, {style_prompt}"},
+            {"page_number": 2, "title": "Animals entering the ark", "visual_prompt": f"Two giraffes and two lions walking toward the ark, {style_prompt}"}
+        ])
+
+        for sc in scenes:
+            with st.expander(f"🖼️ Oldal {sc.get('page_number')}: {sc.get('title')} ({sc.get('scripture_reference', '')})", expanded=False):
+                st.text_area(f"Másolható Prompt (Oldal {sc.get('page_number')}):", value=sc.get('visual_prompt', ''), height=75, key=f"kdp_sc_p_{sc.get('page_number')}")
+
+        st.markdown("---")
+        st.markdown("#### 📥 Gemini Webről Letöltött Képek Feltöltése (Opcionális - Nyomdai PDF-hez)")
+        st.caption("Ha a Gemini Webes felületén letöltötted a kész 4K képeket, húzd be őket ide, és az 5. lépésben a ReportLab automatikusan összefűzi a könyvedet:")
+        uploaded_imgs = st.file_uploader("Kész képek feltöltése (.png / .jpg):", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kdp_user_uploaded_images")
+        if uploaded_imgs:
+            st.session_state["kdp_uploaded_images_list"] = uploaded_imgs
+            st.success(f"✅ {len(uploaded_imgs)} db kép készen áll a PDF összefűzésre!")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
@@ -520,7 +527,7 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 4. LÉPÉS: BORÍTÓ & GERINC ──
     elif cur_step == 3:
-        render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini / FLUX generálja.")
+        render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini Web Imagen motorjával generálod.")
         st.markdown("#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság")
         p_count = st.session_state.get("kdp_page_count", 24)
         cov_calc = calculate_kdp_cover_dimensions(page_count=p_count, trim_size_str="8.5x11", paper_type="white")
@@ -538,13 +545,13 @@ def render_kdp_pipeline_wizard(km):
             """, unsafe_allow_html=True)
         with c2:
             cov_prompt = build_kdp_cover_master_prompt(f"{st.session_state.get('kdp_title', 'Noah ark')} on calm waters with animals", st.session_state.get('kdp_title', 'BIBLE COLORING BOOK'))
-            st.markdown("**Master Prompt Borítóhoz (Section 5.1):**")
+            st.markdown("**Master Prompt Borítóhoz a Gemini Webre:**")
             st.code(cov_prompt, language="text")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Képekhez", use_container_width=True):
+            if st.button("⬅️ Vissza a Promptekhez", use_container_width=True):
                 st.session_state["kdp_step"] = 2
                 st.rerun()
         with c_b2:
@@ -596,7 +603,7 @@ def render_etsy_pipeline_wizard(km):
     st.markdown("""
     <div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #10b981; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;'>
         <h3 style='margin:0; color:#34d399; font-size:1.3rem;'>🖼️ 2. Útvonal: Etsy Wall Art & Clipart Stúdió</h3>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 4-lépéses munkafolyamat: Koncepció & Ige ➔ FLUX 300 DPI Kép ➔ Háttéreltávolítás ➔ 2026 SEO & CSV Export</p>
+        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 4-lépéses munkafolyamat: Koncepció & Stílus ➔ Gemini Custom Gem & 4K Promptek ➔ Háttéreltávolítás ➔ 2026 SEO & CSV Export</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -619,7 +626,7 @@ def render_etsy_pipeline_wizard(km):
 
     etsy_steps = [
         "1. Koncepció & Stílus",
-        "2. Vizuális Generálás",
+        "2. Gemini Gem & Promptek",
         "3. Háttéreltávolítás",
         "4. 2026 SEO & CSV"
     ]
@@ -643,7 +650,6 @@ def render_etsy_pipeline_wizard(km):
             ref = st.text_input("Igehely:", key="wiz_etsy_ref")
             verse = st.text_area("Szó szerinti Ige:", height=70, key="wiz_etsy_verse")
             
-            # Feladat-specifikus Etsy stílusválasztó
             etsy_style = st.selectbox(
                 "🎨 Etsy Művészeti & Dekor Stílus:",
                 options=list(ETSY_TASK_STYLES.keys()),
@@ -662,43 +668,41 @@ def render_etsy_pipeline_wizard(km):
             """, unsafe_allow_html=True)
 
         st.markdown("---")
-        if st.button("Mentés és Tovább a Képgeneráláshoz ➔", type="primary", use_container_width=True):
+        if st.button("Mentés és Tovább a Gemini Promptekhez ➔", type="primary", use_container_width=True):
             st.session_state["etsy_ref"] = ref
             st.session_state["etsy_verse"] = verse
             st.session_state["etsy_step"] = 1
             st.rerun()
 
-    # ── 2. LÉPÉS: VIZUÁLIS GENERÁLÁS ──
+    # ── 2. LÉPÉS: GEMINI CUSTOM GEM & 4K PROMPTEK ──
     elif cur_step == 1:
-        render_ai_tool_badge("flux", "A 4:5 Skandináv faliképeket és a Chibi clipart illusztrációkat a FLUX.1 300 DPI motor generálja.")
-        st.markdown("#### 🎨 2. Lépés: FLUX 300 DPI Képgenerálás")
+        render_ai_tool_badge("gemini", "A 4K faliképeket és clipartokat a Gemini webes felületén hozzuk létre a lenti Custom Gem és prompt segítségével.")
+        
         is_clipart = st.session_state.get("etsy_is_clipart", False)
         style_info = ETSY_TASK_STYLES.get(st.session_state.get("etsy_chosen_style", list(ETSY_TASK_STYLES.keys())[0]), {})
         style_prompt = style_info.get("prompt_mod", "")
 
+        etsy_gem_instruction = build_gemini_custom_gem_instructions(
+            gem_type="etsy_clipart" if is_clipart else "etsy_wallart",
+            project_title=st.session_state.get("etsy_ref", "Etsy Collection"),
+            style_name=style_prompt
+        )
+
+        st.markdown("#### 💎 Gemini Custom Gem Rendszerutasítás (Etsy Stílus)")
+        st.caption("Másold be ezt a Gemini Custom Gembe a garantáltan egységes skandináv falikép vagy chibi clipart stílushoz:")
+        st.code(etsy_gem_instruction, language="markdown")
+
+        st.markdown("---")
+        st.markdown("#### 📋 Másolható 4K Master Prompt a Gemini Webhez:")
+
         if is_clipart:
-            subject = "fiatal bibliai Mózes a kőtáblákkal" if is_hu else "young biblical Moses holding the stone tablets"
+            subject = "young biblical Moses holding the stone tablets" if not is_hu else "fiatal bibliai Mózes a kőtáblákkal"
             prompt_in = f"{build_etsy_clipart_master_prompt(subject)}, {style_prompt}"
-            ratio = "1:1"
         else:
             quote_text = f"{st.session_state.get('etsy_verse', st.session_state.get('wiz_etsy_verse', ''))} - {st.session_state.get('etsy_ref', st.session_state.get('wiz_etsy_ref', ''))}"
-            prompt_in = f"An elegant Christian wall art with text: '{quote_text}', {style_prompt}"
-            ratio = "4:5"
+            prompt_in = f"An elegant Christian wall art with scripture quote: '{quote_text}', {style_prompt}"
 
-        st.markdown("**Generálandó Master Prompt:**")
         st.code(prompt_in, language="text")
-
-        if st.button("🚀 Kép Generálása (Pollinations FLUX 300 DPI)", type="primary", use_container_width=True):
-            with st.spinner("Művészi kép előállítása..."):
-                ok_img, imgs, err = km.generate_image_with_fallback(prompt=prompt_in, aspect_ratio=ratio, model_name="flux")
-                if ok_img and imgs:
-                    st.session_state["last_etsy_img"] = imgs[0]
-                    st.success("✅ Művészi grafika sikeresen elkészült!")
-                else:
-                    st.error(f"Hiba: {err}")
-
-        if "last_etsy_img" in st.session_state:
-            st.image(st.session_state["last_etsy_img"], caption="Elkészült Etsy grafika", width=350)
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
@@ -724,13 +728,10 @@ def render_etsy_pipeline_wizard(km):
         </div>
         """, unsafe_allow_html=True)
 
-        if "last_etsy_img" in st.session_state:
-            st.download_button("📥 Kép Letöltése Háttéreltávolításhoz / Canva-hoz (PNG)", data=st.session_state["last_etsy_img"], file_name="Etsy_Artwork.png", mime="image/png", use_container_width=True)
-
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Képhez", use_container_width=True):
+            if st.button("⬅️ Vissza a Promptekhez", use_container_width=True):
                 st.session_state["etsy_step"] = 1
                 st.rerun()
         with c_b2:
@@ -856,7 +857,6 @@ def render_gumroad_pipeline_wizard(km):
         render_ai_tool_badge("gemini", "A 200 szavas mély lelkigondozói reflexiókat, imákat és naplókérdéseket a Gemini Advanced Master Prompt fejti ki.")
         st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day', 1)}. Napi Áhítat Kifejtése (Gemini Master Prompt)")
         
-        # Feladat-specifikus Gumroad tónusválasztó
         gum_style = st.selectbox(
             "✍️ Lelkigondozói & Irodalmi Hangvétel Stílus:",
             options=list(GUMROAD_TASK_STYLES.keys()),
@@ -989,7 +989,7 @@ def render_central_hub(km):
 
     with tab_settings:
         st.markdown("#### 🔑 AI Szolgáltatók & API Kulcsok")
-        st.caption("Automatikus többmotoros fallback: 1. Groq (Ingyenes) ➔ 2. OpenRouter ➔ 3. Gemini ➔ 4. Offline Sablonok.")
+        st.caption("Automatikus szöveges AI motorok: 1. Groq (Ingyenes) ➔ 2. OpenRouter ➔ 3. Gemini ➔ 4. Offline Sablonok.")
 
         cg1, cg2 = st.columns(2)
         with cg1:
@@ -1051,7 +1051,7 @@ def main():
 
         st.markdown("---")
         summary = km.get_summary()
-        st.caption(f"⚡ AI Motor: {'Groq' if summary.get('has_groq') else 'FLUX / Offline'}")
+        st.caption(f"⚡ Szöveges AI Motor: {'Groq (Aktív)' if summary.get('has_groq') else 'Offline / Sablonok'}")
 
     # ── Permanens AuDHD 120-Perces Időzítő a legfelső fejlécben ──
     if render_audhd_tracker:

@@ -113,6 +113,51 @@ GUMROAD_TASK_STYLES = {
     }
 }
 
+
+def build_gemini_custom_gem_instructions(
+    gem_type: str,
+    project_title: str,
+    style_name: str = "",
+    target_audience: str = "",
+    characters_desc: str = ""
+) -> str:
+    """
+    Generates a turnkey Gemini Custom Gem (or Custom GPT) System Instruction prompt
+    to ensure 100% style consistency, consistent character faces/clothing, and strict formatting.
+    """
+    if "kdp" in gem_type.lower() or "coloring" in gem_type.lower() or "könyv" in gem_type.lower():
+        char_clause = f"\n- **Főszereplők leírása:** {characters_desc}" if characters_desc else "\n- **Főszereplők:** Ha egy bibliai alak (pl. Noé, Mózes, Dávid, kisfiú, oroszlán) többször megjelenik, minden oldalon tartsd meg ugyanazt a ruhát, arcszerkezetet, hajat és arckifejezést!"
+        return f"""# 💎 GEMINI CUSTOM GEM: KDP KÖNYV- ÉS SZÍNEZŐ SPECIALISTA
+Te egy professzionális Amazon KDP illusztrátor és színezőkönyv-készítő AI vagy a(z) '{project_title}' kötethez.
+
+## 🎨 KÖTELEZŐ VIZUÁLIS SZABÁLYOK (100% STÍLUS- ÉS KARAKTERKONZISZTENCIA):
+1. **Művészeti Stílus:** {style_name or 'Tiszta, vastag fekete vonalrajz (Bold Black Line Art), pure white background'}
+2. **Háttér & Tónusok:** Kizárólag hófehér háttér (#ffffff). SOHA ne használj szürkeárnyalatot (grayscale), árnyékolást (shading), sem színátmeneteket!
+3. **Formátum & Margók:** 8.5x11 hüvelyk arány (3:4 portrait). A figurák mindig a kép közepére kerüljenek, kényelmes margót hagyva a széleken (nincs levágott fej/kéz/láb).
+4. **Vonalvezetés:** Zárt, határozott, kifesthető fekete kontúrok minden egyes oldalon.{char_clause}
+
+## 🚀 MŰKÖDÉSI UTASÍTÁS:
+Amikor megadok egy jelenetet vagy oldalszámot, AZONNAL generáld le a fenti szabályoknak megfelelő 4K képet a Gemini Imagen motorral!"""
+
+    elif "etsy" in gem_type.lower() or "wall" in gem_type.lower() or "clipart" in gem_type.lower():
+        return f"""# 💎 GEMINI CUSTOM GEM: ETSY WALL ART & CLIPART MŰVÉSZETI SPECIALISTA
+Te egy prémium minőségű Etsy digitális művész és grafikus AI vagy a(z) '{project_title}' kollekcióhoz.
+
+## 🎨 KÖTELEZŐ MŰVÉSZETI ÉS FORMÁTUM SZABÁLYOK:
+1. **Művészeti Stílus:** {style_name or 'Skandináv minimalista akvarell eukaliptusz levelekkel keretezett tiszta tipográfia'}
+2. **Képarány:** Faliképeknél pontos 4:5 arány (300 DPI 4K minőség), Clipart csomagoknál 1:1 arány.
+3. **Színharmónia:** Lágy, elegáns pasztell árnyalatok, prémium hangulat, finom részletek.
+4. **Háttér:** Faliképeknél tiszta vagy lágy textúra; Clipartoknál izolált 100% tiszta fehér háttér (könnyű többkörös háttéreltávolításhoz).
+
+## 🚀 MŰKÖDÉSI UTASÍTÁS:
+Bibliai igehely vagy téma megadásakor azonnal készítsd el a 4K művészi kompozíciót a Gemini Imagen motorral!"""
+
+    else:
+        return f"""# 💎 GEMINI CUSTOM GEM: KERESZTÉNY LELKIGONDOZÓI & ÁHÍTAT ÍRÓ
+Te egy mélyen hiteles, melegszívű lelkigondozó író AI vagy a(z) '{project_title}' kötethez.
+Hangnem és stílus: {style_name or 'Meleg, bátorító, mélyen spirituális, tiszteletteljes és emberi tónus'}. Kerüld az elcsépelt AI kliséket és a száraz fejtegetéseket."""
+
+
 NICHE_CATEGORIES = {
     "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)": {
         "group": "Spirituality & Faith",
