@@ -426,6 +426,12 @@ def sync_all_language_defaults(lang: str):
         st.session_state["wiz_gum_matrix"] = "[Day 1 | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
 
 
+def on_niche_change():
+    """Callback triggered when Christian sub-niche changes in sidebar."""
+    cur_lang = st.session_state.get("app_global_lang", "HU")
+    sync_all_language_defaults(cur_lang)
+
+
 def render_sleek_language_bar(key_suffix: str = "") -> bool:
     """Renders a sleek, glowing, modern bilingual language selector with instant sync."""
     if "app_global_lang" not in st.session_state:
