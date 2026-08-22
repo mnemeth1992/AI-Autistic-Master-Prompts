@@ -117,7 +117,8 @@ from gumroad_publisher import publish_to_gumroad
 try:
     from app.core.audhd_tracker import render_audhd_tracker
     from app.modules.notebooklm_rag import render_notebooklm_rag_module
-    from app.modules.tax_calculator_2026 import render_tax_calculator_2026_module
+    from app.modules.ev_accounting import render_ev_accounting_module
+    render_tax_calculator_2026_module = render_ev_accounting_module
     from app.core.sidecar_dock import render_sidecar_dock
     from app.modules.ffc_marketing import render_ffc_marketing_module
     from app.modules.vision_lab import render_vision_lab_module
@@ -125,13 +126,15 @@ except (ModuleNotFoundError, ImportError):
     try:
         from core.audhd_tracker import render_audhd_tracker
         from modules.notebooklm_rag import render_notebooklm_rag_module
-        from modules.tax_calculator_2026 import render_tax_calculator_2026_module
+        from modules.ev_accounting import render_ev_accounting_module
+        render_tax_calculator_2026_module = render_ev_accounting_module
         from core.sidecar_dock import render_sidecar_dock
         from modules.ffc_marketing import render_ffc_marketing_module
         from modules.vision_lab import render_vision_lab_module
     except Exception:
         render_audhd_tracker = None
         render_notebooklm_rag_module = None
+        render_ev_accounting_module = None
         render_tax_calculator_2026_module = None
         render_sidecar_dock = None
         render_ffc_marketing_module = None
@@ -1057,9 +1060,9 @@ def render_central_hub(km):
     h_col1, h_col2 = st.columns([1.6, 1.4])
     with h_col1:
         st.markdown("""
-        <div style='background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px;'>
-            <h3 style='margin:0; color:#f1f5f9; font-size:1.25rem;'>⚙️ 0. Központi Vezérlőközpont & Adótervező Hub</h3>
-            <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.84rem;'>2026-os átalányadó tervező, NotebookLM RAG motor, FFC marketing és API beállítások.</p>
+        <div style='background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px;'>
+            <h3 style='margin:0; color:#38bdf8; font-size:1.25rem;'>🏢 0. EV Pénzügyi, Bizonylattár & Központi Hub</h3>
+            <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.84rem;'>2026-os átalányadó tervező, bizonylattár, könyvelői ZIP export, RAG és rendszerbeállítások.</p>
         </div>
         """, unsafe_allow_html=True)
     with h_col2:
@@ -1067,7 +1070,7 @@ def render_central_hub(km):
         is_hu = render_sleek_language_bar("hub")
 
     tab_tax, tab_rag, tab_mktg, tab_vision, tab_settings = st.tabs([
-        "💰 1. 2026 Adótervező & Kalkulátor" if is_hu else "💰 1. 2026 Tax Planner & Calculator",
+        "🏢 1. EV Pénzügy, Bizonylattár & Adó" if is_hu else "🏢 1. EV Accounting, Vault & Tax",
         "📓 2. NotebookLM RAG Kutatás" if is_hu else "📓 2. NotebookLM RAG Research",
         "📌 3. FFC & Pinterest SEO",
         "📷 4. AI Vision Lab",
@@ -1075,10 +1078,12 @@ def render_central_hub(km):
     ])
 
     with tab_tax:
-        if render_tax_calculator_2026_module:
+        if render_ev_accounting_module:
+            render_ev_accounting_module()
+        elif render_tax_calculator_2026_module:
             render_tax_calculator_2026_module()
         else:
-            st.info("2026-os Adó kalkulátor modul aktív.")
+            st.info("EV Pénzügyi és Adó modul aktív.")
 
     with tab_rag:
         if render_notebooklm_rag_module:
@@ -1156,7 +1161,7 @@ def main():
             "📘 1. Amazon KDP Könyv Pipeline" if is_global_hu else "📘 1. Amazon KDP Book Pipeline",
             "🖼️ 2. Etsy Wall Art & Clipart Pipeline",
             "🎙️ 3. Gumroad Áhítat & Podcast Pipeline" if is_global_hu else "🎙️ 3. Gumroad Devotional & Podcast",
-            "⚙️ 0. Vezérlőközpont & Adó Hub" if is_global_hu else "⚙️ 0. Central Control & Tax Hub"
+            "🏢 0. EV Pénzügy & Vezérlőközpont Hub" if is_global_hu else "🏢 0. EV Accounting & Control Hub"
         ]
 
         selected_nav = st.radio(
@@ -1182,7 +1187,7 @@ def main():
         render_etsy_pipeline_wizard(km)
     elif "3. Gumroad" in selected_nav:
         render_gumroad_pipeline_wizard(km)
-    elif "0. Vezérlőközpont" in selected_nav or "0. Central" in selected_nav:
+    elif "0. EV" in selected_nav or "0. Vezérlőközpont" in selected_nav or "0. Central" in selected_nav:
         render_central_hub(km)
 
     # ── Minden oldalon diszkréten elérhető Alsó Gyors-Híd ──
