@@ -215,6 +215,43 @@ def render_stepper(steps: list, current_step_idx: int):
 
 
 # ─────────────────────────────────────────────────────────────
+# NYELVVÁLTÁSI CALLBACK FÜGGVÉNYEK (AZONNALI MEZŐFRISSÍTÉS)
+# ─────────────────────────────────────────────────────────────
+
+def on_kdp_lang_change():
+    """Callback triggered immediately when KDP language radio changes."""
+    lang = st.session_state.get("kdp_lang_radio", "")
+    if "Magyar" in lang:
+        st.session_state["wiz_kdp_title"] = "Noé Bárkája Bibliai Kalandok"
+        st.session_state["wiz_kdp_sub"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek"
+    else:
+        st.session_state["wiz_kdp_title"] = "Noah's Ark Bible Adventures"
+        st.session_state["wiz_kdp_sub"] = "Inspiring Bible Verse Coloring Book for Children"
+
+
+def on_etsy_lang_change():
+    """Callback triggered immediately when Etsy language radio changes."""
+    lang = st.session_state.get("etsy_lang_radio", "")
+    if "Magyar" in lang:
+        st.session_state["wiz_etsy_ref"] = "Zsoltárok 23:3"
+        st.session_state["wiz_etsy_verse"] = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért."
+    else:
+        st.session_state["wiz_etsy_ref"] = "Psalm 23:3"
+        st.session_state["wiz_etsy_verse"] = "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
+
+
+def on_gum_lang_change():
+    """Callback triggered immediately when Gumroad language radio changes."""
+    lang = st.session_state.get("gum_lang_radio", "")
+    if "Magyar" in lang:
+        st.session_state["wiz_gum_title"] = "30 Napos Békesség a Viharban Áhítat"
+        st.session_state["wiz_gum_matrix"] = "[1. Nap | Filippi 4:6-7 | Isten békessége megőrzi a szíveteket | 1. Mi aggaszt ma? 2. Hogyan adod át Istennek? 3. Miért lehetsz hálás ma?]"
+    else:
+        st.session_state["wiz_gum_title"] = "30 Days of Peace in the Storm Devotional Journal"
+        st.session_state["wiz_gum_matrix"] = "[Day 1 | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
+
+
+# ─────────────────────────────────────────────────────────────
 # 1. ÚTVONAL: AMAZON KDP KÖNYV PIPELINE (5-LÉPÉSES WIZARD)
 # ─────────────────────────────────────────────────────────────
 
@@ -227,25 +264,22 @@ def render_kdp_pipeline_wizard(km):
     """, unsafe_allow_html=True)
 
     # ── Nyelvválasztó ──
-    lang_col1, lang_col2 = st.columns([1.5, 2.5])
+    lang_col1, lang_col2 = st.columns([1.6, 2.4])
     with lang_col1:
         kdp_lang = st.radio(
             "🌐 KDP Nyelv / Language:",
             ["🇺🇸 Angol (US Market / KDP)", "🇭🇺 Magyar (Hazai piac)"],
             horizontal=True,
-            key="kdp_lang_radio"
+            key="kdp_lang_radio",
+            on_change=on_kdp_lang_change
         )
     is_hu = "Magyar" in kdp_lang
 
-    # Nyelvváltáskor a minták azonnali frissítése
-    if st.session_state.get("last_kdp_lang") != kdp_lang:
-        st.session_state["last_kdp_lang"] = kdp_lang
-        if is_hu:
-            st.session_state["kdp_title"] = "Noé Bárkája Bibliai Kalandok"
-            st.session_state["kdp_subtitle"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek"
-        else:
-            st.session_state["kdp_title"] = "Noah's Ark Bible Adventures"
-            st.session_state["kdp_subtitle"] = "Inspiring Bible Verse Coloring Book for Children"
+    # Alapértékek inicializálása ha még nincsenek beállítva
+    if "wiz_kdp_title" not in st.session_state:
+        st.session_state["wiz_kdp_title"] = "Noé Bárkája Bibliai Kalandok" if is_hu else "Noah's Ark Bible Adventures"
+    if "wiz_kdp_sub" not in st.session_state:
+        st.session_state["wiz_kdp_sub"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek" if is_hu else "Inspiring Bible Verse Coloring Book for Children"
 
     kdp_steps = [
         "1. Niche & Ötlet",
@@ -266,10 +300,8 @@ def render_kdp_pipeline_wizard(km):
         st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím és Formátum")
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
-            def_title = "Noé Bárkája Bibliai Kalandok" if is_hu else "Noah's Ark Bible Adventures"
-            def_sub = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek" if is_hu else "Inspiring Bible Verse Coloring Book for Children"
-            title = st.text_input("Könyv Főcíme:", value=st.session_state.get("kdp_title", def_title), key="wiz_kdp_title")
-            subtitle = st.text_input("Alcím:", value=st.session_state.get("kdp_subtitle", def_sub), key="wiz_kdp_sub")
+            title = st.text_input("Könyv Főcíme:", key="wiz_kdp_title")
+            subtitle = st.text_input("Alcím:", key="wiz_kdp_sub")
             aud_choice = st.selectbox(
                 "Célközönség & Stílus:",
                 ["👶 Gyermek (Vastag fekete vonalak, cuki formák, tiszta fehér háttér)", "🧘 Felnőtt (Intrikát mandala, zentangle vonalrajz)"],
@@ -291,18 +323,18 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: VÁZLAT & KJV IGÉK ──
     elif cur_step == 1:
-        st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title')}' Sorszámozott Vázlata")
+        st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title', st.session_state.get('wiz_kdp_title'))}' Sorszámozott Vázlata")
         st.caption(f"AI generálja a pontos bibliai igehelyeket és 4K képgeneráló promptokat ({'Magyarul' if is_hu else 'Angolul'}).")
 
         if st.button("✨ Vázlat & Prompt Készlet Generálása (AI)", use_container_width=True, type="primary"):
             with st.spinner("AI készíti a sorszámozott könyvvázlatot..."):
                 prompt = build_kdp_autopilot_manifest_prompt(
-                    book_title=st.session_state.get("kdp_title", ""),
+                    book_title=st.session_state.get("kdp_title", st.session_state.get("wiz_kdp_title", "")),
                     target_audience="Adult" if st.session_state.get("kdp_is_adult") else "Child",
                     page_count=st.session_state.get("kdp_page_count", 10),
                     is_adult=st.session_state.get("kdp_is_adult", False)
                 )
-                lang_sys = "Kizárólag magyar nyelven válaszolj." if is_hu else "Respond strictly in English."
+                lang_sys = "Kizárólag magyar nyelven válaszolj, a címek és igék magyarul legyenek." if is_hu else "Respond strictly in English with literal KJV scriptures."
                 ok, resp = km.generate_text_with_fallback(prompt=prompt, system_instruction=f"Te egy KDP kiadói szakértő vagy. {lang_sys}", model_name="groq-llama-3.3-70b")
                 scenes = parse_kdp_autopilot_manifest_json(resp)
                 if not scenes:
@@ -453,25 +485,22 @@ def render_etsy_pipeline_wizard(km):
     """, unsafe_allow_html=True)
 
     # ── Nyelvválasztó ──
-    lang_col1, lang_col2 = st.columns([1.5, 2.5])
+    lang_col1, lang_col2 = st.columns([1.6, 2.4])
     with lang_col1:
         etsy_lang = st.radio(
             "🌐 Etsy Nyelv / Language:",
             ["🇺🇸 Angol (Global Etsy)", "🇭🇺 Magyar (Hazai piac)"],
             horizontal=True,
-            key="etsy_lang_radio"
+            key="etsy_lang_radio",
+            on_change=on_etsy_lang_change
         )
     is_hu = "Magyar" in etsy_lang
 
-    # Nyelvváltáskor a minták azonnali frissítése
-    if st.session_state.get("last_etsy_lang") != etsy_lang:
-        st.session_state["last_etsy_lang"] = etsy_lang
-        if is_hu:
-            st.session_state["etsy_ref"] = "Zsoltárok 23:3"
-            st.session_state["etsy_verse"] = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért."
-        else:
-            st.session_state["etsy_ref"] = "Psalm 23:3"
-            st.session_state["etsy_verse"] = "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
+    # Alapértékek inicializálása ha még nincsenek beállítva
+    if "wiz_etsy_ref" not in st.session_state:
+        st.session_state["wiz_etsy_ref"] = "Zsoltárok 23:3" if is_hu else "Psalm 23:3"
+    if "wiz_etsy_verse" not in st.session_state:
+        st.session_state["wiz_etsy_verse"] = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért." if is_hu else "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
 
     etsy_steps = [
         "1. Koncepció & Ige",
@@ -494,10 +523,8 @@ def render_etsy_pipeline_wizard(km):
 
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
-            def_ref = "Zsoltárok 23:3" if is_hu else "Psalm 23:3"
-            def_verse = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért." if is_hu else "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
-            ref = st.text_input("Igehely:", value=st.session_state.get("etsy_ref", def_ref), key="wiz_etsy_ref")
-            verse = st.text_area("Szó szerinti Ige:", value=st.session_state.get("etsy_verse", def_verse), height=70, key="wiz_etsy_verse")
+            ref = st.text_input("Igehely:", key="wiz_etsy_ref")
+            verse = st.text_area("Szó szerinti Ige:", height=70, key="wiz_etsy_verse")
         with c2:
             st.markdown("""
             <div class='zen-card'>
@@ -524,7 +551,7 @@ def render_etsy_pipeline_wizard(km):
             prompt_in = build_etsy_clipart_master_prompt(subject)
             ratio = "1:1"
         else:
-            quote_text = f"{st.session_state.get('etsy_verse', '')} - {st.session_state.get('etsy_ref', '')}"
+            quote_text = f"{st.session_state.get('etsy_verse', st.session_state.get('wiz_etsy_verse', ''))} - {st.session_state.get('etsy_ref', st.session_state.get('wiz_etsy_ref', ''))}"
             prompt_in = build_etsy_wallart_master_prompt(quote_text)
             ratio = "4:5"
 
@@ -585,10 +612,11 @@ def render_etsy_pipeline_wizard(km):
         st.markdown("#### 🛍️ 4. Lépés: Szigorú 2026-os Etsy SEO & 1-Kattintásos CSV Export")
         st.caption(f"Cím <= 140 karakter, pontosan 13 tag (egyenként <= 20 karakter!), FFC leírás Drive szállítással ({'Magyarul' if is_hu else 'Angolul'}).")
 
+        cur_ref = st.session_state.get("etsy_ref", st.session_state.get("wiz_etsy_ref", "Psalm 23:3"))
         if is_hu:
-            prod_title = f"{st.session_state.get('etsy_ref', 'Zsoltárok 23:3')} Keresztény Falikép Nyomtatható Skandináv Minimalista Igés Poszter"
+            prod_title = f"{cur_ref} Keresztény Falikép Nyomtatható Skandináv Minimalista Igés Poszter"
         else:
-            prod_title = f"{st.session_state.get('etsy_ref', 'Psalm 23:3')} Christian Wall Art Printable Scandinavian Minimalist Scripture Poster"
+            prod_title = f"{cur_ref} Christian Wall Art Printable Scandinavian Minimalist Scripture Poster"
 
         if st.button("✨ 2026-os Etsy SEO Generálása & CSV Előállítása", type="primary", use_container_width=True):
             with st.spinner("AI generálja a szigorú Etsy SEO címkéket..."):
@@ -637,25 +665,22 @@ def render_gumroad_pipeline_wizard(km):
     """, unsafe_allow_html=True)
 
     # ── Nyelvválasztó ──
-    lang_col1, lang_col2 = st.columns([1.5, 2.5])
+    lang_col1, lang_col2 = st.columns([1.6, 2.4])
     with lang_col1:
         gum_lang = st.radio(
             "🌐 Gumroad Nyelv / Language:",
             ["🇺🇸 Angol (Global Gumroad)", "🇭🇺 Magyar (Hazai piac)"],
             horizontal=True,
-            key="gum_lang_radio"
+            key="gum_lang_radio",
+            on_change=on_gum_lang_change
         )
     is_hu = "Magyar" in gum_lang
 
-    # Nyelvváltáskor a minták azonnali frissítése
-    if st.session_state.get("last_gum_lang") != gum_lang:
-        st.session_state["last_gum_lang"] = gum_lang
-        if is_hu:
-            st.session_state["gum_dev_title"] = "30 Napos Békesség a Viharban Áhítat"
-            st.session_state["gum_matrix_row"] = "[1. Nap | Filippi 4:6-7 | Isten békessége megőrzi a szíveteket | 1. Mi aggaszt ma? 2. Hogyan adod át Istennek? 3. Miért lehetsz hálás ma?]"
-        else:
-            st.session_state["gum_dev_title"] = "30 Days of Peace in the Storm Devotional Journal"
-            st.session_state["gum_matrix_row"] = "[Day 1 | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
+    # Alapértékek inicializálása ha még nincsenek beállítva
+    if "wiz_gum_title" not in st.session_state:
+        st.session_state["wiz_gum_title"] = "30 Napos Békesség a Viharban Áhítat" if is_hu else "30 Days of Peace in the Storm Devotional Journal"
+    if "wiz_gum_matrix" not in st.session_state:
+        st.session_state["wiz_gum_matrix"] = "[1. Nap | Filippi 4:6-7 | Isten békessége megőrzi a szíveteket | 1. Mi aggaszt ma? 2. Hogyan adod át Istennek? 3. Miért lehetsz hálás ma?]" if is_hu else "[Day 1 | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
 
     gum_steps = [
         "1. NotebookLM RAG",
@@ -675,11 +700,9 @@ def render_gumroad_pipeline_wizard(km):
         st.markdown("#### 📓 1. Lépés: Forrásalapú Teológiai Mátrix & KJV Kutatás")
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
-            def_g_title = "30 Napos Békesség a Viharban Áhítat" if is_hu else "30 Days of Peace in the Storm Devotional Journal"
-            dev_title = st.text_input("Áhítatos Kötet Címe:", value=st.session_state.get("gum_dev_title", def_g_title), key="wiz_gum_title")
+            dev_title = st.text_input("Áhítatos Kötet Címe:", key="wiz_gum_title")
             day_num = st.slider("Nap Száma:", 1, 30, value=st.session_state.get("gum_day", 1), key="wiz_gum_day")
-            def_g_mat = f"[{day_num}. Nap | Filippi 4:6-7 | Isten békessége megőrzi a szívet | 1. Mi aggaszt ma? 2. Hogyan adod át? 3. Miért lehetsz hálás?]" if is_hu else f"[Day {day_num} | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
-            matrix_row = st.text_area("NotebookLM Mátrix Sor (RAG Forrás):", value=st.session_state.get("gum_matrix_row", def_g_mat), height=70, key="wiz_gum_matrix")
+            matrix_row = st.text_area("NotebookLM Mátrix Sor (RAG Forrás):", height=70, key="wiz_gum_matrix")
         with c2:
             st.markdown("""
             <div class='zen-card'>
@@ -698,14 +721,14 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: NAPI KÉZIRAT & IMA ──
     elif cur_step == 1:
-        st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day')}. Napi Áhítat Kifejtése (Gemini Master Prompt)")
+        st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day', 1)}. Napi Áhítat Kifejtése (Gemini Master Prompt)")
         
         if st.button(f"✨ Napi Áhítat Generálása ({'Magyarul' if is_hu else 'Angolul'})", type="primary", use_container_width=True):
             with st.spinner("AI írja a mély, lelkigondozói szöveget..."):
                 prompt = build_gumroad_devotional_master_prompt(
-                    st.session_state.get("gum_dev_title", "Áhítat"),
+                    st.session_state.get("gum_dev_title", st.session_state.get("wiz_gum_title", "Áhítat")),
                     st.session_state.get("gum_day", 1),
-                    st.session_state.get("gum_matrix_row", "")
+                    st.session_state.get("gum_matrix_row", st.session_state.get("wiz_gum_matrix", ""))
                 )
                 lang_sys = "Kizárólag mély, hiteles magyar nyelven írj, meleg lelkigondozói tónusban." if is_hu else "Write strictly in deep, authentic English devotional tone."
                 ok, resp = km.generate_text_with_fallback(prompt=prompt, system_instruction=lang_sys, model_name="groq-llama-3.3-70b")
@@ -758,7 +781,7 @@ def render_gumroad_pipeline_wizard(km):
     # ── 4. LÉPÉS: GUMROAD PUBLIKÁLÁS ──
     elif cur_step == 3:
         st.markdown("#### 🚀 4. Lépés: 1-Kattintásos Gumroad API Publikálás")
-        p_title = st.session_state.get("gum_dev_title", "30 Napos Keresztény Áhítat Csomag")
+        p_title = st.session_state.get("gum_dev_title", st.session_state.get("wiz_gum_title", "30 Napos Keresztény Áhítat Csomag"))
         p_price = st.number_input("Termék Ára ($ USD):", min_value=9, max_value=99, value=39)
         p_drive_url = st.text_input("Google Drive Kézbesítési Mappa URL:", value="https://drive.google.com/drive/folders/...")
 
