@@ -16,6 +16,7 @@ import time
 import datetime
 import uuid
 import re
+from typing import List, Dict, Any
 import streamlit as st
 import streamlit.components.v1 as components
 import dotenv
@@ -143,6 +144,79 @@ os.makedirs(PROJECTS_DIR, exist_ok=True)
 
 
 # ─────────────────────────────────────────────────────────────
+# BIBLIAI JELENET TÁR & PONTOS OLDALSZÁM BIZTOSÍTÓ
+# ─────────────────────────────────────────────────────────────
+
+BIBLICAL_SCENES_POOL = [
+    {"title_en": "Noah Building the Wooden Ark", "title_hu": "Noé építi a fából készült bárkát", "ref": "Genesis 6:14", "verse_en": "Make thee an ark of gopher wood...", "verse_hu": "Csinálj magadnak bárkát gófer-fából...", "visual_desc": "Noah holding carpentry tools standing before the giant wooden ark in a sunny meadow"},
+    {"title_en": "Animals Entering the Ark Two by Two", "title_hu": "Az állatok megérkezése a bárkához", "ref": "Genesis 7:9", "verse_en": "There went in two and two unto Noah into the ark...", "verse_hu": "Kettő-kettő ment be Noéhoz a bárkába...", "visual_desc": "Pairs of giraffes, lions, elephants and lambs peacefully walking up the ark wooden ramp"},
+    {"title_en": "The Dove Returning with Olive Leaf", "title_hu": "A galamb visszatér az olajfa levéllel", "ref": "Genesis 8:11", "verse_en": "And the dove came in to him in the evening; and, lo, in her mouth was an olive leaf...", "verse_hu": "És megjöve ő hozzá a galamb estenden, és ímé leszakasztott olajfalevél vala annak szájában...", "visual_desc": "A gentle white dove flying toward Noah holding a green olive leaf in its beak over calm waters"},
+    {"title_en": "The Rainbow of God's Promise", "title_hu": "A szövetség szivárványa", "ref": "Genesis 9:13", "verse_en": "I do set my bow in the cloud, and it shall be for a token of a covenant...", "verse_hu": "Ívemet helyezem a felhőkbe, és az lesz a szövetség jele...", "visual_desc": "Noah and his family joyfully praying with hands lifted under a magnificent colorful rainbow"},
+    {"title_en": "David the Shepherd Protecting His Flock", "title_hu": "Dávid a pásztorfiú megvédi nyáját", "ref": "Psalm 23:1", "verse_en": "The Lord is my shepherd; I shall not want.", "verse_hu": "Az Úr az én pásztorom; nem szűkölködöm.", "visual_desc": "Young David holding a wooden staff playing a harp beside fluffy white sheep in green pastures"},
+    {"title_en": "David and Goliath with Faith in God", "title_hu": "Dávid hittel szembeszáll Góliáttal", "ref": "1 Samuel 17:45", "verse_en": "I come to thee in the name of the Lord of hosts...", "verse_hu": "Én a Seregek Urának nevében megyek ellened...", "visual_desc": "Brave young David holding a smooth stone and sling with confident faith"},
+    {"title_en": "Daniel Safe in the Lions' Den", "title_hu": "Dániel biztonságban az oroszlánok vermében", "ref": "Daniel 6:22", "verse_en": "My God hath sent his angel, and hath shut the lions' mouths...", "verse_hu": "Az én Istenem elküldte az ő angyalát, és bezárta az oroszlánok száját...", "visual_desc": "Daniel kneeling peacefully in prayer with friendly gentle lions resting calmly around him"},
+    {"title_en": "Jesus Calming the Raging Storm", "title_hu": "Jézus lecsendesíti a vihart", "ref": "Mark 4:39", "verse_en": "Peace, be still. And the wind ceased, and there was a great calm.", "verse_hu": "Hallgass, némulj el! És elállt a szél, és lőn nagy csendesség.", "visual_desc": "Jesus standing on the wooden fishing boat raising his hand as storm clouds part and waves calm"},
+    {"title_en": "The Good Shepherd Carrying the Lost Sheep", "title_hu": "A Jó Pásztor a vállán viszi a megkerült bárányt", "ref": "Luke 15:5", "verse_en": "And when he hath found it, he layeth it on his shoulders, rejoicing.", "verse_hu": "És ha megtalálta, felveszi az ő vállára örvendezve.", "visual_desc": "Jesus as the caring Good Shepherd carrying a little fluffy lamb gently on his shoulders"},
+    {"title_en": "Moses and the Burning Bush", "title_hu": "Mózes az égő csipkebokornál", "ref": "Exodus 3:2", "verse_en": "And the angel of the Lord appeared unto him in a flame of fire...", "verse_hu": "És megjelenék néki az Úrnak angyala tűzlángban egy csipkebokor közepéből...", "visual_desc": "Moses respectfully removing his sandals kneeling before the radiant burning bush"},
+    {"title_en": "Parting of the Red Sea", "title_hu": "Átkelés a Vörös-tengeren", "ref": "Exodus 14:21", "verse_en": "And Moses stretched out his hand over the sea; and the Lord caused the sea to go back...", "verse_hu": "És kinyújtá Mózes az ő kezét a tengerre, és az Úr elhajtá a tengert...", "visual_desc": "Moses lifting his staff as towering blue water walls stand firm on left and right"},
+    {"title_en": "The Star of Bethlehem and Wise Men", "title_hu": "A betlehemi csillag és a bölcsek", "ref": "Matthew 2:10", "verse_en": "When they saw the star, they rejoiced with exceeding great joy.", "verse_hu": "Mikor pedig látták a csillagot, igen nagy örömmel örvendezének.", "visual_desc": "Three wise men with gifts gazing up at a radiant bright golden star over Bethlehem"},
+    {"title_en": "Jonah Praying by the Seashore", "title_hu": "Jónás hálát ad Istennek a tengerparton", "ref": "Jonah 2:9", "verse_en": "Salvation is of the Lord.", "verse_hu": "Az Úré a szabadítás!", "visual_desc": "Jonah kneeling in grateful prayer on a sunlit golden sand beach as a big friendly whale swims away"},
+    {"title_en": "Jesus Blessing the Little Children", "title_hu": "Jézus megáldja a gyermekeket", "ref": "Mark 10:14", "verse_en": "Suffer the little children to come unto me, and forbid them not...", "verse_hu": "Engedjétek hozzám jönni a kisgyermekeket, és ne tiltsátok el őket...", "visual_desc": "Jesus smiling with open arms surrounded by happy joyful children laughing together"},
+    {"title_en": "Creation: Sun, Moon and Bright Stars", "title_hu": "A teremtés: Nap, Hold és a ragyogó csillagok", "ref": "Genesis 1:16", "verse_en": "And God made two great lights; the greater light to rule the day...", "verse_hu": "Teremté tehát Isten a két nagy világító testet...", "visual_desc": "A beautiful celestial landscape with golden smiling sun, silver crescent moon, and sparkling stars"}
+]
+
+
+def ensure_exact_page_count(scenes: List[Dict[str, Any]], target_count: int, is_hu: bool, style_mod: str) -> List[Dict[str, Any]]:
+    """Guarantees that the scenes list has EXACTLY target_count pages (e.g. 10 pages = 10 scenes)."""
+    clean_scenes = []
+    
+    # Keep existing valid scenes
+    for idx, sc in enumerate(scenes[:target_count]):
+        page_num = idx + 1
+        t_hu = sc.get("title_hu", sc.get("title", f"{page_num}. Jelenet"))
+        t_en = sc.get("title", f"Scene {page_num}")
+        cur_title = t_hu if is_hu else t_en
+        ref = sc.get("scripture_reference", "Bible Verse")
+        verse = sc.get("scripture_text", "")
+        v_prompt = sc.get("visual_prompt", f"Bible coloring page of {cur_title}, {style_mod}")
+        if style_mod not in v_prompt:
+            v_prompt = f"{v_prompt}, {style_mod}"
+        
+        clean_scenes.append({
+            "page_number": page_num,
+            "title": cur_title,
+            "title_en": t_en,
+            "title_hu": t_hu,
+            "scripture_reference": ref,
+            "scripture_text": verse,
+            "visual_prompt": v_prompt
+        })
+
+    # If AI returned fewer scenes than target_count, complement from the rich biblical scenes pool
+    current_len = len(clean_scenes)
+    if current_len < target_count:
+        for i in range(current_len, target_count):
+            pool_idx = i % len(BIBLICAL_SCENES_POOL)
+            p_data = BIBLICAL_SCENES_POOL[pool_idx]
+            page_num = i + 1
+            cur_title = p_data["title_hu"] if is_hu else p_data["title_en"]
+            cur_verse = p_data["verse_hu"] if is_hu else p_data["verse_en"]
+            v_prompt = f"Coloring book page illustration of {p_data['visual_desc']}, {style_mod}"
+            
+            clean_scenes.append({
+                "page_number": page_num,
+                "title": cur_title,
+                "title_en": p_data["title_en"],
+                "title_hu": p_data["title_hu"],
+                "scripture_reference": p_data["ref"],
+                "scripture_text": cur_verse,
+                "visual_prompt": v_prompt
+            })
+
+    return clean_scenes[:target_count]
+
+
+# ─────────────────────────────────────────────────────────────
 # ZEN & FLOW CUSTOM CSS INJECTION
 # ─────────────────────────────────────────────────────────────
 
@@ -170,6 +244,19 @@ def inject_zen_css():
         padding: 18px 22px;
         margin-bottom: 16px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Paraméter visszajelző sáv */
+    .param-badge {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        padding: 4px 12px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.84rem;
+        display: inline-block;
+        margin-right: 6px;
     }
 
     /* Lépésjelző sáv (Stepper) */
@@ -349,10 +436,25 @@ def on_niche_change():
 # ─────────────────────────────────────────────────────────────
 
 def render_kdp_pipeline_wizard(km):
-    st.markdown("""
+    if "kdp_page_count" not in st.session_state:
+        st.session_state["kdp_page_count"] = 10
+    if "kdp_trim" not in st.session_state:
+        st.session_state["kdp_trim"] = "8.5x11"
+    
+    current_pages = st.session_state.get("kdp_page_count", 10)
+    current_trim = st.session_state.get("kdp_trim", "8.5x11")
+    current_title = st.session_state.get("kdp_title", st.session_state.get("wiz_kdp_title", "Noah's Ark Bible Adventures"))
+
+    st.markdown(f"""
     <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #0284c7; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;'>
-        <h3 style='margin:0; color:#38bdf8; font-size:1.3rem;'>📘 1. Útvonal: Amazon KDP Könyv Pipeline</h3>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 5-lépéses munkafolyamat: Niche & Stílus ➔ Vázlat & Igék ➔ Gemini Custom Gem & 4K Promptek ➔ Borító & Gerinc ➔ Nyomdai PDF</p>
+        <div style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;'>
+            <h3 style='margin:0; color:#38bdf8; font-size:1.25rem;'>📘 1. Útvonal: Amazon KDP Könyv Pipeline</h3>
+            <div>
+                <span class='param-badge'>📖 {current_pages} Oldalas Kiadvány</span>
+                <span class='param-badge'>📐 Formátum: {current_trim}</span>
+            </div>
+        </div>
+        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.86rem;'>Aktuális projekt: <strong>{current_title}</strong> · 5-lépéses zárt munkafolyamat</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -374,10 +476,10 @@ def render_kdp_pipeline_wizard(km):
         st.session_state["wiz_kdp_sub"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek" if is_hu else "Inspiring Bible Verse Coloring Book for Children"
 
     kdp_steps = [
-        "1. Niche & Stílus",
-        "2. Vázlat & Igék",
-        "3. Gemini Gem & Promptek",
-        "4. Borító & Gerinc",
+        f"1. Cél ({current_pages}p)",
+        f"2. Vázlat ({current_pages}p)",
+        f"3. Promptek ({current_pages}p)",
+        "4. Borító",
         "5. Nyomdai PDF"
     ]
 
@@ -387,10 +489,10 @@ def render_kdp_pipeline_wizard(km):
     cur_step = st.session_state["kdp_step"]
     render_stepper(kdp_steps, cur_step)
 
-    # ── 1. LÉPÉS: NICHE & FELADAT-SPECIFIKUS STÍLUS ──
+    # ── 1. LÉPÉS: NICHE, OLDALSZÁM & FELADAT-SPECIFIKUS STÍLUS ──
     if cur_step == 0:
         render_ai_tool_badge("gemini", "A könyvcím, alcím és illusztrációs stílus meghatározásához használd a Geminit vagy az alábbi KDP stílusokat.")
-        st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím, Stílus és Formátum")
+        st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím, Stílus és Oldalszám Beállítása")
         
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
@@ -411,8 +513,9 @@ def render_kdp_pipeline_wizard(km):
             
             st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#38bdf8;'>✨ Kiválasztott Stílus Módosító:</strong><br>
-                <code>{KDP_TASK_STYLES[kdp_style]['prompt_mod']}</code>
+                <strong style='color:#38bdf8;'>📖 Beállított Paraméterek:</strong><br>
+                • <strong>Tervezett terjedelem:</strong> <span style='color:#10b981; font-weight:800;'>{page_count} egyedi illusztrált oldal</span><br>
+                • <strong>Kiválasztott stílus:</strong> <code>{KDP_TASK_STYLES[kdp_style]['prompt_mod']}</code>
             </div>
             """, unsafe_allow_html=True)
 
@@ -425,45 +528,39 @@ def render_kdp_pipeline_wizard(km):
             st.session_state["kdp_step"] = 1
             st.rerun()
 
-    # ── 2. LÉPÉS: VÁZLAT & KJV IGÉK ──
+    # ── 2. LÉPÉS: VÁZLAT & KJV IGÉK (PONTOS OLDALSZÁM BIZTOSÍTÁSÁVAL) ──
     elif cur_step == 1:
         render_ai_tool_badge("notebooklm", "A KJV Biblia feltöltve a NotebookLM-be hallucinációmentes igehelyeket és jeleneteket biztosít ➔ ezt fejtjük ki a Geminivel.")
-        st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title', st.session_state.get('wiz_kdp_title'))}' Sorszámozott Vázlata")
-        st.caption(f"AI generálja a pontos bibliai igehelyeket és 4K képgeneráló promptokat ({'Magyarul' if is_hu else 'Angolul'}).")
+        st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title', current_title)}' Sorszámozott Vázlata ({current_pages} Oldal)")
+        st.caption(f"Az AI pontosan {current_pages} db bibliai igehelyet és 4K képgeneráló promptot készít ({'Magyarul' if is_hu else 'Angolul'}).")
 
-        if st.button("✨ Vázlat & Prompt Készlet Generálása (AI)", use_container_width=True, type="primary"):
-            with st.spinner("AI készíti a sorszámozott könyvvázlatot..."):
+        target_p = st.session_state.get("kdp_page_count", 10)
+        style_choice = st.session_state.get("kdp_chosen_style", list(KDP_TASK_STYLES.keys())[0])
+        style_mod = KDP_TASK_STYLES.get(style_choice, {}).get("prompt_mod", "")
+
+        if st.button(f"✨ Pontosan {target_p} Oldalas Vázlat Generálása (AI)", use_container_width=True, type="primary"):
+            with st.spinner(f"AI generálja a pontosan {target_p} oldalas könyvvázlatot..."):
                 prompt = build_kdp_autopilot_manifest_prompt(
-                    book_title=st.session_state.get("kdp_title", st.session_state.get("wiz_kdp_title", "")),
+                    book_title=st.session_state.get("kdp_title", current_title),
+                    theme=st.session_state.get("kdp_title", current_title),
                     target_audience="Adult" if st.session_state.get("kdp_is_adult") else "Child",
-                    page_count=st.session_state.get("kdp_page_count", 10),
+                    page_count=target_p,
                     is_adult=st.session_state.get("kdp_is_adult", False)
                 )
-                lang_sys = "Kizárólag magyar nyelven válaszolj, a címek és igék magyarul legyenek." if is_hu else "Respond strictly in English with literal KJV scriptures."
+                lang_sys = f"Kizárólag magyar nyelven válaszolj, és pontosan {target_p} db sorszámozott jelenetet készíts." if is_hu else f"Respond strictly in English with exactly {target_p} sequential biblical scenes."
                 ok, resp = km.generate_text_with_fallback(prompt=prompt, system_instruction=f"Te egy KDP kiadói szakértő vagy. {lang_sys}", model_name="groq-llama-3.3-70b")
-                scenes = parse_kdp_autopilot_manifest_json(resp)
-                if not scenes:
-                    style_mod = KDP_TASK_STYLES.get(st.session_state.get("kdp_chosen_style", list(KDP_TASK_STYLES.keys())[0]), {}).get("prompt_mod", "")
-                    if is_hu:
-                        scenes = [
-                            {"page_number": 1, "title": "Noé építi a bárkát", "scripture_reference": "1Mózes 6:14", "scripture_text": "Csinálj magadnak bárkát gófer-fából...", "visual_prompt": f"Noé építi a fából készült bárkát szerszámokkal, {style_mod}"},
-                            {"page_number": 2, "title": "Az állatok megérkezése", "scripture_reference": "1Mózes 7:9", "scripture_text": "Kettő-kettő ment be Noéhoz a bárkába...", "visual_prompt": f"Két zsiráf és két oroszlán sétál a bárka felé, {style_mod}"},
-                            {"page_number": 3, "title": "A szövetség szivárványa", "scripture_reference": "1Mózes 9:13", "scripture_text": "Ívemet helyezem a felhőkbe...", "visual_prompt": f"Noé és családja imádkozik egy hatalmas szivárvány alatt, {style_mod}"}
-                        ]
-                    else:
-                        scenes = [
-                            {"page_number": 1, "title": "Noah building the ark", "scripture_reference": "Genesis 6:14", "scripture_text": "Make thee an ark of gopher wood...", "visual_prompt": f"Noah building the wooden ark with tools, {style_mod}"},
-                            {"page_number": 2, "title": "Animals arriving two by two", "scripture_reference": "Genesis 7:9", "scripture_text": "There went in two and two unto Noah...", "visual_prompt": f"Two giraffes and two lions walking toward the ark, {style_mod}"},
-                            {"page_number": 3, "title": "The rainbow of promise", "scripture_reference": "Genesis 9:13", "scripture_text": "I do set my bow in the cloud...", "visual_prompt": f"Noah praying with family under a big rainbow, {style_mod}"}
-                        ]
-                st.session_state["kdp_scenes_manifest"] = scenes
-                st.success("✅ Könyvvázlat sikeresen elkészült!")
+                
+                raw_scenes = parse_kdp_autopilot_manifest_json(resp)
+                # Ensure 100% exact page count guarantee
+                exact_scenes = ensure_exact_page_count(raw_scenes, target_p, is_hu, style_mod)
+                st.session_state["kdp_scenes_manifest"] = exact_scenes
+                st.success(f"✅ Sorszámozott könyvvázlat sikeresen elkészült mind a(z) {len(exact_scenes)} oldalhoz!")
 
         scenes = st.session_state.get("kdp_scenes_manifest", [])
         if scenes:
-            st.markdown(f"**Legenerált Jelenetek ({len(scenes)} oldal):**")
-            for sc in scenes[:4]:
-                st.info(f"**Oldal {sc.get('page_number')}: {sc.get('title')}** (`{sc.get('scripture_reference')}`)\n\n*Prompt:* {sc.get('visual_prompt')}")
+            st.markdown(f"**Legenerált Jelenetek ({len(scenes)} / {target_p} oldal):**")
+            for sc in scenes:
+                st.info(f"**Oldal {sc.get('page_number')}: {sc.get('title')}** (`{sc.get('scripture_reference')}`)\n\n*Ige:* \"{sc.get('scripture_text', '')}\"\n\n*Prompt:* {sc.get('visual_prompt')}")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
@@ -472,15 +569,16 @@ def render_kdp_pipeline_wizard(km):
                 st.session_state["kdp_step"] = 0
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a Gemini Custom Gem-hez & Képpromptokhoz ➔", type="primary", use_container_width=True):
+            if st.button(f"Tovább a Gemini Gemhez & {target_p} db Promptekhez ➔", type="primary", use_container_width=True):
                 st.session_state["kdp_step"] = 2
                 st.rerun()
 
-    # ── 3. LÉPÉS: GEMINI CUSTOM GEM & 4K PROMPTEK ──
+    # ── 3. LÉPÉS: GEMINI CUSTOM GEM & 4K PROMPTEK (MINDEN OLDALHOZ) ──
     elif cur_step == 2:
         render_ai_tool_badge("gemini", "A 4K képeket mindig a Gemini webes felületén hozzuk létre a lenti Custom Gem leírással, így a stílus és a karakterek 100%-ban azonosak maradnak.")
         
-        book_title = st.session_state.get('kdp_title', st.session_state.get('wiz_kdp_title', 'Coloring Book'))
+        target_p = st.session_state.get("kdp_page_count", 10)
+        book_title = st.session_state.get('kdp_title', current_title)
         style_choice = st.session_state.get("kdp_chosen_style", list(KDP_TASK_STYLES.keys())[0])
         style_prompt = KDP_TASK_STYLES.get(style_choice, {}).get("prompt_mod", "")
 
@@ -490,29 +588,27 @@ def render_kdp_pipeline_wizard(km):
             style_name=style_prompt
         )
 
-        st.markdown("#### 💎 Gemini Custom Gem Rendszerutasítás (System Prompt)")
-        st.caption("Másold be ezt az utasítást a Gemini 'Custom Gems' létrehozó felületére, hogy minden kép garantáltan ugyanolyan stílusú legyen:")
+        st.markdown(f"#### 💎 Gemini Custom Gem Rendszerutasítás ({target_p} Oldalas Kiadványhoz)")
+        st.caption("Másold be ezt az utasítást a Gemini 'Custom Gems' létrehozó felületére a garantált stílus- és karakterkonzisztenciához:")
         st.code(gem_instruction, language="markdown")
 
         st.markdown("---")
-        st.markdown("#### 📋 Oldalankénti 4K Képpromptok a Gemini Webhez:")
+        st.markdown(f"#### 📋 Mind a(z) {target_p} Oldal 4K Képpromptja a Gemini Webhez:")
 
-        scenes = st.session_state.get("kdp_scenes_manifest", [
-            {"page_number": 1, "title": "Noah building the ark", "visual_prompt": f"Noah building the ark, {style_prompt}"},
-            {"page_number": 2, "title": "Animals entering the ark", "visual_prompt": f"Two giraffes and two lions walking toward the ark, {style_prompt}"}
-        ])
+        raw_scenes = st.session_state.get("kdp_scenes_manifest", [])
+        scenes = ensure_exact_page_count(raw_scenes, target_p, is_hu, style_prompt)
 
         for sc in scenes:
-            with st.expander(f"🖼️ Oldal {sc.get('page_number')}: {sc.get('title')} ({sc.get('scripture_reference', '')})", expanded=False):
+            with st.expander(f"🖼️ Oldal {sc.get('page_number')} / {target_p}: {sc.get('title')} ({sc.get('scripture_reference', '')})", expanded=False):
                 st.text_area(f"Másolható Prompt (Oldal {sc.get('page_number')}):", value=sc.get('visual_prompt', ''), height=75, key=f"kdp_sc_p_{sc.get('page_number')}")
 
         st.markdown("---")
         st.markdown("#### 📥 Gemini Webről Letöltött Képek Feltöltése (Opcionális - Nyomdai PDF-hez)")
-        st.caption("Ha a Gemini Webes felületén letöltötted a kész 4K képeket, húzd be őket ide, és az 5. lépésben a ReportLab automatikusan összefűzi a könyvedet:")
-        uploaded_imgs = st.file_uploader("Kész képek feltöltése (.png / .jpg):", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kdp_user_uploaded_images")
+        st.caption(f"Ha a Gemini Webes felületén letöltötted a kész 4K képeket ({target_p} db), húzd be őket ide, és az 5. lépésben a ReportLab automatikusan összefűzi a nyomdakész PDF-et:")
+        uploaded_imgs = st.file_uploader(f"Kész képek feltöltése ({target_p} oldalhoz):", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kdp_user_uploaded_images")
         if uploaded_imgs:
             st.session_state["kdp_uploaded_images_list"] = uploaded_imgs
-            st.success(f"✅ {len(uploaded_imgs)} db kép készen áll a PDF összefűzésre!")
+            st.success(f"✅ {len(uploaded_imgs)} db kép feltöltve a {target_p} oldalas kiadványhoz!")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
@@ -525,26 +621,29 @@ def render_kdp_pipeline_wizard(km):
                 st.session_state["kdp_step"] = 3
                 st.rerun()
 
-    # ── 4. LÉPÉS: BORÍTÓ & GERINC ──
+    # ── 4. LÉPÉS: BORÍTÓ & GERINC (PONTOS OLDALSZÁMBÓL SZÁMÍTVA) ──
     elif cur_step == 3:
         render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini Web Imagen motorjával generálod.")
-        st.markdown("#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság")
-        p_count = st.session_state.get("kdp_page_count", 24)
-        cov_calc = calculate_kdp_cover_dimensions(page_count=p_count, trim_size_str="8.5x11", paper_type="white")
+        
+        target_p = st.session_state.get("kdp_page_count", 10)
+        cov_calc = calculate_kdp_cover_dimensions(page_count=target_p, trim_size_str="8.5x11", paper_type="white")
+
+        st.markdown(f"#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság ({target_p} Oldalas Kiadvány)")
 
         c1, c2 = st.columns(2)
         with c1:
             st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#38bdf8;'>📐 Nyomdai Méretek (8.5×11 Bleed):</strong><br>
-                • <strong>Teljes szélesség:</strong> {cov_calc['total_width_in']:.3f} hüvelyk ({cov_calc['pixel_width_300dpi']} px)<br>
-                • <strong>Teljes magasság:</strong> {cov_calc['total_height_in']:.3f} hüvelyk ({cov_calc['pixel_height_300dpi']} px)<br>
-                • <strong>Gerincvastagság:</strong> {cov_calc['spine_width_in']:.4f} hüvelyk<br>
+                <strong style='color:#38bdf8;'>📐 Nyomdai Méretek (8.5×11 Bleed, {target_p} oldal):</strong><br>
+                • <strong>Belső terjedelme:</strong> <span style='color:#10b981; font-weight:800;'>{target_p} oldal</span><br>
+                • <strong>Teljes borítószélesség:</strong> {cov_calc['total_width_in']:.3f} hüvelyk ({cov_calc['pixel_width_300dpi']} px)<br>
+                • <strong>Teljes borítómagasság:</strong> {cov_calc['total_height_in']:.3f} hüvelyk ({cov_calc['pixel_height_300dpi']} px)<br>
+                • <strong>Számított gerincvastagság:</strong> <span style='color:#f59e0b; font-weight:800;'>{cov_calc['spine_width_in']:.4f} hüvelyk</span><br>
                 • <strong>Képarány:</strong> <code>17.412:11.25</code>
             </div>
             """, unsafe_allow_html=True)
         with c2:
-            cov_prompt = build_kdp_cover_master_prompt(f"{st.session_state.get('kdp_title', 'Noah ark')} on calm waters with animals", st.session_state.get('kdp_title', 'BIBLE COLORING BOOK'))
+            cov_prompt = build_kdp_cover_master_prompt(f"{st.session_state.get('kdp_title', current_title)} on calm waters with animals", st.session_state.get('kdp_title', 'BIBLE COLORING BOOK'))
             st.markdown("**Master Prompt Borítóhoz a Gemini Webre:**")
             st.code(cov_prompt, language="text")
 
@@ -562,15 +661,19 @@ def render_kdp_pipeline_wizard(km):
     # ── 5. LÉPÉS: NYOMDAI PDF & FLIPBOOK ──
     elif cur_step == 4:
         render_ai_tool_badge("reportlab", "A nyomdakész 300 DPI PDF belsőt a beépített ReportLab motor automatikusan fűzi össze margókkal és tesztlapokkal.")
-        st.markdown("#### 🖨️ 5. Lépés: KDP Nyomdakész Belső PDF Összeállítása")
-        st.caption("ReportLab nyomdai motor: margók (0.50\"), filcátütés-gátló oldalak, színtesztelő paletta.")
+        
+        target_p = st.session_state.get("kdp_page_count", 10)
+        st.markdown(f"#### 🖨️ 5. Lépés: KDP Nyomdakész Belső PDF Összeállítása ({target_p} Oldal)")
+        st.caption(f"ReportLab nyomdai motor: margók (0.50\"), filcátütés-gátló tesztlapok, {target_p} db belső illusztráció.")
 
-        scenes = st.session_state.get("kdp_scenes_manifest", [])
-        if st.button("🚀 Nyomdakész KDP Belső PDF Összefűzése (ReportLab)", type="primary", use_container_width=True):
-            with st.spinner("PDF összeállítása margókkal és kísérő oldalakkal..."):
+        raw_scenes = st.session_state.get("kdp_scenes_manifest", [])
+        scenes = ensure_exact_page_count(raw_scenes, target_p, is_hu, "")
+
+        if st.button(f"🚀 Nyomdakész KDP Belső PDF Összefűzése ({target_p} oldal)", type="primary", use_container_width=True):
+            with st.spinner(f"PDF összeállítása mind a(z) {target_p} oldalhoz margókkal és tesztlapokkal..."):
                 pdf_bytes = build_kdp_book_pdf(
                     scenes=scenes,
-                    book_title=st.session_state.get("kdp_title", "Coloring Book"),
+                    book_title=st.session_state.get("kdp_title", current_title),
                     margin_in=0.5,
                     show_frame=True,
                     show_swatches=True,
@@ -578,13 +681,13 @@ def render_kdp_pipeline_wizard(km):
                 )
                 if pdf_bytes:
                     st.session_state["final_kdp_pdf_bytes"] = pdf_bytes
-                    st.success("🎉 Nyomdakész PDF sikeresen elkészült!")
+                    st.success(f"🎉 Nyomdakész {target_p} oldalas KDP PDF sikeresen elkészült!")
 
         if "final_kdp_pdf_bytes" in st.session_state:
             st.download_button(
-                "📥 Nyomdakész KDP PDF Letöltése (.pdf)",
+                f"📥 Nyomdakész KDP PDF Letöltése ({target_p} oldal, .pdf)",
                 data=st.session_state["final_kdp_pdf_bytes"],
-                file_name=f"{st.session_state.get('kdp_title', 'Coloring_Book').replace(' ', '_')}_KDP_Interior.pdf",
+                file_name=f"{st.session_state.get('kdp_title', 'Coloring_Book').replace(' ', '_')}_{target_p}p_KDP_Interior.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
