@@ -660,7 +660,8 @@ def render_kdp_pipeline_wizard(km):
         render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini Web Imagen motorjával generálod." if is_hu else "The wrap-around cover is calculated with KDP math and generated on Gemini Web.")
         
         target_p = st.session_state.get("kdp_page_count", 10)
-        cov_calc = calculate_kdp_cover_dimensions(page_count=target_p, trim_size_str="8.5x11", paper_type="white")
+        cur_trim = st.session_state.get("kdp_trim", "8.5x11")
+        cov_calc = calculate_kdp_cover_dimensions(page_count=target_p, trim_size=cur_trim, paper_type="white")
 
         st.markdown(f"#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság ({target_p} Oldalas Kiadvány)" if is_hu else f"#### 📐 Step 4: KDP Wrap-Around Cover & Spine Dimensions ({target_p} Pages)")
 
@@ -713,13 +714,20 @@ def render_kdp_pipeline_wizard(km):
         if st.button(f"🚀 {'Nyomdai KDP Belső PDF Generálása' if is_hu else 'Generate Print-Ready KDP Interior PDF'} ({current_pages}p)", type="primary", use_container_width=True):
             with st.spinner("ReportLab motor fordítja a nyomdai PDF-et..." if is_hu else "ReportLab compiling interior PDF..."):
                 scenes = st.session_state.get("kdp_scenes_manifest", [])
-                pdf_bytes = build_kdp_book_pdf(
+                pdf_res = build_kdp_book_pdf(
                     book_title=st.session_state.get('kdp_title', current_title),
                     scenes=scenes,
                     uploaded_images=uploaded_list,
-                    trim_size_str="8.5x11",
+                    trim_size_str=st.session_state.get("kdp_trim", "8.5x11"),
                     is_hu=is_hu
                 )
+                if isinstance(pdf_res, tuple):
+                    ok_pdf, pdf_bytes, msg_pdf = pdf_res
+                    if not ok_pdf:
+                        st.error(msg_pdf)
+                else:
+                    pdf_bytes = pdf_res
+
                 st.session_state["kdp_final_pdf_bytes"] = pdf_bytes
                 st.success(f"🎉 {'Nyomdakész KDP Belső PDF sikeresen elkészült!' if is_hu else 'Print-ready KDP Interior PDF successfully generated!'}")
 

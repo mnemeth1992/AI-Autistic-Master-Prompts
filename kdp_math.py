@@ -61,7 +61,9 @@ def calculate_kdp_cover_dimensions(
     page_count: int,
     trim_size: str = "8.5x11",
     paper_type: str = "white",
-    binding_type: str = "paperback"
+    binding_type: str = "paperback",
+    trim_size_str: str = None,
+    **kwargs
 ) -> Dict[str, Any]:
     """
     Calculates exact Amazon KDP cover specifications:
@@ -83,8 +85,8 @@ def calculate_kdp_cover_dimensions(
         p_type_clean = "white"
         
     is_hardcover = "hardcover" in binding_type.lower() or "kemény" in binding_type.lower()
-    binding_key = "hardcover" if is_hardcover else "paperback"
-    
+    if trim_size_str:
+        trim_size = trim_size_str
     trim_w, trim_h = parse_trim_size(trim_size)
     multiplier = PAPER_MULTIPLIERS.get(p_type_clean, 0.002252)
     

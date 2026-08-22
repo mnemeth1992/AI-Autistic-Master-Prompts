@@ -521,9 +521,9 @@ def draw_bleed_protection_page(
 
 
 def build_kdp_book_pdf(
-    title: str,
-    subtitle: str,
-    pages_data: List[Dict[str, Any]],
+    title: str = "Christian Coloring Book",
+    subtitle: str = "Bible Verse Coloring",
+    pages_data: List[Dict[str, Any]] = None,
     output_path: Optional[str] = None,
     trim_size: str = "8.5x11",
     margin_in: float = 0.5,
@@ -533,11 +533,38 @@ def build_kdp_book_pdf(
     show_footer_text: bool = True,
     include_companion_pages: bool = True,
     include_bleed_protection: bool = True,
-    include_swatches_tester: bool = True
+    include_swatches_tester: bool = True,
+    book_title: str = None,
+    scenes: List[Dict[str, Any]] = None,
+    uploaded_images: List[Any] = None,
+    trim_size_str: str = None,
+    is_hu: bool = True,
+    **kwargs
 ) -> Tuple[bool, bytes, str]:
     """Assembles a publication-ready Amazon KDP coloring book PDF."""
     if not REPORTLAB_AVAILABLE:
         return False, b"", "⚠️ A 'reportlab' csomag nincs telepítve a környezetben!"
+
+    if book_title:
+        title = book_title
+    if trim_size_str:
+        trim_size = trim_size_str
+    if pages_data is None:
+        pages_data = [dict(s) for s in (scenes or [])]
+    else:
+        pages_data = [dict(s) for s in pages_data]
+
+    if uploaded_images:
+        for idx, up_img in enumerate(uploaded_images):
+            if idx < len(pages_data):
+                try:
+                    if hasattr(up_img, "read"):
+                        up_img.seek(0)
+                        pages_data[idx]["image_bytes"] = up_img.read()
+                    elif isinstance(up_img, (bytes, bytearray)):
+                        pages_data[idx]["image_bytes"] = up_img
+                except Exception:
+                    pass
 
     try:
         pw, ph, margin, cw, ch = get_kdp_page_metrics(trim_size, margin_in=margin_in)
