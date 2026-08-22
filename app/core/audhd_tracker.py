@@ -4,7 +4,7 @@ AuDHD 120-Minute Focus Timer, Phase Tracker & Streak Calendar Engine
 Designed specifically for neurodivergent (AuDHD) asynchronous workflows:
   - Permanent, non-collapsing top dashboard with giant real-time ticking LED clock.
   - Emerald Green (< 120m) -> Fiery Red when overtime (> 120m).
-  - Section 8 NotebookLM-integrated 5-day daily task checklist with clear AI Tool Badges.
+  - Synchronous 7-day selector with instant day switching and persistent tasks.
   - Persistence of focus streaks in `time_log.json`.
 """
 
@@ -51,10 +51,10 @@ AUDHD_DAY_PLANS = {
         "description": "2 órás mélyfókusz: 8.5x11 4K fekete-fehér színezők, 4:5 faliképek, clipart csomagok és többkörös háttéreltávolítás.",
         "target_minutes": 120,
         "tasks": [
-            "🎨 1. [⚡ Pollinations FLUX] KDP Színező oldalak generálása 4K Master Prompttal (45 perc)",
-            "🖼️ 2. [⚡ Pollinations FLUX] Etsy 4:5 Skandináv eukaliptusz faliképek generálása (30 perc)",
-            "✂️ 3. [⚡ Pollinations FLUX] Clipart illusztrációk generálása fehér háttérrel (25 perc)",
-            "✨ 4. [💎 Gemini] Többkörös beszélgetős háttéreltávolítás (Transparent PNG) (10 perc)",
+            "🎨 1. [💎 Gemini Web] KDP Színező oldalak generálása Custom Gemmel (45 perc)",
+            "🖼️ 2. [💎 Gemini Web] Etsy 4:5 Skandináv eukaliptusz faliképek generálása (30 perc)",
+            "✂️ 3. [💎 Gemini Web] Clipart illusztrációk generálása fehér háttérrel (25 perc)",
+            "✨ 4. [💎 Gemini Web] Többkörös beszélgetős háttéreltávolítás (Transparent PNG) (10 perc)",
             "📁 5. [💾 Drive] Képek mentése és rendszerezése a projektmappákba (10 perc)"
         ]
     },
@@ -227,8 +227,15 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
     components.html(html_code, height=115)
 
 
+def on_day_select_change():
+    """Instant callback when user clicks a different day."""
+    sel = st.session_state.get("top_audhd_day_select")
+    if sel:
+        st.session_state["audhd_selected_day"] = sel
+
+
 def render_audhd_tracker():
-    """Renders permanent top dashboard bar with giant live green/red clock that never collapses."""
+    """Renders permanent top dashboard bar with live green/red clock and synchronous day switcher."""
     if "timer_running" not in st.session_state:
         st.session_state["timer_running"] = False
     if "timer_elapsed_seconds" not in st.session_state:
@@ -238,15 +245,16 @@ def render_audhd_tracker():
     if "audhd_selected_day" not in st.session_state:
         st.session_state["audhd_selected_day"] = get_today_hungarian_day()
 
+    # Synchronize day state immediately
+    current_selected_day = st.session_state.get("audhd_selected_day", get_today_hungarian_day())
+    cur_plan = AUDHD_DAY_PLANS.get(current_selected_day, AUDHD_DAY_PLANS["Hétfő"])
+
     cur_secs = get_current_timer_seconds()
     timer_hms = format_seconds_to_hms(cur_secs)
     target_secs = 120 * 60
     progress = min(1.0, max(0.0, cur_secs / target_secs))
 
-    today_day = get_today_hungarian_day()
-    day_plan = AUDHD_DAY_PLANS.get(st.session_state["audhd_selected_day"], AUDHD_DAY_PLANS["Hétfő"])
-
-    # ── PERMANENS FELSŐ FÓKUSZ KÁRTYA (SOSEM CSÚKÓDIK ÖSSZE) ──
+    # ── PERMANENS FELSŐ FÓKUSZ KÁRTYA (MINDIG NYITVA, AZONNALI SZINKRON) ──
     st.markdown("""
     <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85)); border: 1.5px solid #1e293b; border-radius: 14px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);'>
     """, unsafe_allow_html=True)
@@ -297,24 +305,27 @@ def render_audhd_tracker():
                     st.warning("Legalább 1 perc szükséges a mentéshez.")
 
     with col_info:
-        st.markdown(f"<div style='font-size:1.15rem; font-weight:800; color:#38bdf8;'>⏱️ AuDHD 120-Perces Mélyfókusz Időzítő</div>", unsafe_allow_html=True)
-        st.markdown(f"**Mai Fókusz ({today_day}):** `{day_plan.get('title')}`")
+        top_c1, top_c2 = st.columns([1.2, 1.0])
+        with top_c1:
+            st.markdown(f"<div style='font-size:1.1rem; font-weight:800; color:#38bdf8;'>⏱️ AuDHD 120-Perces Mélyfókusz</div>", unsafe_allow_html=True)
+            st.markdown(f"**Aktuális Nap:** `{cur_plan.get('title')}`")
+        with top_c2:
+            sel_day = st.selectbox(
+                "📅 Válassz Napot:",
+                options=HUNGARIAN_DAYS,
+                index=HUNGARIAN_DAYS.index(current_selected_day),
+                key="top_audhd_day_select",
+                on_change=on_day_select_change
+            )
+
         st.caption(f"Haladás: {int(progress * 100)}% ({timer_hms} / 02:00:00)")
         st.progress(progress)
 
-        with st.expander(f"📋 {st.session_state['audhd_selected_day']}i Timeboxing Feladatlista (Kattints a lenyitáshoz)", expanded=False):
-            sel_day = st.selectbox(
-                "Nap kiválasztása:",
-                options=HUNGARIAN_DAYS,
-                index=HUNGARIAN_DAYS.index(st.session_state["audhd_selected_day"]),
-                key="top_audhd_day_select"
-            )
-            st.session_state["audhd_selected_day"] = sel_day
-            cur_plan = AUDHD_DAY_PLANS[sel_day]
-
+        # Permanensen látható feladatlista (sosem csukódik be magától!)
+        with st.expander(f"📋 {current_selected_day}i 2 Órás Timeboxing Ellenőrzőlista (Kattints a nyitáshoz/záráshoz)", expanded=True):
             tasks = cur_plan.get("tasks", [])
             for t_idx, task_text in enumerate(tasks):
-                task_key = f"task_{sel_day}_{t_idx}"
+                task_key = f"task_{current_selected_day}_{t_idx}"
                 st.checkbox(task_text, key=task_key)
 
     st.markdown("</div>", unsafe_allow_html=True)
