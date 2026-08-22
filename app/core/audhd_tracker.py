@@ -4,7 +4,7 @@ AuDHD 120-Minute Focus Timer, Phase Tracker & Streak Calendar Engine
 Designed specifically for neurodivergent (AuDHD) asynchronous workflows:
   - Permanent, non-collapsing top dashboard with giant real-time ticking LED clock.
   - Emerald Green (< 120m) -> Fiery Red when overtime (> 120m).
-  - Section 8 NotebookLM-integrated 5-day daily task checklist in collapsible drawer.
+  - Section 8 NotebookLM-integrated 5-day daily task checklist with clear AI Tool Badges.
   - Persistence of focus streaks in `time_log.json`.
 """
 
@@ -25,11 +25,11 @@ AUDHD_DAY_PLANS = {
         "description": "2 órás mélyfókusz: Amazon/Etsy kulcsszókutatás, 100% pontos KJV igehely- és jelenetkutatás, versenytársi Review Mining.",
         "target_minutes": 120,
         "tasks": [
-            "🎯 1. Amazon KDP és Etsy kulcsszókutatás (High Volume, Low Competition) (30 perc)",
-            "📖 2. KJV Biblia feltöltése és 30 jelenet/ige kinyerése NotebookLM-ben (30 perc)",
-            "⭐ 3. Top versenytársak 1-3 csillagos értékeléseinek Review Mining elemzése (30 perc)",
-            "📁 4. Piaci hibák és 5 kiemelkedő termékelőny mentése a projektbe (15 perc)",
-            "📋 5. Heti termékspecifikációk véglegesítése a NotebookLM RAG fülön (15 perc)"
+            "🎯 1. [🌐 Amazon/Etsy] Kulcsszókutatás (High Volume, Low Competition) (30 perc)",
+            "📖 2. [📓 NotebookLM] KJV Biblia feltöltése és 30 jelenet/ige kinyerése (30 perc)",
+            "⭐ 3. [📓 NotebookLM] Top versenytársak 1-3 csillagos Review Mining elemzése (30 perc)",
+            "📁 4. [💾 Drive] Piaci hibák és 5 kiemelkedő termékelőny mentése a projektbe (15 perc)",
+            "📋 5. [📓 NotebookLM] Heti termékspecifikációk véglegesítése a RAG fülön (15 perc)"
         ]
     },
     "Kedd": {
@@ -38,11 +38,11 @@ AUDHD_DAY_PLANS = {
         "description": "2 órás mélyfókusz: 30 napos teológiai mátrix felépítése forrásokból, Gemini Advanced Master Prompt futtatás.",
         "target_minutes": 120,
         "tasks": [
-            "🕊️ 1. Teológiai jegyzetek és könyvek feltöltése NotebookLM jegyzetfüzetbe (20 perc)",
-            "📑 2. 30 napos táblázatos mátrix legenerálása operatív prompttal (40 perc)",
-            "💎 3. Gemini Advanced Master Prompt futtatása a mátrix soraihoz (40 perc)",
-            "✍️ 4. 200 szavas reflexiók, imádságok és 3 önreflexiós kérdés finomhangolása (10 perc)",
-            "💾 5. Kész kézirat mentése Google Docs-ba és a Drive 05_GUMROAD mappába (10 perc)"
+            "🕊️ 1. [📓 NotebookLM] Teológiai források feltöltése a jegyzetfüzetbe (20 perc)",
+            "📑 2. [📓 NotebookLM] 30 napos táblázatos mátrix legenerálása prompttal (40 perc)",
+            "💎 3. [💎 Gemini Advanced] Master Prompt futtatása a mátrix soraihoz (40 perc)",
+            "✍️ 4. [💎 Gemini Advanced] 200 szavas reflexiók, imák és 3 kérdés finomhangolása (10 perc)",
+            "💾 5. [💾 Drive/Docs] Kész kézirat mentése a 05_GUMROAD mappába (10 perc)"
         ]
     },
     "Szerda": {
@@ -51,11 +51,11 @@ AUDHD_DAY_PLANS = {
         "description": "2 órás mélyfókusz: 8.5x11 4K fekete-fehér színezők, 4:5 faliképek, clipart csomagok és többkörös háttéreltávolítás.",
         "target_minutes": 120,
         "tasks": [
-            "🎨 1. KDP Színező belső oldalak generálása 4K Master Prompttal (45 perc)",
-            "🖼️ 2. Etsy 4:5 Skandináv eukaliptusz igés faliképek generálása (30 perc)",
-            "✂️ 3. Clipart illusztrációk generálása tiszta fehér háttérrel (25 perc)",
-            "✨ 4. Többkörös beszélgetős háttéreltávolítás (Transparent PNG) (10 perc)",
-            "📁 5. Képek mentése és rendszerezése a Google Drive projektmappákba (10 perc)"
+            "🎨 1. [⚡ Pollinations FLUX] KDP Színező oldalak generálása 4K Master Prompttal (45 perc)",
+            "🖼️ 2. [⚡ Pollinations FLUX] Etsy 4:5 Skandináv eukaliptusz faliképek generálása (30 perc)",
+            "✂️ 3. [⚡ Pollinations FLUX] Clipart illusztrációk generálása fehér háttérrel (25 perc)",
+            "✨ 4. [💎 Gemini] Többkörös beszélgetős háttéreltávolítás (Transparent PNG) (10 perc)",
+            "📁 5. [💾 Drive] Képek mentése és rendszerezése a projektmappákba (10 perc)"
         ]
     },
     "Csütörtök": {
@@ -64,11 +64,11 @@ AUDHD_DAY_PLANS = {
         "description": "2 órás mélyfókusz: ReportLab nyomdakész KDP belső PDF összeállítása, borító méretezés és Etsy ZIP csomagolás.",
         "target_minutes": 120,
         "tasks": [
-            "📖 1. KDP belső PDF összeállítása filcátütés-gátló lapokkal és margókkal (40 perc)",
-            "🎨 2. KDP 17.412:11.25 arányú Wrap-Around borító generálása és méretezése (35 perc)",
-            "🛍️ 3. Etsy digitális falikép méretcsomagok (4:5, 3:4, 2:3, 1:1) és mockupok készítése (25 perc)",
-            "📦 4. Clipart PNG ZIP csomagok és vásárlói útmutatók összeállítása (10 perc)",
-            "💾 5. Nyomdakész és letöltendő fájlok mentése a Drive mappákba (10 perc)"
+            "📖 1. [🖨️ ReportLab] KDP belső PDF összefűzése margókkal és tesztlapokkal (40 perc)",
+            "🎨 2. [💎 Gemini / Canva] KDP 17.412:11.25 Wrap-Around borító generálása (35 perc)",
+            "🛍️ 3. [📐 Canva / ZIP] Etsy falikép méretcsomagok (4:5, 3:4, 2:3) készítése (25 perc)",
+            "📦 4. [📐 ZIP] Clipart PNG csomagok és vásárlói útmutató összeállítása (10 perc)",
+            "💾 5. [💾 Drive] Nyomdakész és letöltendő fájlok mentése a Drive-ba (10 perc)"
         ]
     },
     "Péntek": {
@@ -77,11 +77,11 @@ AUDHD_DAY_PLANS = {
         "description": "2 órás mélyfókusz: Termékfeltöltések, Pinterest passzív SEO leírások és NotebookLM Audio Devotional ($29->$39) generálás.",
         "target_minutes": 120,
         "tasks": [
-            "🛍️ 1. Amazon KDP és Etsy termékek feltöltése 13 SEO taggel és leírással (40 perc)",
-            "📌 2. Pinterest passzív SEO címek, leírások és közvetlen linkes pinek készítése (20 perc)",
-            "🎙️ 3. NotebookLM Audio Overview (Deep Dive podcast MP3) generálása a kéziratból (35 perc)",
-            "💰 4. Gumroad termék publikálás + Audio Companion prémium upsell ($39) beállítása (15 perc)",
-            "🏆 5. Heti fókuszblokkok értékelése és felkészülés a képernyőmentes hétvégére (10 perc)"
+            "🛍️ 1. [🛍️ KDP / Etsy] Termékek feltöltése 13 SEO taggel és leírással (40 perc)",
+            "📌 2. [📌 Pinterest] Passzív SEO címek, leírások és közvetlen linkes pinek (20 perc)",
+            "🎙️ 3. [📓 NotebookLM] Audio Overview (Deep Dive MP3 podcast) generálása (35 perc)",
+            "💰 4. [🛍️ Gumroad] Termék publikálás + Audio Companion ($39) upsell (15 perc)",
+            "🏆 5. [⏱️ Időnapló] Heti fókuszblokkok értékelése és felkészülés a hétvégére (10 perc)"
         ]
     },
     "Szombat": {

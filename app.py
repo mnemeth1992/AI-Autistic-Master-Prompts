@@ -214,6 +214,61 @@ def render_stepper(steps: list, current_step_idx: int):
     st.markdown("<br>", unsafe_allow_html=True)
 
 
+def render_ai_tool_badge(tool_type: str, note: str = ""):
+    """Renders a large, prominent, unmistakable visual badge indicating the exact AI tool to use."""
+    t_lower = tool_type.lower()
+    if "notebooklm" in t_lower:
+        bg = "linear-gradient(135deg, #4c1d95 0%, #6d28d9 100%)"
+        border = "#a78bfa"
+        icon = "📓"
+        name = "GOOGLE NOTEBOOKLM (RAG Forrásalapú Kutató & Podcast)"
+        action_url = "https://notebooklm.google.com"
+        btn_text = "🚀 NotebookLM Megnyitása"
+    elif "gemini" in t_lower:
+        bg = "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)"
+        border = "#60a5fa"
+        icon = "💎"
+        name = "GOOGLE GEMINI ADVANCED (Kreatív Szöveg & Képszerkesztő)"
+        action_url = "https://gemini.google.com"
+        btn_text = "🚀 Gemini Megnyitása"
+    elif "flux" in t_lower:
+        bg = "linear-gradient(135deg, #064e3b 0%, #059669 100%)"
+        border = "#34d399"
+        icon = "⚡"
+        name = "POLLINATIONS FLUX.1 (300 DPI Nyomdai Képmotor)"
+        action_url = None
+        btn_text = ""
+    elif "reportlab" in t_lower or "pdf" in t_lower:
+        bg = "linear-gradient(135deg, #78350f 0%, #d97706 100%)"
+        border = "#fbbf24"
+        icon = "🖨️"
+        name = "REPORTLAB NYOMDAI MOTOR (Automatikus KDP PDF)"
+        action_url = None
+        btn_text = ""
+    else:
+        bg = "linear-gradient(135deg, #1e293b 0%, #334155 100%)"
+        border = "#94a3b8"
+        icon = "🛠️"
+        name = tool_type.upper()
+        action_url = None
+        btn_text = ""
+
+    html = f"""
+    <div style='background: {bg}; border: 2px solid {border}; border-radius: 12px; padding: 12px 18px; margin: 10px 0 16px 0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 14px rgba(0,0,0,0.35);'>
+        <div style='display:flex; align-items:center; gap: 14px;'>
+            <span style='font-size: 2.2rem;'>{icon}</span>
+            <div>
+                <div style='font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.85); font-weight: 800;'>🎯 HASZNÁLANDÓ AI ESZKÖZ / RECOMMENDED AI TOOL</div>
+                <div style='font-size: 1.15rem; font-weight: 900; color: #ffffff;'>{name}</div>
+                {f"<div style='font-size:0.84rem; color:rgba(255,255,255,0.95); margin-top:3px;'>💡 {note}</div>" if note else ""}
+            </div>
+        </div>
+        {f"<a href='{action_url}' target='_blank' style='background: rgba(255,255,255,0.22); border: 1.5px solid rgba(255,255,255,0.5); color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.2);'>{btn_text} ↗</a>" if action_url else ""}
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+
+
 # ─────────────────────────────────────────────────────────────
 # NYELVVÁLTÁSI CALLBACK FÜGGVÉNYEK (AZONNALI MEZŐFRISSÍTÉS)
 # ─────────────────────────────────────────────────────────────
@@ -275,7 +330,6 @@ def render_kdp_pipeline_wizard(km):
         )
     is_hu = "Magyar" in kdp_lang
 
-    # Alapértékek inicializálása ha még nincsenek beállítva
     if "wiz_kdp_title" not in st.session_state:
         st.session_state["wiz_kdp_title"] = "Noé Bárkája Bibliai Kalandok" if is_hu else "Noah's Ark Bible Adventures"
     if "wiz_kdp_sub" not in st.session_state:
@@ -297,6 +351,7 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 1. LÉPÉS: NICHE & ÖTLET ──
     if cur_step == 0:
+        render_ai_tool_badge("gemini", "A könyvcím, alcím és célközönség meghatározásához használd a Geminit vagy az app beépített 22 Niche sablonjait.")
         st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím és Formátum")
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
@@ -323,6 +378,7 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: VÁZLAT & KJV IGÉK ──
     elif cur_step == 1:
+        render_ai_tool_badge("notebooklm", "A KJV Biblia feltöltve a NotebookLM-be hallucinációmentes igehelyeket és jeleneteket biztosít ➔ ezt fejtjük ki a Geminivel.")
         st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title', st.session_state.get('wiz_kdp_title'))}' Sorszámozott Vázlata")
         st.caption(f"AI generálja a pontos bibliai igehelyeket és 4K képgeneráló promptokat ({'Magyarul' if is_hu else 'Angolul'}).")
 
@@ -372,6 +428,7 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 3. LÉPÉS: KÉPGENERÁLÁS ──
     elif cur_step == 2:
+        render_ai_tool_badge("flux", "A 8.5x11 4K fekete-fehér színező oldalakat a beépített Pollinations FLUX.1 vagy a Gemini Web generálja.")
         st.markdown("#### 🎨 3. Lépés: 4K Színező Képek Generálása (FLUX / Gemini)")
         scenes = st.session_state.get("kdp_scenes_manifest", [{"visual_prompt": build_kdp_coloring_interior_master_prompt("Noah with animals")}])
         
@@ -406,6 +463,7 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 4. LÉPÉS: BORÍTÓ & GERINC ──
     elif cur_step == 3:
+        render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini / FLUX generálja.")
         st.markdown("#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság")
         p_count = st.session_state.get("kdp_page_count", 24)
         cov_calc = calculate_kdp_cover_dimensions(page_count=p_count, trim_size_str="8.5x11", paper_type="white")
@@ -439,6 +497,7 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 5. LÉPÉS: NYOMDAI PDF & FLIPBOOK ──
     elif cur_step == 4:
+        render_ai_tool_badge("reportlab", "A nyomdakész 300 DPI PDF belsőt a beépített ReportLab motor automatikusan fűzi össze margókkal és tesztlapokkal.")
         st.markdown("#### 🖨️ 5. Lépés: KDP Nyomdakész Belső PDF Összeállítása")
         st.caption("ReportLab nyomdai motor: margók (0.50\"), filcátütés-gátló oldalak, színtesztelő paletta.")
 
@@ -496,7 +555,6 @@ def render_etsy_pipeline_wizard(km):
         )
     is_hu = "Magyar" in etsy_lang
 
-    # Alapértékek inicializálása ha még nincsenek beállítva
     if "wiz_etsy_ref" not in st.session_state:
         st.session_state["wiz_etsy_ref"] = "Zsoltárok 23:3" if is_hu else "Psalm 23:3"
     if "wiz_etsy_verse" not in st.session_state:
@@ -517,6 +575,7 @@ def render_etsy_pipeline_wizard(km):
 
     # ── 1. LÉPÉS: KONCEPCIÓ & IGE ──
     if cur_step == 0:
+        render_ai_tool_badge("notebooklm", "A szó szerinti, pontos bibliai igéket a forrásalapú NotebookLM jegyzetfüzetből emeljük át.")
         st.markdown("#### 🌿 1. Lépés: Terméktípus és Bibliai Igehely")
         p_type = st.radio("Terméktípus:", ["🖼️ Skandináv Igés Falikép (4:5 Wall Art)", "✂️ Chibi / Akvarell Clipart Csomag (Fehér Háttér)"], key="wiz_etsy_ptype")
         st.session_state["etsy_is_clipart"] = "Clipart" in p_type
@@ -543,6 +602,7 @@ def render_etsy_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: VIZUÁLIS GENERÁLÁS ──
     elif cur_step == 1:
+        render_ai_tool_badge("flux", "A 4:5 Skandináv faliképeket és a Chibi clipart illusztrációkat a FLUX.1 300 DPI motor generálja.")
         st.markdown("#### 🎨 2. Lépés: FLUX 300 DPI Képgenerálás")
         is_clipart = st.session_state.get("etsy_is_clipart", False)
         
@@ -583,6 +643,7 @@ def render_etsy_pipeline_wizard(km):
 
     # ── 3. LÉPÉS: HÁTTÉRELTÁVOLÍTÁS ──
     elif cur_step == 2:
+        render_ai_tool_badge("gemini", "A többkörös beszélgetős háttéreltávolításhoz (Transparent PNG) a Gemini Web képszerkesztőjét használjuk.")
         st.markdown("#### ✨ 3. Lépés: Többkörös Beszélgetős Háttéreltávolítás (PNG)")
         st.caption("Használd a Gemini Conversational Editing funkciót a fehér háttér azonnali átlátszóvá tételéhez.")
 
@@ -609,6 +670,7 @@ def render_etsy_pipeline_wizard(km):
 
     # ── 4. LÉPÉS: 2026 SEO & CSV ──
     elif cur_step == 3:
+        render_ai_tool_badge("gemini", "A szigorú 2026-os Etsy SEO címeket (140 kar) és a 13 tag-et a Gemini / Groq és a beépített CSV motor készíti.")
         st.markdown("#### 🛍️ 4. Lépés: Szigorú 2026-os Etsy SEO & 1-Kattintásos CSV Export")
         st.caption(f"Cím <= 140 karakter, pontosan 13 tag (egyenként <= 20 karakter!), FFC leírás Drive szállítással ({'Magyarul' if is_hu else 'Angolul'}).")
 
@@ -676,7 +738,6 @@ def render_gumroad_pipeline_wizard(km):
         )
     is_hu = "Magyar" in gum_lang
 
-    # Alapértékek inicializálása ha még nincsenek beállítva
     if "wiz_gum_title" not in st.session_state:
         st.session_state["wiz_gum_title"] = "30 Napos Békesség a Viharban Áhítat" if is_hu else "30 Days of Peace in the Storm Devotional Journal"
     if "wiz_gum_matrix" not in st.session_state:
@@ -697,6 +758,7 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 1. LÉPÉS: NOTEBOOKLM RAG ──
     if cur_step == 0:
+        render_ai_tool_badge("notebooklm", "A 30 napos teológiai mátrix táblázatot [Nap | Ige | Tanítás | 3 Kérdés] a forrásalapú NotebookLM építi fel.")
         st.markdown("#### 📓 1. Lépés: Forrásalapú Teológiai Mátrix & KJV Kutatás")
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
@@ -721,6 +783,7 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: NAPI KÉZIRAT & IMA ──
     elif cur_step == 1:
+        render_ai_tool_badge("gemini", "A 200 szavas mély lelkigondozói reflexiókat, imákat és naplókérdéseket a Gemini Advanced Master Prompt fejti ki.")
         st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day', 1)}. Napi Áhítat Kifejtése (Gemini Master Prompt)")
         
         if st.button(f"✨ Napi Áhítat Generálása ({'Magyarul' if is_hu else 'Angolul'})", type="primary", use_container_width=True):
@@ -754,6 +817,7 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 3. LÉPÉS: SALES COPY & AUDIO UPSELL ($39) ──
     elif cur_step == 2:
+        render_ai_tool_badge("notebooklm", "A 10-15 perces Deep Dive Audio Overview (két műsorvezetős MP3 podcast) bónuszt a NotebookLM generálja ($39 upsell).")
         st.markdown("#### 📜 3. Lépés: Russell Brunson Sales Letter & Audio Upsell ($39)")
         st.caption("A NotebookLM Deep Dive Audio Overview (15 perces MP3 podcast) bónusz $29-ról $39-ra emeli a csomagárat (+$10 tiszta profit).")
 
@@ -780,6 +844,7 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 4. LÉPÉS: GUMROAD PUBLIKÁLÁS ──
     elif cur_step == 3:
+        render_ai_tool_badge("gemini", "A termék 1-kattintással közvetlenül publikálható a Gumroad API v2-n keresztül.")
         st.markdown("#### 🚀 4. Lépés: 1-Kattintásos Gumroad API Publikálás")
         p_title = st.session_state.get("gum_dev_title", st.session_state.get("wiz_gum_title", "30 Napos Keresztény Áhítat Csomag"))
         p_price = st.number_input("Termék Ára ($ USD):", min_value=9, max_value=99, value=39)
@@ -903,7 +968,7 @@ def main():
         summary = km.get_summary()
         st.caption(f"⚡ AI Motor: {'Groq' if summary.get('has_groq') else 'FLUX / Offline'}")
 
-    # ── AuDHD 120-Perces Időzítő a főoldal legtetején lenyitható panelben ──
+    # ── Permanens AuDHD 120-Perces Időzítő a legfelső fejlécben ──
     if render_audhd_tracker:
         render_audhd_tracker()
 
