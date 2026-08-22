@@ -229,6 +229,29 @@ def ensure_exact_page_count(scenes: List[Dict[str, Any]], target_count: int, is_
 def inject_zen_css():
     st.markdown("""
     <style>
+    /* Felső felesleges Streamlit sáv, Share gomb, menü és toolbar teljes elrejtése */
+    header[data-testid="stHeader"],
+    .stAppHeader,
+    #MainMenu,
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    .viewerBadge_container,
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+        min-height: 0px !important;
+        padding: 0px !important;
+        margin: 0px !important;
+    }
+
+    /* Tiszta, fentről induló tartalom (eltünteti a felesleges felső üres helyet) */
+    .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
     /* Alap háttér és betűtípus */
     .stApp {
         background-color: #0f172a !important;
