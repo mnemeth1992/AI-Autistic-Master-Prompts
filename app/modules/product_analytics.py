@@ -2,7 +2,7 @@
 Termék Piac & Értékesítési Analytics Modul
 =========================================
 Termékszintű értékesítési kimutatások, bestseller rangsor, eladott darabszámok,
-bevételmegoszlás és AuDHD skálázási javaslatok (Amazon KDP, Etsy, Gumroad).
+bevételmegoszlás, termékszerkesztés, egyenkénti és tömeges törlés (Amazon KDP, Etsy, Gumroad).
 """
 
 import os
@@ -28,19 +28,9 @@ def fmt_huf(val: float) -> str:
     return f"{int(round(val)):,} Ft".replace(",", " ")
 
 
-def load_product_catalog() -> List[Dict[str, Any]]:
-    """Loads the persistent product sales and performance catalog."""
-    if os.path.exists(PRODUCT_SALES_FILE):
-        try:
-            with open(PRODUCT_SALES_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if data:
-                    return data
-        except Exception:
-            pass
-
-    # Default Christian Product Portfolio Benchmarks
-    default_catalog = [
+def get_default_demo_catalog() -> List[Dict[str, Any]]:
+    """Returns the default Christian benchmark product catalog."""
+    return [
         {
             "id": "prod-kdp-01",
             "name": "Noé Bárkája Bibliai Kalandok Színezőkönyv",
@@ -122,6 +112,21 @@ def load_product_catalog() -> List[Dict[str, Any]]:
             "notes": "Fekete-fehér vonalrajz, 20 jelenet, bátorító igékkel"
         }
     ]
+
+
+def load_product_catalog() -> List[Dict[str, Any]]:
+    """Loads the persistent product sales and performance catalog."""
+    if os.path.exists(PRODUCT_SALES_FILE):
+        try:
+            with open(PRODUCT_SALES_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        except Exception:
+            pass
+
+    # Initialize with default benchmarks on first start
+    default_catalog = get_default_demo_catalog()
     save_product_catalog(default_catalog)
     return default_catalog
 
@@ -153,7 +158,7 @@ def render_product_analytics_module():
         cat_totals[cat] = cat_totals.get(cat, 0.0) + p.get("total_revenue_huf", 0.0)
         cat_units[cat] = cat_units.get(cat, 0) + p.get("units_sold", 0)
 
-    top_cat = max(cat_totals.items(), key=lambda x: x[1])[0] if cat_totals else "N/A"
+    top_cat = max(cat_totals.items(), key=lambda x: x[1])[0] if cat_totals else "Nincs még termék"
 
     # Header Banner
     header_html = f"""<div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.95)); border: 1.5px solid #10b981; border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);'>
@@ -177,35 +182,41 @@ def render_product_analytics_module():
     with k2:
         st.metric("Összesített Termékbevétel", fmt_huf(total_revenue_huf), delta="Bruttó forgalom")
     with k3:
-        st.metric("🥇 #1 Bestseller Termék", top_product.get("name", "N/A")[:22] + "...", delta=f"{top_product.get('units_sold', 0)} db ({fmt_huf(top_product.get('total_revenue_huf', 0))})")
+        if top_product:
+            st.metric("🥇 #1 Bestseller Termék", top_product.get("name", "N/A")[:20] + "...", delta=f"{top_product.get('units_sold', 0)} db ({fmt_huf(top_product.get('total_revenue_huf', 0))})")
+        else:
+            st.metric("🥇 #1 Bestseller Termék", "Nincs adat", delta="0 Ft")
     with k4:
-        st.metric("💎 Legjobb Termékvonal", top_cat.split(" ")[1] if " " in top_cat else top_cat, delta=fmt_huf(cat_totals.get(top_cat, 0)))
+        st.metric("💎 Legjobb Termékvonal", top_cat.split(" ")[1] if " " in top_cat else top_cat, delta=fmt_huf(cat_totals.get(top_cat, 0)) if cat_totals else "0 Ft")
 
     st.markdown("---")
 
-    t_rank, t_cat, t_add, t_strat = st.tabs([
-        "🏆 1. Bestseller Rangsor & Terméklista",
+    t_rank, t_cat, t_manage, t_strat = st.tabs([
+        "🏆 1. Bestseller Rangsor",
         "📊 2. Kategória & Platform Megoszlás",
-        "➕ 3. Új Termék / Eladás Rögzítése",
+        "⚙️ 3. Termékek Kezelése & Törlés",
         "🧠 4. AuDHD Skálázási Stratégia"
     ])
 
     # ─────────────────────────────────────────────────────────
-    # TAB 1: BESTSELLER RANGSOR & TERMÉKLISTA
+    # TAB 1: BESTSELLER RANGSOR
     # ─────────────────────────────────────────────────────────
     with t_rank:
         st.markdown("#### 🏆 Termékek Értékesítési Ranglistája (Bevétel Alapján)")
         st.caption("A termékek rangsora az összesített forintbevétel és az eladott darabszámok szerint:")
 
-        for idx, prod in enumerate(sorted_by_rev):
-            rank_icon = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
-            is_best = prod.get("is_bestseller", False)
-            p_rev = prod.get("total_revenue_huf", 0.0)
-            share_pct = (p_rev / total_revenue_huf * 100.0) if total_revenue_huf > 0 else 0.0
-            border_col = '#f59e0b' if idx == 0 else ('#38bdf8' if idx == 1 else ('#10b981' if idx == 2 else '#334155'))
-            badge_html = "<span style='background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #f59e0b; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:8px;'>👑 BESTSELLER</span>" if is_best else ""
+        if not sorted_by_rev:
+            st.info("ℹ️ A termékkatalógus jelenleg üres. Rögzíts új terméket a 'Termékek Kezelése & Törlés' fülön, vagy tölts be minta termékeket!")
+        else:
+            for idx, prod in enumerate(sorted_by_rev):
+                rank_icon = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
+                is_best = prod.get("is_bestseller", False)
+                p_rev = prod.get("total_revenue_huf", 0.0)
+                share_pct = (p_rev / total_revenue_huf * 100.0) if total_revenue_huf > 0 else 0.0
+                border_col = '#f59e0b' if idx == 0 else ('#38bdf8' if idx == 1 else ('#10b981' if idx == 2 else '#334155'))
+                badge_html = "<span style='background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #f59e0b; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:8px;'>👑 BESTSELLER</span>" if is_best else ""
 
-            card_html = f"""<div class='zen-card' style='border-left: 4px solid {border_col}; margin-bottom: 12px;'>
+                card_html = f"""<div class='zen-card' style='border-left: 4px solid {border_col}; margin-bottom: 12px;'>
 <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
 <div style='display:flex; align-items:center; gap: 12px;'>
 <span style='font-size: 1.8rem;'>{rank_icon}</span>
@@ -224,7 +235,7 @@ Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platfo
 </div>
 </div>
 </div>"""
-            st.markdown(card_html, unsafe_allow_html=True)
+                st.markdown(card_html, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────
     # TAB 2: KATEGÓRIA & PLATFORM MEGOSZLÁS
@@ -233,14 +244,17 @@ Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platfo
         st.markdown("#### 📊 Értékesítési Megoszlás Termékvonalak Szerint")
         st.caption("Összehasonlító kimutatás a 3 fő digitális ökoszisztéma pillér között:")
 
-        c_p1, c_p2 = st.columns(2)
-        with c_p1:
-            st.markdown("##### 💰 Bevétel Megoszlás (HUF):")
-            for cat_name, cat_amt in cat_totals.items():
-                cat_pct = (cat_amt / total_revenue_huf * 100.0) if total_revenue_huf > 0 else 0.0
-                bar_color = "#38bdf8" if "KDP" in cat_name else ("#10b981" if "Etsy" in cat_name else "#a855f7")
+        if not cat_totals:
+            st.info("Nincs megjeleníthető kategória adat.")
+        else:
+            c_p1, c_p2 = st.columns(2)
+            with c_p1:
+                st.markdown("##### 💰 Bevétel Megoszlás (HUF):")
+                for cat_name, cat_amt in cat_totals.items():
+                    cat_pct = (cat_amt / total_revenue_huf * 100.0) if total_revenue_huf > 0 else 0.0
+                    bar_color = "#38bdf8" if "KDP" in cat_name else ("#10b981" if "Etsy" in cat_name else "#a855f7")
 
-                cat_bar_html = f"""<div style='margin-bottom: 14px;'>
+                    cat_bar_html = f"""<div style='margin-bottom: 14px;'>
 <div style='display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:4px;'>
 <strong>{cat_name}</strong>
 <span style='color:#f1f5f9; font-weight:700;'>{fmt_huf(cat_amt)} ({cat_pct:.1f}%)</span>
@@ -249,13 +263,13 @@ Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platfo
 <div style='background:{bar_color}; width:{cat_pct:.1f}%; height:100%;'></div>
 </div>
 </div>"""
-                st.markdown(cat_bar_html, unsafe_allow_html=True)
+                    st.markdown(cat_bar_html, unsafe_allow_html=True)
 
-        with c_p2:
-            st.markdown("##### 📦 Eladott Darabszám Megoszlás (Units):")
-            for cat_name, u_count in cat_units.items():
-                u_pct = (u_count / total_units_sold * 100.0) if total_units_sold > 0 else 0.0
-                unit_bar_html = f"""<div style='margin-bottom: 14px;'>
+            with c_p2:
+                st.markdown("##### 📦 Eladott Darabszám Megoszlás (Units):")
+                for cat_name, u_count in cat_units.items():
+                    u_pct = (u_count / total_units_sold * 100.0) if total_units_sold > 0 else 0.0
+                    unit_bar_html = f"""<div style='margin-bottom: 14px;'>
 <div style='display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:4px;'>
 <strong>{cat_name}</strong>
 <span style='color:#38bdf8; font-weight:700;'>{u_count} db ({u_pct:.1f}%)</span>
@@ -264,72 +278,100 @@ Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platfo
 <div style='background:#f59e0b; width:{u_pct:.1f}%; height:100%;'></div>
 </div>
 </div>"""
-                st.markdown(unit_bar_html, unsafe_allow_html=True)
+                    st.markdown(unit_bar_html, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────
-    # TAB 3: ÚJ TERMÉK / ELADÁS RÖGZÍTÉSE
+    # TAB 3: TERMÉKEK KEZELÉSE, SZERKESZTÉS & TÖRLÉS
     # ─────────────────────────────────────────────────────────
-    with t_add:
-        st.markdown("#### ➕ Új Termék Rögzítése vagy Eladások Frissítése")
-        st.caption("Adj hozzá új kiadványt a portfóliódhoz, vagy frissítsd a meglévő termékek értékesítési számait.")
+    with t_manage:
+        st.markdown("#### ⚙️ Termékek Kezelése, Új Termék & Törlés")
+        st.caption("Itt kezelheted a portfóliódat: adj hozzá saját terméket, töröld a teszt termékeket egyenként, vagy indíts tiszta lapot egyetlen kattintással.")
 
-        with st.form("add_product_form"):
-            ca1, ca2 = st.columns(2)
-            with ca1:
-                p_name_in = st.text_input("Termék Pontos Neve:", placeholder="Pl. Dániel az oroszlánok vermében KDP Színező")
-                p_cat_in = st.selectbox("Termékkategória:", [
-                    "📘 Amazon KDP Könyv",
-                    "🖼️ Etsy Wall Art",
-                    "✂️ Etsy Clipart Csomag",
-                    "🎙️ Gumroad Áhítat & Podcast",
-                    "📦 PLR & Egyéb Digitális Termék"
-                ])
-                p_plat_in = st.selectbox("Értékesítési Platform:", ["Amazon KDP", "Etsy Payments", "Gumroad", "Stripe / Direct", "Saját Weboldal"])
-
-            with ca2:
-                p_price_usd_in = st.number_input("Eladási Ár ($ USD):", min_value=0.0, value=9.99, step=0.5)
-                p_price_huf_in = st.number_input("Eladási Ár (HUF):", min_value=0.0, value=3850.0, step=100.0)
-                p_units_in = st.number_input("Eddig Eladott Mennyiség (db):", min_value=0, value=10, step=1)
-                p_best_in = st.checkbox("👑 Bestsellerként megjelölve", value=False)
-                p_notes_in = st.text_input("Megjegyzés / Részletek:", placeholder="Pl. 24 oldalas, 8.5x11 formátum")
-
-            submitted_prod = st.form_submit_button("💾 Termék Mentése a Portfólióba", type="primary", use_container_width=True)
-            if submitted_prod and p_name_in:
-                new_p = {
-                    "id": f"prod-{str(uuid.uuid4())[:8]}",
-                    "name": p_name_in,
-                    "name_en": p_name_in,
-                    "category": p_cat_in,
-                    "platform": p_plat_in,
-                    "price_usd": p_price_usd_in,
-                    "price_huf": p_price_huf_in,
-                    "units_sold": p_units_in,
-                    "total_revenue_huf": p_units_in * p_price_huf_in,
-                    "rating": 5.0,
-                    "reviews_count": 0,
-                    "launch_date": datetime.date.today().strftime("%Y-%m-%d"),
-                    "is_bestseller": p_best_in,
-                    "notes": p_notes_in
-                }
-                catalog.append(new_p)
-                save_product_catalog(catalog)
-                st.success(f"✅ '{p_name_in}' sikeresen hozzáadva a termékkatalógushoz!")
+        # Globális Műveleti Sáv (Tiszta lap / Demó visszaállítás)
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            if st.button("🗑️ ÖSSZES TERMÉK TÖRLÉSE (Tiszta Lap)", use_container_width=True, type="secondary"):
+                save_product_catalog([])
+                st.success("✅ Minden termék törölve! A katalógus mostantól teljesen üres és tiszta.")
+                st.rerun()
+        with col_act2:
+            if st.button("📦 Minta Termékek Visszaállítása (Demó)", use_container_width=True):
+                save_product_catalog(get_default_demo_catalog())
+                st.success("✅ Minta termékek betöltve!")
                 st.rerun()
 
         st.markdown("---")
-        st.markdown("##### ⚡ Meglévő Termékek Eladási Darabszámának Gyors Frissítése:")
-        for p in catalog:
-            cp_col1, cp_col2, cp_col3 = st.columns([2.5, 1.5, 1.2])
-            with cp_col1:
-                st.markdown(f"**{p.get('name')}** (`{p.get('category')}`)")
-            with cp_col2:
-                st.markdown(f"Jelenlegi: **{p.get('units_sold')} db** ({fmt_huf(p.get('total_revenue_huf', 0))})")
-            with cp_col3:
-                if st.button(f"➕ +5 eladás", key=f"quick_add_{p.get('id')}"):
-                    p["units_sold"] = p.get("units_sold", 0) + 5
-                    p["total_revenue_huf"] = p["units_sold"] * p.get("price_huf", 3850.0)
+
+        # Új termék űrlap
+        with st.expander("➕ Új Saját Termék Rögzítése", expanded=len(catalog) == 0):
+            with st.form("add_product_form"):
+                ca1, ca2 = st.columns(2)
+                with ca1:
+                    p_name_in = st.text_input("Termék Pontos Neve:", placeholder="Pl. Dániel az oroszlánok vermében KDP Színező")
+                    p_cat_in = st.selectbox("Termékkategória:", [
+                        "📘 Amazon KDP Könyv",
+                        "🖼️ Etsy Wall Art",
+                        "✂️ Etsy Clipart Csomag",
+                        "🎙️ Gumroad Áhítat & Podcast",
+                        "📦 PLR & Egyéb Digitális Termék"
+                    ])
+                    p_plat_in = st.selectbox("Értékesítési Platform:", ["Amazon KDP", "Etsy Payments", "Gumroad", "Stripe / Direct", "Saját Weboldal"])
+
+                with ca2:
+                    p_price_usd_in = st.number_input("Eladási Ár ($ USD):", min_value=0.0, value=9.99, step=0.5)
+                    p_price_huf_in = st.number_input("Eladási Ár (HUF):", min_value=0.0, value=3850.0, step=100.0)
+                    p_units_in = st.number_input("Eddig Eladott Mennyiség (db):", min_value=0, value=0, step=1)
+                    p_best_in = st.checkbox("👑 Bestsellerként megjelölve", value=False)
+                    p_notes_in = st.text_input("Megjegyzés / Részletek:", placeholder="Pl. 24 oldalas, 8.5x11 formátum")
+
+                submitted_prod = st.form_submit_button("💾 Saját Termék Mentése", type="primary", use_container_width=True)
+                if submitted_prod and p_name_in:
+                    new_p = {
+                        "id": f"prod-{str(uuid.uuid4())[:8]}",
+                        "name": p_name_in,
+                        "name_en": p_name_in,
+                        "category": p_cat_in,
+                        "platform": p_plat_in,
+                        "price_usd": p_price_usd_in,
+                        "price_huf": p_price_huf_in,
+                        "units_sold": p_units_in,
+                        "total_revenue_huf": p_units_in * p_price_huf_in,
+                        "rating": 5.0,
+                        "reviews_count": 0,
+                        "launch_date": datetime.date.today().strftime("%Y-%m-%d"),
+                        "is_bestseller": p_best_in,
+                        "notes": p_notes_in
+                    }
+                    catalog.append(new_p)
                     save_product_catalog(catalog)
+                    st.success(f"✅ '{p_name_in}' sikeresen hozzáadva!")
                     st.rerun()
+
+        st.markdown("---")
+        st.markdown(f"##### 📑 Meglévő Termékek Listája & Egyenkénti Törlés ({len(catalog)} db):")
+
+        if not catalog:
+            st.info("Jelenleg nincs termék a listában.")
+        else:
+            for p_idx, p in enumerate(catalog):
+                cp_col1, cp_col2, cp_col3, cp_col4 = st.columns([2.6, 1.4, 1.0, 0.8])
+                with cp_col1:
+                    st.markdown(f"**{p.get('name')}**<br><small style='color:#38bdf8;'>[{p.get('category')}] · {p.get('platform')}</small>", unsafe_allow_html=True)
+                with cp_col2:
+                    st.markdown(f"**{p.get('units_sold')} db eladva**<br><span style='color:#10b981; font-weight:700;'>{fmt_huf(p.get('total_revenue_huf', 0))}</span>", unsafe_allow_html=True)
+                with cp_col3:
+                    if st.button(f"➕ +5 db", key=f"quick_add_{p.get('id')}_{p_idx}"):
+                        p["units_sold"] = p.get("units_sold", 0) + 5
+                        p["total_revenue_huf"] = p["units_sold"] * p.get("price_huf", 3850.0)
+                        save_product_catalog(catalog)
+                        st.rerun()
+                with cp_col4:
+                    if st.button("🗑️ Törlés", key=f"del_prod_{p.get('id')}_{p_idx}", type="secondary"):
+                        catalog.pop(p_idx)
+                        save_product_catalog(catalog)
+                        st.success(f"🗑️ Termék törölve!")
+                        st.rerun()
+                st.markdown("<hr style='margin:6px 0; border-color:#334155;'>", unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────
     # TAB 4: AUDHD SKÁLÁZÁSI STRATÉGIA
@@ -338,10 +380,13 @@ Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platfo
         st.markdown("#### 🧠 AuDHD Portfólió Elemzés & Skálázási Iránytű")
         st.caption("Döntési bénulás (choice paralysis) helyett 3 fókuszált, magas hatékonyságú lépés a meglévő eladásaid alapján:")
 
-        top_share = (top_product.get('total_revenue_huf', 0) / total_revenue_huf * 100) if total_revenue_huf > 0 else 0
-        aam_share = (total_revenue_huf / 18000000 * 100) if total_revenue_huf > 0 else 0
+        if not top_product:
+            st.info("ℹ️ Rögzíts legalább 1 terméket az intelligens skálázási javaslatok megtekintéséhez!")
+        else:
+            top_share = (top_product.get('total_revenue_huf', 0) / total_revenue_huf * 100) if total_revenue_huf > 0 else 0
+            aam_share = (total_revenue_huf / 18000000 * 100) if total_revenue_huf > 0 else 0
 
-        strat_html = f"""<div class='zen-card' style='border-left: 4px solid #38bdf8; margin-bottom: 14px;'>
+            strat_html = f"""<div class='zen-card' style='border-left: 4px solid #38bdf8; margin-bottom: 14px;'>
 <h5 style='color:#38bdf8; margin:0 0 6px 0;'>🎯 1. Skálázási Fókusz: '{top_product.get('name', 'Bestseller')}' Multipack Keresztértékesítés</h5>
 <p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
 Ez a termék generálja a teljes bevételed <strong>{top_share:.1f}%</strong>-át! 
@@ -364,4 +409,4 @@ A jelenlegi termékportfóliód <strong>{fmt_huf(total_revenue_huf)}</strong> é
 <strong>{aam_share:.1f}%</strong>-os AAM keretkihasználtságot jelent. A vállalkozásod teljesen biztonságos, adómentes zónában működik!
 </p>
 </div>"""
-        st.markdown(strat_html, unsafe_allow_html=True)
+            st.markdown(strat_html, unsafe_allow_html=True)
