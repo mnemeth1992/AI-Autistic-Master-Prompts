@@ -256,7 +256,7 @@ def render_audhd_tracker():
 
     # ── PERMANENS FELSŐ FÓKUSZ KÁRTYA (MINDIG NYITVA, AZONNALI SZINKRON) ──
     st.markdown("""
-    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85)); border: 1.5px solid #1e293b; border-radius: 14px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);'>
+    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.92)); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 16px; padding: 16px 20px; margin-bottom: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);'>
     """, unsafe_allow_html=True)
 
     col_clock, col_info = st.columns([1.1, 1.9])
@@ -329,3 +329,13 @@ def render_audhd_tracker():
                 st.checkbox(task_text, key=task_key)
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── JÓL LÁTHATÓ GLOWING ELVÁLASZTÓ SÁV AZ AUDHD SZÁMLÁLÓ ÉS AZ ALSÓ RÉSZ KÖZÉ ──
+    st.markdown("""
+    <div style='margin: 22px 0 26px 0; position: relative; text-align: center;'>
+        <div style='height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.25) 15%, rgba(56, 189, 248, 0.95) 50%, rgba(16, 185, 129, 0.85) 75%, transparent 100%); box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);'></div>
+        <div style='display: inline-block; position: relative; top: -13px; background: #0b1329; padding: 3px 20px; border-radius: 20px; border: 1.5px solid #38bdf8; font-size: 0.76rem; font-weight: 800; letter-spacing: 2px; color: #38bdf8; text-transform: uppercase; box-shadow: 0 4px 15px rgba(0,0,0,0.7), 0 0 10px rgba(56, 189, 248, 0.25);'>
+            ⚡ AKTÍV MUNKATERÜLET & PIPELINE ⚡
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
