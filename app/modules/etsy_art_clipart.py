@@ -167,6 +167,9 @@ def render_etsy_art_clipart_module():
             else:
                 st.info("Kattints a generálás gombra a clipart megjelenítéséhez.")
 
+            st.markdown("##### 💬 Többkörös Beszélgetős Háttéreltávolítás (Gemini Conversational Editing):")
+            st.code("Kérlek, távolítsd el a fehér hátteret a fenti grafikák mögül, és tegyed őket teljesen átlátszóvá (transparent PNG format).", language="text")
+
     # ─────────────────────────────────────────────────────────
     # TAB 3: SZIGORÚ 2026-OS ETSY SEO & CSV
     # ─────────────────────────────────────────────────────────

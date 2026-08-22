@@ -18,63 +18,83 @@ TIME_LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.
 
 AUDHD_DAY_PLANS = {
     "Hétfő": {
-        "title": "📖 Amazon KDP Színezőkönyv & Nyomdakész PDF Műhely",
-        "description": "2 órás mélyfókusz: 10-30 oldalas könyvvázlat, képgenerálás, Drive szinkron és nyomdakész KDP belső PDF.",
+        "title": "🔍 Hétfő: Tiszta Kutatás & RAG Data Mining (NotebookLM & Gemini)",
+        "description": "2 órás mélyfókusz: Amazon/Etsy kulcsszókutatás, 100% pontos KJV igehely- és jelenetkutatás, versenytársi Review Mining.",
         "target_minutes": 120,
         "tasks": [
-            "🎯 1. Téma, célközönség (Gyerek/Felnőtt) és KDP könyvcím meghatározása (15 perc)",
-            "✨ 2. Könyvvázlat, KJV igék, színpaletta és promptok generálása (25 perc)",
-            "🤖 3. Gem Mester Utasítás beállítása és képek legenerálása (40 perc)",
-            "📁 4. Képek mentése a Google Drive projektmappába és ellenőrzése (20 perc)",
-            "🚀 5. Nyomdakész KDP belső PDF összeállítása ReportLab-bal (20 perc)"
+            "🎯 1. Amazon KDP és Etsy kulcsszókutatás (High Volume, Low Competition) (30 perc)",
+            "📖 2. KJV Biblia feltöltése és 30 jelenet/ige kinyerése NotebookLM-ben (30 perc)",
+            "⭐ 3. Top versenytársak 1-3 csillagos értékeléseinek Review Mining elemzése (30 perc)",
+            "📁 4. Piaci hibák és 5 kiemelkedő termékelőny mentése a projektbe (15 perc)",
+            "📋 5. Heti termékspecifikációk véglegesítése a NotebookLM RAG fülön (15 perc)"
         ]
     },
     "Kedd": {
-        "title": "🎨 Etsy Faliképek, Clipart Csomagok & CSV Export",
-        "description": "2 órás mélyfókusz: 4:5 Skandináv faliképek, átlátszó clipart illusztrációk és Etsy Listing CSV.",
+        "title": "📑 Kedd: Teológiai Mátrix & Szöveggenerálás (NotebookLM & Gemini)",
+        "description": "2 órás mélyfókusz: 30 napos teológiai mátrix felépítése forrásokból, Gemini Advanced Master Prompt futtatás.",
         "target_minutes": 120,
         "tasks": [
-            "🖼️ 1. 5 db 4:5 arányú művészi Skandináv falikép prompt megtervezése (20 perc)",
-            "✂️ 2. Chibi / Akvarell clipart illusztrációk legenerálása (35 perc)",
-            "✨ 3. Képek mentése a Drive 04_🖼️_ETSY_DIGITAL mappába (25 perc)",
-            "🛍️ 4. Etsy termékleírás, 13 SEO tag és címkészlet összeállítása (20 perc)",
-            "📊 5. Etsy Listing CSV exportálása és ZIP digitális csomag összeállítása (20 perc)"
+            "🕊️ 1. Teológiai jegyzetek és könyvek feltöltése NotebookLM jegyzetfüzetbe (20 perc)",
+            "📑 2. 30 napos táblázatos mátrix legenerálása operatív prompttal (40 perc)",
+            "💎 3. Gemini Advanced Master Prompt futtatása a mátrix soraihoz (40 perc)",
+            "✍️ 4. 200 szavas reflexiók, imádságok és 3 önreflexiós kérdés finomhangolása (10 perc)",
+            "💾 5. Kész kézirat mentése Google Docs-ba és a Drive 05_GUMROAD mappába (10 perc)"
         ]
     },
     "Szerda": {
-        "title": "✍️ Gumroad Áhítat & Vezetett Lelki Napló Műhely",
-        "description": "2 órás mélyfókusz: 30 napos áhítat vezérfonal, napi reflexiók, imádságok és Gumroad kiadás.",
+        "title": "🎨 Szerda: Vizuális Generálás & Képszerkesztés (FLUX / Gemini)",
+        "description": "2 órás mélyfókusz: 8.5x11 4K fekete-fehér színezők, 4:5 faliképek, clipart csomagok és többkörös háttéreltávolítás.",
         "target_minutes": 120,
         "tasks": [
-            "🕊️ 1. 30 napos áhítat / napló vezérfonal és KJV igék kiválasztása (20 perc)",
-            "✍️ 2. Részletes áhítat szövegek és napi imádságok megírása AI-val (40 perc)",
-            "📑 3. Önreflexiós kérdések és naplózó feladatok kidolgozása (25 perc)",
-            "🏷️ 4. Gumroad termékleírás, vásárlói előnyök és árképzés (20 perc)",
-            "💾 5. Kézirat és anyagok mentése a Drive 05_📖_GUMROAD_PLR mappába (15 perc)"
+            "🎨 1. KDP Színező belső oldalak generálása 4K Master Prompっとal (45 perc)",
+            "🖼️ 2. Etsy 4:5 Skandináv eukaliptusz igés faliképek generálása (30 perc)",
+            "✂️ 3. Clipart illusztrációk generálása tiszta fehér háttérrel (25 perc)",
+            "✨ 4. Többkörös beszélgetős háttéreltávolítás (Transparent PNG) (10 perc)",
+            "📁 5. Képek mentése és rendszerezése a Google Drive projektmappákba (10 perc)"
         ]
     },
     "Csütörtök": {
-        "title": "🚀 FFC Marketing, Copywriting & Google Sites Stúdió",
-        "description": "2 órás mélyfókusz: Avatar kutatás, 12-lépéses Sales Letter, 0 Ft-os Google Sites oldal & E-mailek.",
+        "title": "📐 Csütörtök: Kiadványszerkesztés & PDF Szerkesztés (ReportLab / Canva)",
+        "description": "2 órás mélyfókusz: ReportLab nyomdakész KDP belső PDF összeállítása, borító méretezés és Etsy ZIP csomagolás.",
         "target_minutes": 120,
         "tasks": [
-            "🎯 1. FFC Avatar kutatás & 10 db pszichológiai Big Domino horog generálása (25 perc)",
-            "📜 2. 12-lépéses Russell Brunson Sales Letter megírása (35 perc)",
-            "🌐 3. Google Sites 0 Ft-os Landing Page szövegek és CTA blokkok összeállítása (25 perc)",
-            "📧 4. 3 napos / 30 napos automata e-mail tölcsér és hírlevél szekvencia generálása (20 perc)",
-            "💾 5. Marketing anyagok mentése Word (.docx) és .txt formátumban a Drive-ra (15 perc)"
+            "📖 1. KDP belső PDF összeállítása filcátütés-gátló lapokkal és margókkal (40 perc)",
+            "🎨 2. KDP 17.412:11.25 arányú Wrap-Around borító generálása és méretezése (35 perc)",
+            "🛍️ 3. Etsy digitális falikép méretcsomagok (4:5, 3:4, 2:3, 1:1) és mockupok készítése (25 perc)",
+            "📦 4. Clipart PNG ZIP csomagok és vásárlói útmutatók összeállítása (10 perc)",
+            "💾 5. Nyomdakész és letöltendő fájlok mentése a Drive mappákba (10 perc)"
         ]
     },
     "Péntek": {
-        "title": "🖼️ KDP Borító, Gemini Képbegyűjtő Központ & Heti Zárás",
-        "description": "2 órás mélyfókusz: Wrap-around könyvborító méretezés, Drive képbegyűjtés, PDF-ek és heti audit.",
+        "title": "🚀 Péntek: Automata Publikálás & Audio Upsell (KDP, Etsy, Gumroad)",
+        "description": "2 órás mélyfókusz: Termékfeltöltések, Pinterest passzív SEO leírások és NotebookLM Audio Devotional ($29->$39) generálás.",
         "target_minutes": 120,
         "tasks": [
-            "🎨 1. KDP Wrap-Around Borító méretezése és borítókép legenerálása (30 perc)",
-            "📁 2. Heti Google Drive mappák áttekintése és rendszerezése (25 perc)",
-            "🖼️ 3. Gemini Képbegyűjtő & PDF Központban az elmaradt PDF kötetek összefűzése (30 perc)",
-            "🔑 4. API kulcsok és kvóták ellenőrzése a Rendszerbeállítások fülön (15 perc)",
-            "🏆 5. Heti fókuszblokkok értékelése és az időnapló lezárása (20 perc)"
+            "🛍️ 1. Amazon KDP és Etsy termékek feltöltése 13 SEO taggel és leírással (40 perc)",
+            "📌 2. Pinterest passzív SEO címek, leírások és közvetlen linkes pinek készítése (20 perc)",
+            "🎙️ 3. NotebookLM Audio Overview (Deep Dive podcast MP3) generálása a kéziratból (35 perc)",
+            "💰 4. Gumroad termék publikálás + Audio Companion prémium upsell ($39) beállítása (15 perc)",
+            "🏆 5. Heti fókuszblokkok értékelése és felkészülés a képernyőmentes hétvégére (10 perc)"
+        ]
+    },
+    "Szombat": {
+        "title": "🌿 Szombat: Pihenés & Regeneráció",
+        "description": "Kötelező képernyőmentes idő az idegrendszeri regeneráció és az AudHD túlterhelődés elkerülése érdekében.",
+        "target_minutes": 0,
+        "tasks": [
+            "🌿 Séta a természetben és képernyőmentes offline pihenés",
+            "☕ Családi és baráti kapcsolatok ápolása",
+            "📖 Csendes olvasás, offline hobbik, idegrendszeri feltöltődés"
+        ]
+    },
+    "Vasárnap": {
+        "title": "🕊️ Vasárnap: Lelki Feltöltődés & Csendesség",
+        "description": "Lelki megújulás, istentisztelet és felkészülés a következő heti 10 órás aszinkron alkotóciklusra.",
+        "target_minutes": 0,
+        "tasks": [
+            "🕊️ Közösség, istentisztelet és hálaadás",
+            "🧘 Csendes elmélkedés és lelki megnyugvás",
+            "✨ Motivált, békés ráhangolódás a hétfői kutatási napra"
         ]
     }
 }

@@ -65,30 +65,42 @@ def render_gumroad_devotional_module():
 
             dev_theme = st.text_input("Napi Fókusz / Téma:", value="Isten Békessége a Szorongás Helyett (Filippi 4:6-7)", key="dev_in_theme")
 
+            # NotebookLM Matrix Row Input (Optional RAG Enhancement)
+            saved_matrix = st.session_state.get("rag_devotional_matrix", "")
+            matrix_row_input = st.text_area(
+                "📓 NotebookLM Teológiai Mátrix Sor (opcionális RAG forrás):",
+                value=st.session_state.get("dev_matrix_row", f"[Nap {day_number} | Philippians 4:6-7 | Isten békessége a szorongás helyett | 1. Mi aggaszt? 2. Hogyan adod át? 3. Miért vagy hálás?]") if not saved_matrix else saved_matrix.split("\n")[0],
+                height=70,
+                key="dev_in_matrix_row"
+            )
+
         with c_d2:
             st.markdown("""
             <div class='metric-card'>
                 <strong style='color:#34d399;'>📖 KJV + Magyar Ige:</strong> Pontos bibliai alap<br>
-                <strong style='color:#38bdf8;'>🕊️ 200 Szavas Reflexió:</strong> Mesterséges kliséktől mentes, meleg hangvétel<br>
-                <strong style='color:#f59e0b;'>✍️ 3 Naplókérdés:</strong> Mély önreflexió és gyakorlati lépések
+                <strong style='color:#38bdf8;'>🕊️ 200 Szavas Reflexió:</strong> Mesterséges kliséktől mentes, meleg lelkigondozói hangvétel<br>
+                <strong style='color:#f59e0b;'>✍️ 3 Naplókérdés:</strong> Mély önreflexió és csendesség<br>
+                <strong style='color:#a855f7;'>🎙️ Audio Companion:</strong> $29 ➔ $39 upsell MP3 podcast bónusz
             </div>
             """, unsafe_allow_html=True)
 
-        if st.button(f"✨ {day_number}. Napi Áhítat Generálása (AI / Offline)", use_container_width=True, type="primary"):
-            with st.spinner(f"AI írja a(z) {day_number}. napi áhítatot és imádságot..."):
-                prompt = f"""Írj egy mély, szívhez szóló, teológiailag megalapozott keresztény áhítatot a(z) {day_number}. napra.
-Kötet címe: "{dev_title}"
-Napi Téma: "{dev_theme}"
+        if st.button(f"✨ {day_number}. Napi Áhítat Generálása (Gemini Advanced Master Prompt / AI)", use_container_width=True, type="primary"):
+            with st.spinner(f"AI írja a(z) {day_number}. napi áhítatot a Master Prompt alapján..."):
+                prompt = f"""Szeretnék egy mély, hiteles és lelkileg építő 30 napos keresztény áhítat naplót (devotional) írni nőknek '{dev_title}' címmel.
+Az alábbiakban megadom a NotebookLM által teológiailag ellenőrzött vázlatot a(z) {day_number}. naphoz:
+{matrix_row_input or dev_theme}
 
-Struktúra:
-1. 📖 Napi Ige (Angol KJV és Magyar fordítás)
-2. 🕊️ Csendes Reflexió (kb. 180-220 szó, kerüld a gépies AI-kliséket, legyen közvetlen, lelkigondozói és bátorító)
-3. 🙏 Napi Imádság (Őszinte, bensőséges ima)
-4. ✍️ 3 Mély Vezetett Naplókérdés az elcsendesedéshez
-"""
+Kérlek, írd meg a nap teljes tartalmát. Tartalmazzon:
+1. 📖 A megadott KJV bibliai ige szó szerint és pontos magyar fordítása
+2. 🕊️ Egy 200 szavas bátorító magyarázó-elmélkedő szöveg (csendes reflexió)
+3. 🙏 Egy bensőséges, tiszteletteljes napi ima
+4. ✍️ 3 db mély, elgondolkodtató önreflektív kérdés vezetett naplózáshoz
+
+Stílusutasítás: Kerüld a tipikus, mesterkélt AI-fordulatokat és a túl száraz megfogalmazást. Írj meleg, mélyen bátorító, spirituális, tiszteletteljes és emberi tónusban."""
+
                 ok, resp = km.generate_text_with_fallback(
                     prompt=prompt,
-                    system_instruction="Te egy melegszívű, tapasztalt lelkipásztor és lelkigondozó író vagy.",
+                    system_instruction="Te egy melegszívű, tapasztalt lelkipásztor és lelkigondozó író vagy. Kerüld az elcsépelt kliséket.",
                     model_name="groq-llama-3.3-70b"
                 )
                 if not ok or not resp:
@@ -137,22 +149,27 @@ Struktúra:
                 )
 
     # ─────────────────────────────────────────────────────────
-    # TAB 2: GUMROAD SALES LETTER
+    # TAB 2: GUMROAD SALES LETTER & VALUE STACK
     # ─────────────────────────────────────────────────────────
     with tab_gumroad_copy:
-        st.markdown("#### 📜 Magas Konverziójú Gumroad Értékesítési Szöveg (Sales Letter)")
+        st.markdown("#### 📜 Magas Konverziójú Gumroad Értékesítési Szöveg & Audio Upsell ($39)")
+
+        include_audio_upsell = st.checkbox("🎙️ NotebookLM Audio Companion Podcast bónusz beépítése (Áremelés: $29 ➔ $39)", value=True)
 
         if st.button("🚀 Gumroad Értékesítési Szöveg & Value Stack Generálása", use_container_width=True, type="primary"):
             with st.spinner("AI írja az ellenállhatatlan Russell Brunson stílusú értékesítési szöveget..."):
+                audio_extra = "Tartalmazza az exkluzív NotebookLM Deep Dive Audio Companion (15 perces MP3 podcast) bónuszt, ami indokolja a $39 prémium árat." if include_audio_upsell else "Alap digitális PDF árazás: $29."
                 prompt = f"""Írj egy magas konverziójú Gumroad termékleírást és értékesítési szöveget ehhez a termékhez:
 Termék: "{dev_title}"
-Téma: Keresztény áhítatos napló és digitális PDF csomag
+Téma: Keresztény áhítatos napló és digitális PDF + MP3 csomag
+{audio_extra}
 
 Tartalmazza:
 - Erős figyelemfelkeltő főcím
-- A probléma és érzelmi feszültség feloldása
+- A lelki szomjúság, szorongás és túlterheltség megértő feltárása
 - Mit tartalmaz a digitális csomag (Bullet pontok)
-- Russell Brunson Value Stack (Bónuszok és összérték)
+- Russell Brunson Value Stack (Főkönyv $47 értékben + Bónusz Audio Companion $19 értékben + Imakártyák $15 értékben)
+- Teljes csomag ára: $39 (Több mint 65% kedvezmény a $81-os összértékből)
 - Google Drive azonnali hozzáférési útmutató
 - Kockázatmentes 30 napos garancia
 """

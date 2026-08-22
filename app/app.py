@@ -41,6 +41,8 @@ try:
     from modules.niche_generator import render_niche_generator_module
     from modules.etsy_art_clipart import render_etsy_art_clipart_module
     from modules.gumroad_devotional import render_gumroad_devotional_module
+    from modules.notebooklm_rag import render_notebooklm_rag_module
+    from modules.tax_calculator_2026 import render_tax_calculator_2026_module
     from modules.vision_lab import render_vision_lab_module
     from modules.pdf_gallery_hub import render_pdf_gallery_hub_module
     from modules.ffc_marketing import render_ffc_marketing_module
@@ -57,6 +59,8 @@ except (ModuleNotFoundError, ImportError):
     from app.modules.niche_generator import render_niche_generator_module
     from app.modules.etsy_art_clipart import render_etsy_art_clipart_module
     from app.modules.gumroad_devotional import render_gumroad_devotional_module
+    from app.modules.notebooklm_rag import render_notebooklm_rag_module
+    from app.modules.tax_calculator_2026 import render_tax_calculator_2026_module
     from app.modules.vision_lab import render_vision_lab_module
     from app.modules.pdf_gallery_hub import render_pdf_gallery_hub_module
     from app.modules.ffc_marketing import render_ffc_marketing_module
@@ -178,10 +182,12 @@ def main():
             "💡 4. 30 Téma & Niche Ötletműhely",
             "🎨 5. Etsy Igés Faliképek & Clipartok",
             "✍️ 6. Gumroad Áhítatok & Értékesítési Szövegek",
-            "📷 7. AI Vision Multimodális Lab",
-            "🖼️ 8. Képbegyűjtő, Flipbook & PDF Központ",
-            "🚀 9. FFC Marketing, Brunson Copywriting & Sites",
-            "⚙️ 10. Rendszerbeállítások & API Kulcsok"
+            "📓 7. NotebookLM RAG Központ & Review Mining",
+            "💰 8. 2026-os Magyar Átalányadó & Pénzügyi Tervező",
+            "📷 9. AI Vision Multimodális Lab",
+            "🖼️ 10. Képbegyűjtő, Flipbook & PDF Központ",
+            "🚀 11. FFC Marketing, Brunson Copywriting & Sites",
+            "⚙️ 12. Rendszerbeállítások & API Kulcsok"
         ]
 
         active_workspace = st.radio(
@@ -226,7 +232,7 @@ def main():
             st.success("🟢 Kulcsok resetelve!")
             st.rerun()
 
-        st.caption("Keresztény AI Munkaállomás · v4.0 Moduláris")
+        st.caption("Keresztény AI Munkaállomás · v4.0 Moduláris (AudHD RAG Integrációval)")
 
     # ── FŐTERÜLET: AUDHD POMODORO FÓKUSZ KÖVETŐ ──
     render_audhd_tracker()
@@ -244,19 +250,23 @@ def main():
         render_etsy_art_clipart_module()
     elif "6. Gumroad Áhítatok" in active_workspace:
         render_gumroad_devotional_module()
-    elif "7. AI Vision" in active_workspace:
+    elif "7. NotebookLM RAG" in active_workspace:
+        render_notebooklm_rag_module()
+    elif "8. 2026-os Magyar Átalányadó" in active_workspace:
+        render_tax_calculator_2026_module()
+    elif "9. AI Vision" in active_workspace:
         render_vision_lab_module()
-    elif "8. Képbegyűjtő" in active_workspace:
+    elif "10. Képbegyűjtő" in active_workspace:
         render_pdf_gallery_hub_module()
-    elif "9. FFC Marketing" in active_workspace:
+    elif "11. FFC Marketing" in active_workspace:
         render_ffc_marketing_module()
-    elif "10. Rendszerbeállítások" in active_workspace:
+    elif "12. Rendszerbeállítások" in active_workspace:
         render_settings_module(km)
 
 
 def render_settings_module(km):
-    """Workspace 10: System Settings, API Keys & Preferences."""
-    st.markdown("<div class='path-badge'>⚙️ 10. Rendszerbeállítások & AI Motorok</div>", unsafe_allow_html=True)
+    """Workspace 12: System Settings, API Keys & Preferences."""
+    st.markdown("<div class='path-badge'>⚙️ 12. Rendszerbeállítások & AI Motorok</div>", unsafe_allow_html=True)
 
     st.markdown("#### 🔑 AI Szolgáltatók & API Kulcsok")
     st.caption("A rendszer a leggyorsabb és legolcsóbb motorokat részesíti előnyben: 1. Groq (Ingyenes) ➔ 2. OpenRouter (Ingyenes) ➔ 3. Gemini (Fizetős) ➔ 4. Offline Sablonok.")

@@ -26,7 +26,8 @@ try:
         build_google_sites_landing_page_prompt,
         build_email_funnel_3day_prompt,
         build_email_funnel_30day_prompt,
-        build_social_seo_calendar_30day_prompt
+        build_social_seo_calendar_30day_prompt,
+        build_pinterest_pin_seo_prompt
     )
     from core.drive_sync import save_prompts_file_to_drive, create_marketing_docx, resolve_drive_folder
     from core.project_manager import auto_save_current_project
@@ -40,7 +41,8 @@ except (ModuleNotFoundError, ImportError):
         build_google_sites_landing_page_prompt,
         build_email_funnel_3day_prompt,
         build_email_funnel_30day_prompt,
-        build_social_seo_calendar_30day_prompt
+        build_social_seo_calendar_30day_prompt,
+        build_pinterest_pin_seo_prompt
     )
     from app.core.drive_sync import save_prompts_file_to_drive, create_marketing_docx, resolve_drive_folder
     from app.core.project_manager import auto_save_current_project
@@ -81,12 +83,13 @@ def render_ffc_marketing_module():
         </div>
         """, unsafe_allow_html=True)
 
-    tab_avatar, tab_sales, tab_gsites, tab_emails, tab_social = st.tabs([
+    tab_avatar, tab_sales, tab_gsites, tab_emails, tab_social, tab_pinterest = st.tabs([
         "🧠 1. Avatár Kutatás & Big Domino",
         "📜 2. 12-Lépéses Sales Letter & Value Stack",
         "🌐 3. Google Sites 0 Ft-os Landing Page",
         "📧 4. Automata E-mail Tölcsér (3-Day & 30-Day)",
-        "📌 5. 30 Napos Social Media Naptár"
+        "📌 5. 30 Napos Social Media Naptár",
+        "📌 6. Pinterest Passzív Vizuális SEO"
     ])
 
     # ─────────────────────────────────────────────────────────
@@ -325,3 +328,73 @@ def render_ffc_marketing_module():
                 mime="text/plain",
                 use_container_width=True
             )
+
+    # ─────────────────────────────────────────────────────────
+    # TAB 6: PINTEREST PASSZÍV VIZUÁLIS SEO
+    # ─────────────────────────────────────────────────────────
+    with tab_pinterest:
+        st.markdown("#### 📌 Pinterest Visual Search Engine & Passzív SEO Generátor")
+        st.caption("A Pinterest nem közösségi média, hanem egy vizuális keresőmotor. Egy optimalizált Pin hónapokig vagy évekig passzív vásárlói forgalmat terel az Etsy és Gumroad boltodra.")
+
+        c_pin1, c_pin2 = st.columns([1.2, 1.0])
+        with c_pin1:
+            pin_type = st.selectbox(
+                "Cél Terméktípus:",
+                [
+                    "Etsy Keresztény Igés Falikép (Printable Wall Art)",
+                    "Amazon KDP Gyermek Bibliai Színezőkönyv",
+                    "Gumroad 30 Napos Keresztény Áhítat & Audio Companion",
+                    "Etsy Clipart & Matrica Csomag"
+                ],
+                key="pin_in_type"
+            )
+        with c_pin2:
+            st.markdown("""
+            <div class='metric-card'>
+                <strong style='color:#38bdf8;'>🎯 Vizuális SEO Előny:</strong> Zéró posztolási kényszer, 0 kommentkezelés.<br>
+                <strong style='color:#34d399;'>🎨 Méretarány:</strong> 2:3 (1000x1500 px) Canva ingyenes sablon.<br>
+                <strong style='color:#f59e0b;'>🔗 Közvetlen link:</strong> Terelés közvetlenül a termékoldalra.
+            </div>
+            """, unsafe_allow_html=True)
+
+        if st.button("🚀 5 db Pinterest Passzív SEO Pin Generálása", use_container_width=True, type="primary"):
+            with st.spinner("AI generálja a Pinterest kulcsszavas leírásokat és Canva sablon javaslatokat..."):
+                prompt = build_pinterest_pin_seo_prompt(prod_name, niche_ctx, pin_type)
+                ok, resp_pin = km.generate_text_with_fallback(
+                    prompt=prompt,
+                    system_instruction="Te egy profi Pinterest SEO és vizuális keresőmotor stratéga vagy.",
+                    model_name="groq-llama-3.3-70b"
+                )
+                if not ok or not resp_pin:
+                    resp_pin = f"""### 📌 5x PINTEREST VISUAL SEO PINEK: {prod_name}
+
+#### 1. Pin: Magas Keresési Szándék (High-Intent Search)
+- **Cél Keresőszó:** `{niche_ctx.split('(')[0].strip()} printable`
+- **Pin Cím:** {prod_name} | Instant Download Printable
+- **Pin Leírás:** Transform your daily routine with this beautiful {prod_name}. Perfect for quiet morning time, prayer journaling, and spiritual encouragement. Download instantly and print at home! #christianliving #printableart #biblejournaling #faithbased #dailydevotional
+- **Canva Sablon:** 1000x1500 px, lágy zsályazöld háttér, elegáns mockup képkeretben.
+- **Cél URL:** Közvetlen Etsy / Gumroad terméklink.
+
+#### 2. Pin: Probléma-Megoldó Fókusz (How-To / Stress Relief)
+- **Cél Keresőszó:** `anxiety relief scripture journal`
+- **Pin Cím:** Find Peace in 10 Minutes a Day | Guided Devotional
+- **Pin Leírás:** Overwhelmed by daily stress? Discover peaceful reflections and literal KJV scriptures to calm your mind and renew your spirit. #stressrelief #christianmentalhealth #peaceofmind #prayerlife #scriptureoftheday
+- **Canva Sablon:** 2:3 vertikális, fehér-fa textúra háttér, jól olvasható fekete felirat.
+"""
+
+                st.session_state["ffc_pinterest_data"] = resp_pin
+                auto_save_current_project()
+                st.success("✅ Pinterest SEO Pin készlet sikeresen legenerálva!")
+
+        pin_data = st.session_state.get("ffc_pinterest_data", "")
+        if pin_data:
+            st.markdown("---")
+            st.markdown(pin_data)
+            st.download_button(
+                "📥 Pinterest SEO Csomag Letöltése (.txt)",
+                data=pin_data,
+                file_name="Pinterest_Visual_SEO_Pins.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+
