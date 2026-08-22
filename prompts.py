@@ -1488,5 +1488,76 @@ def parse_strict_etsy_seo_output(raw_text: str) -> dict:
     }
 
 
+# ─────────────────────────────────────────────────────────
+# PINTEREST PASSZÍV VIZUÁLIS SEO & SECTION 5 MASTER PROMPTOK
+# ─────────────────────────────────────────────────────────
+
+def build_pinterest_pin_seo_prompt(product_name: str, niche: str, product_type: str = "Etsy Digital Wall Art") -> str:
+    """Builds prompt for generating 5 high-intent Pinterest Pin SEO sets."""
+    return f"""Generate 5 high-converting, evergreen Pinterest Visual SEO Pin concepts for:
+Product: "{product_name}"
+Niche: {niche}
+Product Type: {product_type}
+
+Pinterest is a visual search engine where users search with strong purchase intent. 
+Provide 5 distinct Pin concepts matching high-search volume keywords (e.g. 'Christian coloring book for toddlers', 'Psalm 23 minimalist wall art', '30 day devotional journal for women').
+
+For each Pin provide:
+1. Pin Concept & Target Search Keyword
+2. Catchy Pin Title (max 100 chars, highly searchable)
+3. SEO-Optimized Pin Description (200-400 chars, natural tone, clear benefit, call-to-action to visit store, 5 targeted hashtags)
+4. Canva Visual Template Advice (Aspect ratio 2:3 or 1000x1500px, color palette, text overlay hook, mockup style)
+5. Call To Action & Link Placement Strategy
+"""
+
+
+def build_kdp_coloring_interior_master_prompt(scene_description: str) -> str:
+    """Section 5.1: Master Prompt for KDP Coloring Book Interior (Gemini / FLUX)."""
+    return (
+        f"Kérlek, hozz létre egy tiszta, fekete-fehér gyermek színező oldalt a következőről: "
+        f"[{scene_description}] a Nano Banana Pro modellel. "
+        f"Stíluskövetelmények: Egyszerű, vastag fekete vonalakkal dolgozz, tiszta fehér háttérrel, "
+        f"árnyékolás, szürke tónusok és színátmenetek nélkül. Kedves, konzisztens vektorgrafikus gyerekkönyv stílus legyen, "
+        f"egységes vonalvastagsággal és letisztult formákkal. A lap méretaránya legyen 8.5:11 hüvelyk, 4K felbontásban."
+    )
+
+
+def build_kdp_cover_master_prompt(main_theme: str, book_title: str) -> str:
+    """Section 5.1: Master Prompt for KDP Book Cover."""
+    return (
+        f"A high-quality colorful children's book cover depicting [{main_theme}], "
+        f"consistent pastel color palette, vector art style, with bold, clean typography at the top "
+        f"that reads exactly: '[{book_title}]', high resolution, professional design, 17.412:11.25 aspect ratio."
+    )
+
+
+def build_etsy_wallart_master_prompt(exact_kjv_quote: str) -> str:
+    """Section 5.2: Master Prompt for Etsy Christian Wall Art."""
+    return (
+        f"An elegant minimalist watercolor design with soft green eucalyptus leaves framing a central text. "
+        f"The text reads in beautiful, clean typography: '[{exact_kjv_quote}]', "
+        f"high resolution, modern Scandinavian Christian wall art style, 4:5 aspect ratio."
+    )
+
+
+def build_etsy_clipart_master_prompt(character_subject: str) -> str:
+    """Section 5.2: Master Prompt for Etsy Clipart Bundles."""
+    return (
+        f"Watercolor illustration of [{character_subject}], cute chibi style, "
+        f"soft pastel color palette, isolated on pure white background, high detail, consistent clipart bundle style."
+    )
+
+
+def build_etsy_bg_removal_prompt() -> str:
+    """Section 5.2: Master Prompt for Multi-Turn Conversational Background Removal."""
+    return "Kérlek, távolítsd el a fehér hátteret a fenti grafikák mögül, és tegyed őket teljesen átlátszóvá (transparent PNG format)."
+
+
+def build_gumroad_devotional_master_prompt(devotional_title: str, day_number: int, matrix_row: str) -> str:
+    """Section 5.3: Master Prompt for 30-Day Devotional Journal Text."""
+    return f"""Szeretnék egy mély, hiteles és lelkileg építő 30 napos keresztény áhítat naplót (devotional) írni nőknek '[{devotional_title}]' címmel. Az alábbiakban megadom a NotebookLM által teológiailag ellenőrzött vázlatot a(z) [{day_number}.] naphoz: [{matrix_row}]. Kérlek, írd meg a nap teljes tartalmát. Tartalmazzon: a megadott KJV bibliai igét, egy 200 szavas bátorító magyarázó-elmélkedő szöveget, egy napi imát, és 3 db mély, elgondolkodtató önreflektív kérdést. Stílusutasítás: Kerüld a tipikus, mesterkélt AI-fordulatokat és a túl száraz megfogalmazást. Írj meleg, mélyen bátorító, spirituális, tiszteletteljes és emberi tónusban."""
+
+
+
 
 
