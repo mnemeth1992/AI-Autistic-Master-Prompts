@@ -179,7 +179,7 @@ def ensure_exact_page_count(scenes: List[Dict[str, Any]], target_count: int, is_
         ref = sc.get("scripture_reference", "Bible Verse")
         verse = sc.get("scripture_text", "")
         v_prompt = sc.get("visual_prompt", f"Bible coloring page of {cur_title}, {style_mod}")
-        if style_mod not in v_prompt:
+        if style_mod and style_mod not in v_prompt:
             v_prompt = f"{v_prompt}, {style_mod}"
         
         clean_scenes.append({
@@ -244,6 +244,18 @@ def inject_zen_css():
         padding: 18px 22px;
         margin-bottom: 16px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Prémium Nyelvváltó Sáv */
+    .lang-container {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+        border: 1.5px solid #38bdf8;
+        border-radius: 14px;
+        padding: 8px 14px;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     /* Paraméter visszajelző sáv */
@@ -387,48 +399,55 @@ def render_ai_tool_badge(tool_type: str, note: str = ""):
 
 
 # ─────────────────────────────────────────────────────────────
-# NYELVVÁLTÁSI CALLBACK FÜGGVÉNYEK (AZONNALI MEZŐFRISSÍTÉS)
+# GLOBÁLIS PRÉMIUM KÉTNYELVŰ RENDSZER (SZINKRONIZÁCIÓ & VÁLTÓ)
 # ─────────────────────────────────────────────────────────────
 
-def on_kdp_lang_change():
-    """Callback triggered immediately when KDP language radio changes."""
-    lang = st.session_state.get("kdp_lang_radio", "")
+def sync_all_language_defaults(lang: str):
+    """Synchronizes all input fields and prompts across all modules upon language change."""
     niche_key = st.session_state.get("zen_niche_sel", list(CHRISTIAN_SUB_NICHES.keys())[0])
     niche_data = CHRISTIAN_SUB_NICHES.get(niche_key, CHRISTIAN_SUB_NICHES[list(CHRISTIAN_SUB_NICHES.keys())[0]])
 
-    if "Magyar" in lang:
+    if lang == "HU":
         st.session_state["wiz_kdp_title"] = niche_data.get("default_kdp_title_hu", "Noé Bárkája Bibliai Kalandok")
         st.session_state["wiz_kdp_sub"] = niche_data.get("default_kdp_sub_hu", "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek")
-    else:
-        st.session_state["wiz_kdp_title"] = niche_data.get("default_kdp_title_en", "Noah's Ark Bible Adventures")
-        st.session_state["wiz_kdp_sub"] = niche_data.get("default_kdp_sub_en", "Inspiring Bible Verse Coloring Book for Children")
-
-
-def on_etsy_lang_change():
-    """Callback triggered immediately when Etsy language radio changes."""
-    lang = st.session_state.get("etsy_lang_radio", "")
-    if "Magyar" in lang:
         st.session_state["wiz_etsy_ref"] = "Zsoltárok 23:3"
         st.session_state["wiz_etsy_verse"] = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért."
-    else:
-        st.session_state["wiz_etsy_ref"] = "Psalm 23:3"
-        st.session_state["wiz_etsy_verse"] = "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
-
-
-def on_gum_lang_change():
-    """Callback triggered immediately when Gumroad language radio changes."""
-    lang = st.session_state.get("gum_lang_radio", "")
-    if "Magyar" in lang:
         st.session_state["wiz_gum_title"] = "30 Napos Békesség a Viharban Áhítat"
         st.session_state["wiz_gum_matrix"] = "[1. Nap | Filippi 4:6-7 | Isten békessége megőrzi a szíveteket | 1. Mi aggaszt ma? 2. Hogyan adod át Istennek? 3. Miért lehetsz hálás ma?]"
     else:
+        st.session_state["wiz_kdp_title"] = niche_data.get("default_kdp_title_en", "Noah's Ark Bible Adventures")
+        st.session_state["wiz_kdp_sub"] = niche_data.get("default_kdp_sub_en", "Inspiring Bible Verse Coloring Book for Children")
+        st.session_state["wiz_etsy_ref"] = "Psalm 23:3"
+        st.session_state["wiz_etsy_verse"] = "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
         st.session_state["wiz_gum_title"] = "30 Days of Peace in the Storm Devotional Journal"
         st.session_state["wiz_gum_matrix"] = "[Day 1 | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
 
 
-def on_niche_change():
-    """Callback triggered when Christian sub-niche changes in sidebar."""
-    on_kdp_lang_change()
+def render_sleek_language_bar(key_suffix: str = "") -> bool:
+    """Renders a sleek, glowing, modern bilingual language selector with instant sync."""
+    if "app_global_lang" not in st.session_state:
+        st.session_state["app_global_lang"] = "HU"
+
+    cur_lang = st.session_state["app_global_lang"]
+    opts = ["🇭🇺 Magyar (Hazai piac)", "🇺🇸 English (Global Market)"]
+    cur_idx = 0 if cur_lang == "HU" else 1
+
+    selected = st.radio(
+        "🌐 Nyelv / Language:",
+        options=opts,
+        index=cur_idx,
+        horizontal=True,
+        key=f"lang_switch_{key_suffix}",
+        label_visibility="collapsed"
+    )
+
+    new_lang = "HU" if "Magyar" in selected else "EN"
+    if new_lang != st.session_state["app_global_lang"]:
+        st.session_state["app_global_lang"] = new_lang
+        sync_all_language_defaults(new_lang)
+        st.rerun()
+
+    return st.session_state["app_global_lang"] == "HU"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -445,30 +464,24 @@ def render_kdp_pipeline_wizard(km):
     current_trim = st.session_state.get("kdp_trim", "8.5x11")
     current_title = st.session_state.get("kdp_title", st.session_state.get("wiz_kdp_title", "Noah's Ark Bible Adventures"))
 
-    st.markdown(f"""
-    <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #0284c7; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;'>
-        <div style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;'>
-            <h3 style='margin:0; color:#38bdf8; font-size:1.25rem;'>📘 1. Útvonal: Amazon KDP Könyv Pipeline</h3>
-            <div>
-                <span class='param-badge'>📖 {current_pages} Oldalas Kiadvány</span>
-                <span class='param-badge'>📐 Formátum: {current_trim}</span>
+    # ── Fejléc és Nyelvválasztó Sáv ──
+    h_col1, h_col2 = st.columns([1.6, 1.4])
+    with h_col1:
+        st.markdown(f"""
+        <div style='background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #0284c7; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px;'>
+            <div style='display:flex; justify-content:space-between; align-items:center;'>
+                <h3 style='margin:0; color:#38bdf8; font-size:1.25rem;'>📘 1. Útvonal: Amazon KDP Könyv Pipeline</h3>
+                <div>
+                    <span class='param-badge'>📖 {current_pages} Oldal</span>
+                    <span class='param-badge'>📐 {current_trim}</span>
+                </div>
             </div>
+            <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.84rem;'>Projekt: <strong>{current_title}</strong></p>
         </div>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.86rem;'>Aktuális projekt: <strong>{current_title}</strong> · 5-lépéses zárt munkafolyamat</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ── Nyelvválasztó ──
-    lang_col1, lang_col2 = st.columns([1.6, 2.4])
-    with lang_col1:
-        kdp_lang = st.radio(
-            "🌐 KDP Nyelv / Language:",
-            ["🇺🇸 Angol (US Market / KDP)", "🇭🇺 Magyar (Hazai piac)"],
-            horizontal=True,
-            key="kdp_lang_radio",
-            on_change=on_kdp_lang_change
-        )
-    is_hu = "Magyar" in kdp_lang
+        """, unsafe_allow_html=True)
+    with h_col2:
+        st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#38bdf8; margin-bottom:4px;'>🌐 KIADVÁNY NYELVE / LANGUAGE:</div>", unsafe_allow_html=True)
+        is_hu = render_sleek_language_bar("kdp")
 
     if "wiz_kdp_title" not in st.session_state:
         st.session_state["wiz_kdp_title"] = "Noé Bárkája Bibliai Kalandok" if is_hu else "Noah's Ark Bible Adventures"
@@ -476,11 +489,11 @@ def render_kdp_pipeline_wizard(km):
         st.session_state["wiz_kdp_sub"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek" if is_hu else "Inspiring Bible Verse Coloring Book for Children"
 
     kdp_steps = [
-        f"1. Cél ({current_pages}p)",
-        f"2. Vázlat ({current_pages}p)",
-        f"3. Promptek ({current_pages}p)",
-        "4. Borító",
-        "5. Nyomdai PDF"
+        f"1. Cél ({current_pages}p)" if is_hu else f"1. Goal ({current_pages}p)",
+        f"2. Vázlat ({current_pages}p)" if is_hu else f"2. Outline ({current_pages}p)",
+        f"3. Promptek ({current_pages}p)" if is_hu else f"3. Prompts ({current_pages}p)",
+        "4. Borító" if is_hu else "4. Cover",
+        "5. Nyomdai PDF" if is_hu else "5. Print PDF"
     ]
 
     if "kdp_step" not in st.session_state:
@@ -491,16 +504,16 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 1. LÉPÉS: NICHE, OLDALSZÁM & FELADAT-SPECIFIKUS STÍLUS ──
     if cur_step == 0:
-        render_ai_tool_badge("gemini", "A könyvcím, alcím és illusztrációs stílus meghatározásához használd a Geminit vagy az alábbi KDP stílusokat.")
-        st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím, Stílus és Oldalszám Beállítása")
+        render_ai_tool_badge("gemini", "A könyvcím, alcím és illusztrációs stílus meghatározásához használd a Geminit vagy az alábbi KDP stílusokat." if is_hu else "Use Gemini or the presets below to fine-tune your book title, subtitle, and art style.")
+        st.markdown(f"#### 🎯 1. Lépés: Könyv Cél, Cím, Stílus és Oldalszám Beállítása" if is_hu else "#### 🎯 Step 1: Book Goal, Title, Style & Page Count")
         
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
-            title = st.text_input("Könyv Főcíme:", key="wiz_kdp_title")
-            subtitle = st.text_input("Alcím:", key="wiz_kdp_sub")
+            title = st.text_input("Könyv Főcíme:" if is_hu else "Main Book Title:", key="wiz_kdp_title")
+            subtitle = st.text_input("Alcím:" if is_hu else "Subtitle:", key="wiz_kdp_sub")
             
             kdp_style = st.selectbox(
-                "🎨 KDP Művészeti & Vizuális Stílus:",
+                "🎨 KDP Művészeti & Vizuális Stílus:" if is_hu else "🎨 KDP Artistic & Visual Style:",
                 options=list(KDP_TASK_STYLES.keys()),
                 key="wiz_kdp_style_select"
             )
@@ -509,18 +522,18 @@ def render_kdp_pipeline_wizard(km):
 
         with c2:
             trim = st.selectbox("KDP Formátum (Trim Size):", ["8.5x11", "8.5x8.5", "8x10", "6x9"], index=0, key="wiz_kdp_trim")
-            page_count = st.slider("Színező / Illusztrált Oldalak Száma:", 4, 30, value=st.session_state.get("kdp_page_count", 10), key="wiz_kdp_pages")
+            page_count = st.slider("Színező / Illusztrált Oldalak Száma:" if is_hu else "Number of Coloring / Illustrated Pages:", 4, 30, value=st.session_state.get("kdp_page_count", 10), key="wiz_kdp_pages")
             
             st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#38bdf8;'>📖 Beállított Paraméterek:</strong><br>
-                • <strong>Tervezett terjedelem:</strong> <span style='color:#10b981; font-weight:800;'>{page_count} egyedi illusztrált oldal</span><br>
-                • <strong>Kiválasztott stílus:</strong> <code>{KDP_TASK_STYLES[kdp_style]['prompt_mod']}</code>
+                <strong style='color:#38bdf8;'>📖 {'Beállított Paraméterek' if is_hu else 'Configured Parameters'}:</strong><br>
+                • <strong>{'Tervezett terjedelem' if is_hu else 'Target Volume'}:</strong> <span style='color:#10b981; font-weight:800;'>{page_count} {'egyedi illusztrált oldal' if is_hu else 'unique illustrated pages'}</span><br>
+                • <strong>{'Kiválasztott stílus' if is_hu else 'Chosen Style'}:</strong> <code>{KDP_TASK_STYLES[kdp_style]['prompt_mod']}</code>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("---")
-        if st.button("Mentés és Tovább a Vázlathoz ➔", type="primary", use_container_width=True):
+        if st.button("Mentés és Tovább a Vázlathoz ➔" if is_hu else "Save & Continue to Outline ➔", type="primary", use_container_width=True):
             st.session_state["kdp_title"] = title
             st.session_state["kdp_subtitle"] = subtitle
             st.session_state["kdp_trim"] = trim
@@ -530,15 +543,16 @@ def render_kdp_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: VÁZLAT & KJV IGÉK (PONTOS OLDALSZÁM BIZTOSÍTÁSÁVAL) ──
     elif cur_step == 1:
-        render_ai_tool_badge("notebooklm", "A KJV Biblia feltöltve a NotebookLM-be hallucinációmentes igehelyeket és jeleneteket biztosít ➔ ezt fejtjük ki a Geminivel.")
-        st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title', current_title)}' Sorszámozott Vázlata ({current_pages} Oldal)")
+        render_ai_tool_badge("notebooklm", "A KJV Biblia feltöltve a NotebookLM-be hallucinációmentes igehelyeket és jeleneteket biztosít ➔ ezt fejtjük ki a Geminivel." if is_hu else "Upload KJV Bible into NotebookLM for hallucination-free scriptures ➔ expand scenes with Gemini.")
+        st.markdown(f"#### 📖 2. Lépés: '{st.session_state.get('kdp_title', current_title)}' Sorszámozott Vázlata ({current_pages} Oldal)" if is_hu else f"#### 📖 Step 2: '{st.session_state.get('kdp_title', current_title)}' Sequential Outline ({current_pages} Pages)")
         st.caption(f"Az AI pontosan {current_pages} db bibliai igehelyet és 4K képgeneráló promptot készít ({'Magyarul' if is_hu else 'Angolul'}).")
 
         target_p = st.session_state.get("kdp_page_count", 10)
         style_choice = st.session_state.get("kdp_chosen_style", list(KDP_TASK_STYLES.keys())[0])
         style_mod = KDP_TASK_STYLES.get(style_choice, {}).get("prompt_mod", "")
 
-        if st.button(f"✨ Pontosan {target_p} Oldalas Vázlat Generálása (AI)", use_container_width=True, type="primary"):
+        btn_txt = f"✨ Pontosan {target_p} Oldalas Vázlat Generálása (AI)" if is_hu else f"✨ Generate Exactly {target_p}-Page Outline (AI)"
+        if st.button(btn_txt, use_container_width=True, type="primary"):
             with st.spinner(f"AI generálja a pontosan {target_p} oldalas könyvvázlatot..."):
                 prompt = build_kdp_autopilot_manifest_prompt(
                     book_title=st.session_state.get("kdp_title", current_title),
@@ -551,31 +565,30 @@ def render_kdp_pipeline_wizard(km):
                 ok, resp = km.generate_text_with_fallback(prompt=prompt, system_instruction=f"Te egy KDP kiadói szakértő vagy. {lang_sys}", model_name="groq-llama-3.3-70b")
                 
                 raw_scenes = parse_kdp_autopilot_manifest_json(resp)
-                # Ensure 100% exact page count guarantee
                 exact_scenes = ensure_exact_page_count(raw_scenes, target_p, is_hu, style_mod)
                 st.session_state["kdp_scenes_manifest"] = exact_scenes
-                st.success(f"✅ Sorszámozott könyvvázlat sikeresen elkészült mind a(z) {len(exact_scenes)} oldalhoz!")
+                st.success(f"✅ Sorszámozott könyvvázlat sikeresen elkészült mind a(z) {len(exact_scenes)} oldalhoz!" if is_hu else f"✅ Sequential outline generated for all {len(exact_scenes)} pages!")
 
         scenes = st.session_state.get("kdp_scenes_manifest", [])
         if scenes:
-            st.markdown(f"**Legenerált Jelenetek ({len(scenes)} / {target_p} oldal):**")
+            st.markdown(f"**{'Legenerált Jelenetek' if is_hu else 'Generated Scenes'} ({len(scenes)} / {target_p} {'oldal' if is_hu else 'pages'}):**")
             for sc in scenes:
-                st.info(f"**Oldal {sc.get('page_number')}: {sc.get('title')}** (`{sc.get('scripture_reference')}`)\n\n*Ige:* \"{sc.get('scripture_text', '')}\"\n\n*Prompt:* {sc.get('visual_prompt')}")
+                st.info(f"**{'Oldal' if is_hu else 'Page'} {sc.get('page_number')}: {sc.get('title')}** (`{sc.get('scripture_reference')}`)\n\n*Ige:* \"{sc.get('scripture_text', '')}\"\n\n*Prompt:* {sc.get('visual_prompt')}")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Címhez", use_container_width=True):
+            if st.button("⬅️ Vissza a Címhez" if is_hu else "⬅️ Back to Title", use_container_width=True):
                 st.session_state["kdp_step"] = 0
                 st.rerun()
         with c_b2:
-            if st.button(f"Tovább a Gemini Gemhez & {target_p} db Promptekhez ➔", type="primary", use_container_width=True):
+            if st.button(f"Tovább a Gemini Gemhez & {target_p} db Promptekhez ➔" if is_hu else f"Continue to Gemini Gem & {target_p} Prompts ➔", type="primary", use_container_width=True):
                 st.session_state["kdp_step"] = 2
                 st.rerun()
 
     # ── 3. LÉPÉS: GEMINI CUSTOM GEM & 4K PROMPTEK (MINDEN OLDALHOZ) ──
     elif cur_step == 2:
-        render_ai_tool_badge("gemini", "A 4K képeket mindig a Gemini webes felületén hozzuk létre a lenti Custom Gem leírással, így a stílus és a karakterek 100%-ban azonosak maradnak.")
+        render_ai_tool_badge("gemini", "A 4K képeket mindig a Gemini webes felületén hozzuk létre a lenti Custom Gem leírással, így a stílus és a karakterek 100%-ban azonosak maradnak." if is_hu else "Generate 4K images on Gemini Web using the Custom Gem instruction below for 100% character and style consistency.")
         
         target_p = st.session_state.get("kdp_page_count", 10)
         book_title = st.session_state.get('kdp_title', current_title)
@@ -588,88 +601,89 @@ def render_kdp_pipeline_wizard(km):
             style_name=style_prompt
         )
 
-        st.markdown(f"#### 💎 Gemini Custom Gem Rendszerutasítás ({target_p} Oldalas Kiadványhoz)")
-        st.caption("Másold be ezt az utasítást a Gemini 'Custom Gems' létrehozó felületére a garantált stílus- és karakterkonzisztenciához:")
+        st.markdown(f"#### 💎 Gemini Custom Gem {'Rendszerutasítás' if is_hu else 'System Instruction'} ({target_p} {'Oldalas Kiadványhoz' if is_hu else 'Pages'})")
+        st.caption("Másold be ezt az utasítást a Gemini 'Custom Gems' létrehozó felületére a garantált stílus- és karakterkonzisztenciához:" if is_hu else "Copy this instruction into Gemini Custom Gems creator for guaranteed style consistency:")
         st.code(gem_instruction, language="markdown")
 
         st.markdown("---")
-        st.markdown(f"#### 📋 Mind a(z) {target_p} Oldal 4K Képpromptja a Gemini Webhez:")
+        st.markdown(f"#### 📋 {'Mind a(z)' if is_hu else 'All'} {target_p} {'Oldal 4K Képpromptja a Gemini Webhez:' if is_hu else 'Page 4K Image Prompts for Gemini Web:'}")
 
         raw_scenes = st.session_state.get("kdp_scenes_manifest", [])
         scenes = ensure_exact_page_count(raw_scenes, target_p, is_hu, style_prompt)
 
         for sc in scenes:
-            with st.expander(f"🖼️ Oldal {sc.get('page_number')} / {target_p}: {sc.get('title')} ({sc.get('scripture_reference', '')})", expanded=False):
-                st.text_area(f"Másolható Prompt (Oldal {sc.get('page_number')}):", value=sc.get('visual_prompt', ''), height=75, key=f"kdp_sc_p_{sc.get('page_number')}")
+            with st.expander(f"🖼️ {'Oldal' if is_hu else 'Page'} {sc.get('page_number')} / {target_p}: {sc.get('title')} ({sc.get('scripture_reference', '')})", expanded=False):
+                st.text_area(f"{'Másolható Prompt' if is_hu else 'Copyable Prompt'} ({'Oldal' if is_hu else 'Page'} {sc.get('page_number')}):", value=sc.get('visual_prompt', ''), height=75, key=f"kdp_sc_p_{sc.get('page_number')}")
 
         st.markdown("---")
-        st.markdown("#### 📥 Gemini Webről Letöltött Képek Feltöltése (Opcionális - Nyomdai PDF-hez)")
-        st.caption(f"Ha a Gemini Webes felületén letöltötted a kész 4K képeket ({target_p} db), húzd be őket ide, és az 5. lépésben a ReportLab automatikusan összefűzi a nyomdakész PDF-et:")
-        uploaded_imgs = st.file_uploader(f"Kész képek feltöltése ({target_p} oldalhoz):", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kdp_user_uploaded_images")
+        st.markdown(f"#### 📥 {'Gemini Webről Letöltött Képek Feltöltése (Opcionális - Nyomdai PDF-hez)' if is_hu else 'Upload Downloaded Images from Gemini Web (Optional - for Print PDF)'}")
+        st.caption(f"Ha a Gemini Webes felületén letöltötted a kész 4K képeket ({target_p} db), húzd be őket ide, és az 5. lépésben a ReportLab automatikusan összefűzi a nyomdakész PDF-et:" if is_hu else f"Upload your {target_p} images saved from Gemini Web for automatic ReportLab PDF assembly:")
+        uploaded_imgs = st.file_uploader(f"{'Kész képek feltöltése' if is_hu else 'Upload finished images'} ({target_p} {'oldalhoz' if is_hu else 'pages'}):", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kdp_user_uploaded_images")
         if uploaded_imgs:
             st.session_state["kdp_uploaded_images_list"] = uploaded_imgs
-            st.success(f"✅ {len(uploaded_imgs)} db kép feltöltve a {target_p} oldalas kiadványhoz!")
+            st.success(f"✅ {len(uploaded_imgs)} db kép feltöltve a {target_p} oldalas kiadványhoz!" if is_hu else f"✅ {len(uploaded_imgs)} images uploaded for {target_p}-page book!")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Vázlathoz", use_container_width=True):
+            if st.button("⬅️ Vissza a Vázlathoz" if is_hu else "⬅️ Back to Outline", use_container_width=True):
                 st.session_state["kdp_step"] = 1
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a Borító & Gerinc Kalkulációhoz ➔", type="primary", use_container_width=True):
+            if st.button("Tovább a Borító & Gerinc Kalkulációhoz ➔" if is_hu else "Continue to Cover & Spine Math ➔", type="primary", use_container_width=True):
                 st.session_state["kdp_step"] = 3
                 st.rerun()
 
     # ── 4. LÉPÉS: BORÍTÓ & GERINC (PONTOS OLDALSZÁMBÓL SZÁMÍTVA) ──
     elif cur_step == 3:
-        render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini Web Imagen motorjával generálod.")
+        render_ai_tool_badge("gemini", "A mértani 17.412:11.25 Wrap-Around borítót a beépített KDP kalkulátor méretezi és a Gemini Web Imagen motorjával generálod." if is_hu else "The wrap-around cover is calculated with KDP math and generated on Gemini Web.")
         
         target_p = st.session_state.get("kdp_page_count", 10)
         cov_calc = calculate_kdp_cover_dimensions(page_count=target_p, trim_size_str="8.5x11", paper_type="white")
 
-        st.markdown(f"#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság ({target_p} Oldalas Kiadvány)")
+        st.markdown(f"#### 📐 4. Lépés: KDP Wrap-Around Borító & Gerincvastagság ({target_p} Oldalas Kiadvány)" if is_hu else f"#### 📐 Step 4: KDP Wrap-Around Cover & Spine Dimensions ({target_p} Pages)")
 
         c1, c2 = st.columns(2)
         with c1:
             st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#38bdf8;'>📐 Nyomdai Méretek (8.5×11 Bleed, {target_p} oldal):</strong><br>
-                • <strong>Belső terjedelme:</strong> <span style='color:#10b981; font-weight:800;'>{target_p} oldal</span><br>
-                • <strong>Teljes borítószélesség:</strong> {cov_calc['total_width_in']:.3f} hüvelyk ({cov_calc['pixel_width_300dpi']} px)<br>
-                • <strong>Teljes borítómagasság:</strong> {cov_calc['total_height_in']:.3f} hüvelyk ({cov_calc['pixel_height_300dpi']} px)<br>
-                • <strong>Számított gerincvastagság:</strong> <span style='color:#f59e0b; font-weight:800;'>{cov_calc['spine_width_in']:.4f} hüvelyk</span><br>
-                • <strong>Képarány:</strong> <code>17.412:11.25</code>
+                <strong style='color:#38bdf8;'>📐 {'Nyomdai Méretek' if is_hu else 'Print Dimensions'} (8.5×11 Bleed, {target_p} {'oldal' if is_hu else 'pages'}):</strong><br>
+                • <strong>{'Belső terjedelme' if is_hu else 'Interior Volume'}:</strong> <span style='color:#10b981; font-weight:800;'>{target_p} {'oldal' if is_hu else 'pages'}</span><br>
+                • <strong>{'Teljes borítószélesség' if is_hu else 'Total Cover Width'}:</strong> {cov_calc['total_width_in']:.3f} in ({cov_calc['pixel_width_300dpi']} px)<br>
+                • <strong>{'Teljes borítómagasság' if is_hu else 'Total Cover Height'}:</strong> {cov_calc['total_height_in']:.3f} in ({cov_calc['pixel_height_300dpi']} px)<br>
+                • <strong>{'Számított gerincvastagság' if is_hu else 'Spine Thickness'}:</strong> <span style='color:#f59e0b; font-weight:800;'>{cov_calc['spine_width_in']:.4f} in</span><br>
+                • <strong>{'Képarány' if is_hu else 'Aspect Ratio'}:</strong> <code>17.412:11.25</code>
             </div>
             """, unsafe_allow_html=True)
         with c2:
             cov_prompt = build_kdp_cover_master_prompt(f"{st.session_state.get('kdp_title', current_title)} on calm waters with animals", st.session_state.get('kdp_title', 'BIBLE COLORING BOOK'))
-            st.markdown("**Master Prompt Borítóhoz a Gemini Webre:**")
+            st.markdown(f"**{'Master Prompt Borítóhoz a Gemini Webre:' if is_hu else 'Master Prompt for Cover on Gemini Web:'}**")
             st.code(cov_prompt, language="text")
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Promptekhez", use_container_width=True):
+            if st.button("⬅️ Vissza a Promptekhez" if is_hu else "⬅️ Back to Prompts", use_container_width=True):
                 st.session_state["kdp_step"] = 2
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a Nyomdai PDF Összefűzéshez ➔", type="primary", use_container_width=True):
+            if st.button("Tovább a Nyomdai PDF Összefűzéshez ➔" if is_hu else "Continue to Print PDF ➔", type="primary", use_container_width=True):
                 st.session_state["kdp_step"] = 4
                 st.rerun()
 
     # ── 5. LÉPÉS: NYOMDAI PDF & FLIPBOOK ──
     elif cur_step == 4:
-        render_ai_tool_badge("reportlab", "A nyomdakész 300 DPI PDF belsőt a beépített ReportLab motor automatikusan fűzi össze margókkal és tesztlapokkal.")
+        render_ai_tool_badge("reportlab", "A nyomdakész 300 DPI PDF belsőt a beépített ReportLab motor automatikusan fűzi össze margókkal és tesztlapokkal." if is_hu else "Print-ready 300 DPI interior PDF is compiled automatically by ReportLab with margins and color test swatches.")
         
         target_p = st.session_state.get("kdp_page_count", 10)
-        st.markdown(f"#### 🖨️ 5. Lépés: KDP Nyomdakész Belső PDF Összeállítása ({target_p} Oldal)")
-        st.caption(f"ReportLab nyomdai motor: margók (0.50\"), filcátütés-gátló tesztlapok, {target_p} db belső illusztráció.")
+        st.markdown(f"#### 🖨️ 5. Lépés: KDP Nyomdakész Belső PDF Összeállítása ({target_p} Oldal)" if is_hu else f"#### 🖨️ Step 5: KDP Print-Ready Interior PDF Assembly ({target_p} Pages)")
+        st.caption(f"ReportLab nyomdai motor: margók (0.50\"), filcátütés-gátló tesztlapok, {target_p} db belső illusztráció." if is_hu else f"ReportLab engine: 0.50\" margins, bleed protection sheets, {target_p} interior illustrations.")
 
         raw_scenes = st.session_state.get("kdp_scenes_manifest", [])
         scenes = ensure_exact_page_count(raw_scenes, target_p, is_hu, "")
 
-        if st.button(f"🚀 Nyomdakész KDP Belső PDF Összefűzése ({target_p} oldal)", type="primary", use_container_width=True):
+        btn_pdf_txt = f"🚀 Nyomdakész KDP Belső PDF Összefűzése ({target_p} oldal)" if is_hu else f"🚀 Assemble Print-Ready KDP PDF ({target_p} pages)"
+        if st.button(btn_pdf_txt, type="primary", use_container_width=True):
             with st.spinner(f"PDF összeállítása mind a(z) {target_p} oldalhoz margókkal és tesztlapokkal..."):
                 pdf_bytes = build_kdp_book_pdf(
                     scenes=scenes,
@@ -681,11 +695,11 @@ def render_kdp_pipeline_wizard(km):
                 )
                 if pdf_bytes:
                     st.session_state["final_kdp_pdf_bytes"] = pdf_bytes
-                    st.success(f"🎉 Nyomdakész {target_p} oldalas KDP PDF sikeresen elkészült!")
+                    st.success(f"🎉 Nyomdakész {target_p} oldalas KDP PDF sikeresen elkészült!" if is_hu else f"🎉 Print-ready {target_p}-page KDP PDF created successfully!")
 
         if "final_kdp_pdf_bytes" in st.session_state:
             st.download_button(
-                f"📥 Nyomdakész KDP PDF Letöltése ({target_p} oldal, .pdf)",
+                f"📥 {'Nyomdakész KDP PDF Letöltése' if is_hu else 'Download Print-Ready KDP PDF'} ({target_p} {'oldal' if is_hu else 'pages'}, .pdf)",
                 data=st.session_state["final_kdp_pdf_bytes"],
                 file_name=f"{st.session_state.get('kdp_title', 'Coloring_Book').replace(' ', '_')}_{target_p}p_KDP_Interior.pdf",
                 mime="application/pdf",
@@ -693,7 +707,7 @@ def render_kdp_pipeline_wizard(km):
             )
 
         st.markdown("---")
-        if st.button("🔄 Új KDP Könyv Indítása (Reset)", use_container_width=True):
+        if st.button("🔄 Új KDP Könyv Indítása (Reset)" if is_hu else "🔄 Start New KDP Project (Reset)", use_container_width=True):
             st.session_state["kdp_step"] = 0
             st.rerun()
 
@@ -703,24 +717,17 @@ def render_kdp_pipeline_wizard(km):
 # ─────────────────────────────────────────────────────────────
 
 def render_etsy_pipeline_wizard(km):
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #10b981; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;'>
-        <h3 style='margin:0; color:#34d399; font-size:1.3rem;'>🖼️ 2. Útvonal: Etsy Wall Art & Clipart Stúdió</h3>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 4-lépéses munkafolyamat: Koncepció & Stílus ➔ Gemini Custom Gem & 4K Promptek ➔ Háttéreltávolítás ➔ 2026 SEO & CSV Export</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ── Nyelvválasztó ──
-    lang_col1, lang_col2 = st.columns([1.6, 2.4])
-    with lang_col1:
-        etsy_lang = st.radio(
-            "🌐 Etsy Nyelv / Language:",
-            ["🇺🇸 Angol (Global Etsy)", "🇭🇺 Magyar (Hazai piac)"],
-            horizontal=True,
-            key="etsy_lang_radio",
-            on_change=on_etsy_lang_change
-        )
-    is_hu = "Magyar" in etsy_lang
+    h_col1, h_col2 = st.columns([1.6, 1.4])
+    with h_col1:
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #10b981; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px;'>
+            <h3 style='margin:0; color:#34d399; font-size:1.25rem;'>🖼️ 2. Útvonal: Etsy Wall Art & Clipart Stúdió</h3>
+            <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.84rem;'>Zárt 4-lépéses munkafolyamat: Koncepció ➔ Gemini Custom Gem ➔ Háttéreltávolítás ➔ 2026 SEO & CSV</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with h_col2:
+        st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#34d399; margin-bottom:4px;'>🌐 ETSY NYELV / LANGUAGE:</div>", unsafe_allow_html=True)
+        is_hu = render_sleek_language_bar("etsy")
 
     if "wiz_etsy_ref" not in st.session_state:
         st.session_state["wiz_etsy_ref"] = "Zsoltárok 23:3" if is_hu else "Psalm 23:3"
@@ -728,9 +735,9 @@ def render_etsy_pipeline_wizard(km):
         st.session_state["wiz_etsy_verse"] = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért." if is_hu else "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
 
     etsy_steps = [
-        "1. Koncepció & Stílus",
-        "2. Gemini Gem & Promptek",
-        "3. Háttéreltávolítás",
+        "1. Koncepció & Stílus" if is_hu else "1. Concept & Style",
+        "2. Gemini Gem & Promptek" if is_hu else "2. Gemini Gem & Prompts",
+        "3. Háttéreltávolítás" if is_hu else "3. Background Removal",
         "4. 2026 SEO & CSV"
     ]
 
@@ -742,19 +749,19 @@ def render_etsy_pipeline_wizard(km):
 
     # ── 1. LÉPÉS: KONCEPCIÓ & FELADAT-SPECIFIKUS STÍLUS ──
     if cur_step == 0:
-        render_ai_tool_badge("notebooklm", "A szó szerinti, pontos bibliai igéket a forrásalapú NotebookLM jegyzetfüzetből emeljük át.")
-        st.markdown("#### 🌿 1. Lépés: Terméktípus, Igehely és Művészeti Stílus")
+        render_ai_tool_badge("notebooklm", "A szó szerinti, pontos bibliai igéket a forrásalapú NotebookLM jegyzetfüzetből emeljük át." if is_hu else "Extract literal scripture verses from NotebookLM RAG.")
+        st.markdown(f"#### 🌿 1. Lépés: Terméktípus, Igehely és Művészeti Stílus" if is_hu else "#### 🌿 Step 1: Product Type, Scripture Verse & Art Style")
         
-        p_type = st.radio("Terméktípus:", ["🖼️ Skandináv Igés Falikép (4:5 Wall Art)", "✂️ Chibi / Akvarell Clipart Csomag (Fehér Háttér)"], key="wiz_etsy_ptype")
+        p_type = st.radio("Terméktípus:" if is_hu else "Product Type:", ["🖼️ Skandináv Igés Falikép (4:5 Wall Art)" if is_hu else "🖼️ Scandinavian Scripture Wall Art (4:5)", "✂️ Chibi / Akvarell Clipart Csomag (Fehér Háttér)" if is_hu else "✂️ Chibi / Watercolor Clipart Bundle (1:1 White BG)"], key="wiz_etsy_ptype")
         st.session_state["etsy_is_clipart"] = "Clipart" in p_type
 
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
-            ref = st.text_input("Igehely:", key="wiz_etsy_ref")
-            verse = st.text_area("Szó szerinti Ige:", height=70, key="wiz_etsy_verse")
+            ref = st.text_input("Igehely:" if is_hu else "Scripture Reference:", key="wiz_etsy_ref")
+            verse = st.text_area("Szó szerinti Ige:" if is_hu else "Literal Verse Text:", height=70, key="wiz_etsy_verse")
             
             etsy_style = st.selectbox(
-                "🎨 Etsy Művészeti & Dekor Stílus:",
+                "🎨 Etsy Művészeti & Dekor Stílus:" if is_hu else "🎨 Etsy Art & Decor Style:",
                 options=list(ETSY_TASK_STYLES.keys()),
                 key="wiz_etsy_style_select"
             )
@@ -763,15 +770,15 @@ def render_etsy_pipeline_wizard(km):
         with c2:
             st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#34d399;'>🎨 Kiválasztott Stílus Módosító:</strong><br>
+                <strong style='color:#34d399;'>🎨 {'Kiválasztott Stílus Módosító' if is_hu else 'Selected Style Modifier'}:</strong><br>
                 <code>{ETSY_TASK_STYLES[etsy_style]['prompt_mod']}</code><br><br>
-                <strong style='color:#cbd5e1;'>🏷️ SEO Címkék kiegészítése:</strong><br>
+                <strong style='color:#cbd5e1;'>🏷️ {'SEO Címkék kiegészítése' if is_hu else 'SEO Tags Addon'}:</strong><br>
                 <code>{', '.join(ETSY_TASK_STYLES[etsy_style]['tags_addon'])}</code>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("---")
-        if st.button("Mentés és Tovább a Gemini Promptekhez ➔", type="primary", use_container_width=True):
+        if st.button("Mentés és Tovább a Gemini Promptekhez ➔" if is_hu else "Save & Continue to Gemini Prompts ➔", type="primary", use_container_width=True):
             st.session_state["etsy_ref"] = ref
             st.session_state["etsy_verse"] = verse
             st.session_state["etsy_step"] = 1
@@ -779,7 +786,7 @@ def render_etsy_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: GEMINI CUSTOM GEM & 4K PROMPTEK ──
     elif cur_step == 1:
-        render_ai_tool_badge("gemini", "A 4K faliképeket és clipartokat a Gemini webes felületén hozzuk létre a lenti Custom Gem és prompt segítségével.")
+        render_ai_tool_badge("gemini", "A 4K faliképeket és clipartokat a Gemini webes felületén hozzuk létre a lenti Custom Gem és prompt segítségével." if is_hu else "Create 4K wall art and cliparts on Gemini Web with the Custom Gem and prompts below.")
         
         is_clipart = st.session_state.get("etsy_is_clipart", False)
         style_info = ETSY_TASK_STYLES.get(st.session_state.get("etsy_chosen_style", list(ETSY_TASK_STYLES.keys())[0]), {})
@@ -791,12 +798,12 @@ def render_etsy_pipeline_wizard(km):
             style_name=style_prompt
         )
 
-        st.markdown("#### 💎 Gemini Custom Gem Rendszerutasítás (Etsy Stílus)")
-        st.caption("Másold be ezt a Gemini Custom Gembe a garantáltan egységes skandináv falikép vagy chibi clipart stílushoz:")
+        st.markdown(f"#### 💎 Gemini Custom Gem {'Rendszerutasítás (Etsy Stílus)' if is_hu else 'System Instruction (Etsy Style)'}")
+        st.caption("Másold be ezt a Gemini Custom Gembe a garantáltan egységes skandináv falikép vagy chibi clipart stílushoz:" if is_hu else "Copy into Gemini Custom Gems for 100% consistent art style:")
         st.code(etsy_gem_instruction, language="markdown")
 
         st.markdown("---")
-        st.markdown("#### 📋 Másolható 4K Master Prompt a Gemini Webhez:")
+        st.markdown(f"#### 📋 {'Másolható 4K Master Prompt a Gemini Webhez:' if is_hu else 'Copyable 4K Master Prompt for Gemini Web:'}")
 
         if is_clipart:
             subject = "young biblical Moses holding the stone tablets" if not is_hu else "fiatal bibliai Mózes a kőtáblákkal"
@@ -810,42 +817,42 @@ def render_etsy_pipeline_wizard(km):
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Koncepcióhoz", use_container_width=True):
+            if st.button("⬅️ Vissza a Koncepcióhoz" if is_hu else "⬅️ Back to Concept", use_container_width=True):
                 st.session_state["etsy_step"] = 0
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a Háttéreltávolításhoz ➔", type="primary", use_container_width=True):
+            if st.button("Tovább a Háttéreltávolításhoz ➔" if is_hu else "Continue to BG Removal ➔", type="primary", use_container_width=True):
                 st.session_state["etsy_step"] = 2
                 st.rerun()
 
     # ── 3. LÉPÉS: HÁTTÉRELTÁVOLÍTÁS ──
     elif cur_step == 2:
-        render_ai_tool_badge("gemini", "A többkörös beszélgetős háttéreltávolításhoz (Transparent PNG) a Gemini Web képszerkesztőjét használjuk.")
-        st.markdown("#### ✨ 3. Lépés: Többkörös Beszélgetős Háttéreltávolítás (PNG)")
-        st.caption("Használd a Gemini Conversational Editing funkciót a fehér háttér azonnali átlátszóvá tételéhez.")
+        render_ai_tool_badge("gemini", "A többkörös beszélgetős háttéreltávolításhoz (Transparent PNG) a Gemini Web képszerkesztőjét használjuk." if is_hu else "Use Gemini Web Multi-Turn Conversational Editing to make backgrounds transparent PNG.")
+        st.markdown(f"#### ✨ 3. Lépés: Többkörös Beszélgetős Háttéreltávolítás (PNG)" if is_hu else "#### ✨ Step 3: Conversational Background Removal (PNG)")
+        st.caption("Használd a Gemini Conversational Editing funkciót a fehér háttér azonnali átlátszóvá tételéhez." if is_hu else "Use conversational commands in Gemini to remove white background instantly.")
 
-        st.markdown("""
+        st.markdown(f"""
         <div class='zen-card'>
-            <strong style='color:#38bdf8;'>💬 Gemini Másolható Utasítás:</strong><br>
-            <code>Kérlek, távolítsd el a fehér hátteret a fenti grafikák mögül, és tegyed őket teljesen átlátszóvá (transparent PNG format).</code>
+            <strong style='color:#38bdf8;'>💬 {'Gemini Másolható Utasítás' if is_hu else 'Gemini Copyable Command'}:</strong><br>
+            <code>{'Kérlek, távolítsd el a fehér hátteret a fenti grafikák mögül, és tegyed őket teljesen átlátszóvá (transparent PNG format).' if is_hu else 'Please remove the white background behind these illustrations and make them completely transparent (PNG format).'}</code>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Promptekhez", use_container_width=True):
+            if st.button("⬅️ Vissza a Promptekhez" if is_hu else "⬅️ Back to Prompts", use_container_width=True):
                 st.session_state["etsy_step"] = 1
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a 2026 SEO & CSV-hez ➔", type="primary", use_container_width=True):
+            if st.button("Tovább a 2026 SEO & CSV-hez ➔" if is_hu else "Continue to 2026 SEO & CSV ➔", type="primary", use_container_width=True):
                 st.session_state["etsy_step"] = 3
                 st.rerun()
 
     # ── 4. LÉPÉS: 2026 SEO & CSV ──
     elif cur_step == 3:
-        render_ai_tool_badge("gemini", "A szigorú 2026-os Etsy SEO címeket (140 kar) és a 13 tag-et a Gemini / Groq és a beépített CSV motor készíti.")
-        st.markdown("#### 🛍️ 4. Lépés: Szigorú 2026-os Etsy SEO & 1-Kattintásos CSV Export")
+        render_ai_tool_badge("gemini", "A szigorú 2026-os Etsy SEO címeket (140 kar) és a 13 tag-et a Gemini / Groq és a beépített CSV motor készíti." if is_hu else "Strict 2026 Etsy SEO titles (140 chars) and 13 tags generated with CSV export.")
+        st.markdown("#### 🛍️ 4. Lépés: Szigorú 2026-os Etsy SEO & 1-Kattintásos CSV Export" if is_hu else "#### 🛍️ Step 4: Strict 2026 Etsy SEO & 1-Click CSV Export")
         st.caption(f"Cím <= 140 karakter, pontosan 13 tag (egyenként <= 20 karakter!), FFC leírás Drive szállítással ({'Magyarul' if is_hu else 'Angolul'}).")
 
         cur_ref = st.session_state.get("etsy_ref", st.session_state.get("wiz_etsy_ref", "Psalm 23:3"))
@@ -854,7 +861,8 @@ def render_etsy_pipeline_wizard(km):
         else:
             prod_title = f"{cur_ref} Christian Wall Art Printable Scandinavian Minimalist Scripture Poster"
 
-        if st.button("✨ 2026-os Etsy SEO Generálása & CSV Előállítása", type="primary", use_container_width=True):
+        btn_seo_txt = "✨ 2026-os Etsy SEO Generálása & CSV Előállítása" if is_hu else "✨ Generate 2026 Etsy SEO & Official CSV"
+        if st.button(btn_seo_txt, type="primary", use_container_width=True):
             with st.spinner("AI generálja a szigorú Etsy SEO címkéket..."):
                 prompt = build_strict_etsy_seo_prompt(prod_title, "Christian Wall Art Decor")
                 lang_sys = "Kizárólag magyar nyelven válaszolj, a címkék magyar ékezetmentes kulcsszavak legyenek." if is_hu else "Respond strictly in English."
@@ -872,18 +880,18 @@ def render_etsy_pipeline_wizard(km):
                             "tags": ["christian wall art", "psalm 23 print", "bible verse decor", "scandinavian art", "scripture print", "printable wall art", "instant download", "faith home decor", "minimalist poster", "digital wall art", "christian gift", "eucalyptus print", "300 dpi printable"]
                         }
                 st.session_state["etsy_seo_result"] = seo_data
-                st.success("✅ Etsy SEO készlet és CSV elkészült!")
+                st.success("✅ Etsy SEO készlet és CSV elkészült!" if is_hu else "✅ Etsy SEO listing & CSV prepared successfully!")
 
         seo_res = st.session_state.get("etsy_seo_result", {})
         if seo_res:
-            st.markdown(f"**Cím ({len(seo_res.get('title', ''))}/140 kar):** `{seo_res.get('title')}`")
-            st.markdown(f"**13 Címke:** {', '.join([f'`{t}`' for t in seo_res.get('tags', [])])}")
+            st.markdown(f"**{'Cím' if is_hu else 'Title'} ({len(seo_res.get('title', ''))}/140 {'kar' if is_hu else 'chars'}):** `{seo_res.get('title')}`")
+            st.markdown(f"**13 {'Címke' if is_hu else 'Tags'}:** {', '.join([f'`{t}`' for t in seo_res.get('tags', [])])}")
             
             csv_bytes = generate_etsy_csv([{"title": seo_res.get('title'), "description": "High resolution printable digital download.", "price": "6.99", "quantity": "999", "tags": seo_res.get('tags', [])}])
-            st.download_button("📊 Hivatalos Etsy CSV Letöltése", data=csv_bytes, file_name="Etsy_Listing_2026.csv", mime="text/csv", use_container_width=True)
+            st.download_button(f"📊 {'Hivatalos Etsy CSV Letöltése' if is_hu else 'Download Official Etsy CSV'}", data=csv_bytes, file_name="Etsy_Listing_2026.csv", mime="text/csv", use_container_width=True)
 
         st.markdown("---")
-        if st.button("🔄 Új Etsy Termék Indítása (Reset)", use_container_width=True):
+        if st.button("🔄 Új Etsy Termék Indítása (Reset)" if is_hu else "🔄 Start New Etsy Product (Reset)", use_container_width=True):
             st.session_state["etsy_step"] = 0
             st.rerun()
 
@@ -893,24 +901,17 @@ def render_etsy_pipeline_wizard(km):
 # ─────────────────────────────────────────────────────────────
 
 def render_gumroad_pipeline_wizard(km):
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #a855f7; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;'>
-        <h3 style='margin:0; color:#c084fc; font-size:1.3rem;'>🎙️ 3. Útvonal: Gumroad Áhítat & Podcast Gyár</h3>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>Zárt, 4-lépéses munkafolyamat: NotebookLM RAG ➔ 30 Napos Kézirat ➔ Sales Letter & Audio Upsell ($39) ➔ API Publikálás</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ── Nyelvválasztó ──
-    lang_col1, lang_col2 = st.columns([1.6, 2.4])
-    with lang_col1:
-        gum_lang = st.radio(
-            "🌐 Gumroad Nyelv / Language:",
-            ["🇺🇸 Angol (Global Gumroad)", "🇭🇺 Magyar (Hazai piac)"],
-            horizontal=True,
-            key="gum_lang_radio",
-            on_change=on_gum_lang_change
-        )
-    is_hu = "Magyar" in gum_lang
+    h_col1, h_col2 = st.columns([1.6, 1.4])
+    with h_col1:
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(15, 23, 42, 0.9)); border: 1px solid #a855f7; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px;'>
+            <h3 style='margin:0; color:#c084fc; font-size:1.25rem;'>🎙️ 3. Útvonal: Gumroad Áhítat & Podcast Gyár</h3>
+            <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.84rem;'>Zárt 4-lépéses munkafolyamat: RAG Mátrix ➔ 30 Napos Kézirat ➔ Sales Copy & Audio Upsell ($39) ➔ API</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with h_col2:
+        st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#c084fc; margin-bottom:4px;'>🌐 GUMROAD NYELV / LANGUAGE:</div>", unsafe_allow_html=True)
+        is_hu = render_sleek_language_bar("gum")
 
     if "wiz_gum_title" not in st.session_state:
         st.session_state["wiz_gum_title"] = "30 Napos Békesség a Viharban Áhítat" if is_hu else "30 Days of Peace in the Storm Devotional Journal"
@@ -919,9 +920,9 @@ def render_gumroad_pipeline_wizard(km):
 
     gum_steps = [
         "1. NotebookLM RAG",
-        "2. Napi Kézirat & Stílus",
-        "3. Copy & Audio Upsell ($39)",
-        "4. Gumroad Publikálás"
+        "2. Napi Kézirat & Stílus" if is_hu else "2. Daily Manuscript & Tone",
+        "3. Copy & Audio ($39)" if is_hu else "3. Copy & Audio ($39)",
+        "4. Gumroad Publikálás" if is_hu else "4. Gumroad Publish"
     ]
 
     if "gum_step" not in st.session_state:
@@ -932,23 +933,23 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 1. LÉPÉS: NOTEBOOKLM RAG ──
     if cur_step == 0:
-        render_ai_tool_badge("notebooklm", "A 30 napos teológiai mátrix táblázatot [Nap | Ige | Tanítás | 3 Kérdés] a forrásalapú NotebookLM építi fel.")
-        st.markdown("#### 📓 1. Lépés: Forrásalapú Teológiai Mátrix & KJV Kutatás")
+        render_ai_tool_badge("notebooklm", "A 30 napos teológiai mátrix táblázatot [Nap | Ige | Tanítás | 3 Kérdés] a forrásalapú NotebookLM építi fel." if is_hu else "Build your 30-day theological matrix table in NotebookLM RAG.")
+        st.markdown(f"#### 📓 1. Lépés: Forrásalapú Teológiai Mátrix & KJV Kutatás" if is_hu else "#### 📓 Step 1: Source-Based Theological Matrix & KJV Research")
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
-            dev_title = st.text_input("Áhítatos Kötet Címe:", key="wiz_gum_title")
-            day_num = st.slider("Nap Száma:", 1, 30, value=st.session_state.get("gum_day", 1), key="wiz_gum_day")
-            matrix_row = st.text_area("NotebookLM Mátrix Sor (RAG Forrás):", height=70, key="wiz_gum_matrix")
+            dev_title = st.text_input("Áhítatos Kötet Címe:" if is_hu else "Devotional Book Title:", key="wiz_gum_title")
+            day_num = st.slider("Nap Száma:" if is_hu else "Day Number:", 1, 30, value=st.session_state.get("gum_day", 1), key="wiz_gum_day")
+            matrix_row = st.text_area("NotebookLM Mátrix Sor (RAG Forrás):" if is_hu else "NotebookLM Matrix Row (RAG Source):", height=70, key="wiz_gum_matrix")
         with c2:
-            st.markdown("""
+            st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#a855f7;'>🧠 RAG Előny:</strong><br>
-                A NotebookLM jegyzetfüzetbe feltöltött KJV Biblia és teológiai jegyzetek megszüntetik a téves idézeteket és a közhelyes AI szövegeket.
+                <strong style='color:#a855f7;'>🧠 {'RAG Előny' if is_hu else 'RAG Advantage'}:</strong><br>
+                {'A NotebookLM jegyzetfüzetbe feltöltött KJV Biblia és teológiai jegyzetek megszüntetik a téves idézeteket és a közhelyes AI szövegeket.' if is_hu else 'NotebookLM grounded in KJV scriptures eliminates hallucinated quotes and generic text.'}
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("---")
-        if st.button("Mentés és Tovább a Kézirathoz ➔", type="primary", use_container_width=True):
+        if st.button("Mentés és Tovább a Kézirathoz ➔" if is_hu else "Save & Continue to Manuscript ➔", type="primary", use_container_width=True):
             st.session_state["gum_dev_title"] = dev_title
             st.session_state["gum_day"] = day_num
             st.session_state["gum_matrix_row"] = matrix_row
@@ -957,18 +958,19 @@ def render_gumroad_pipeline_wizard(km):
 
     # ── 2. LÉPÉS: NAPI KÉZIRAT & FELADAT-SPECIFIKUS TÓNUS STÍLUS ──
     elif cur_step == 1:
-        render_ai_tool_badge("gemini", "A 200 szavas mély lelkigondozói reflexiókat, imákat és naplókérdéseket a Gemini Advanced Master Prompt fejti ki.")
-        st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day', 1)}. Napi Áhítat Kifejtése (Gemini Master Prompt)")
+        render_ai_tool_badge("gemini", "A 200 szavas mély lelkigondozói reflexiókat, imákat és naplókérdéseket a Gemini Advanced Master Prompt fejti ki." if is_hu else "Expand 200-word pastoral reflections, prayers and journal prompts with Gemini Advanced.")
+        st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day', 1)}. Napi Áhítat Kifejtése (Gemini Master Prompt)" if is_hu else f"#### ✍️ Step 2: Day {st.session_state.get('gum_day', 1)} Devotional Manuscript (Gemini Master Prompt)")
         
         gum_style = st.selectbox(
-            "✍️ Lelkigondozói & Irodalmi Hangvétel Stílus:",
+            "✍️ Lelkigondozói & Irodalmi Hangvétel Stílus:" if is_hu else "✍️ Pastoral & Devotional Tone Style:",
             options=list(GUMROAD_TASK_STYLES.keys()),
             key="wiz_gum_style_select"
         )
         st.session_state["gum_chosen_style"] = gum_style
         tone_instruction = GUMROAD_TASK_STYLES[gum_style]["instruction"]
 
-        if st.button(f"✨ Napi Áhítat Generálása ({'Magyarul' if is_hu else 'Angolul'})", type="primary", use_container_width=True):
+        btn_dev_txt = f"✨ Napi Áhítat Generálása ({'Magyarul' if is_hu else 'Angolul'})" if is_hu else f"✨ Generate Daily Devotional ({'Hungarian' if is_hu else 'English'})"
+        if st.button(btn_dev_txt, type="primary", use_container_width=True):
             with st.spinner("AI írja a mély, lelkigondozói szöveget..."):
                 base_prompt = build_gumroad_devotional_master_prompt(
                     st.session_state.get("gum_dev_title", st.session_state.get("wiz_gum_title", "Áhítat")),
@@ -978,70 +980,71 @@ def render_gumroad_pipeline_wizard(km):
                 lang_sys = f"Kizárólag mély, hiteles magyar nyelven írj. Stílusutasítás: {tone_instruction}" if is_hu else f"Write strictly in deep, authentic English devotional tone. Style instruction: {tone_instruction}"
                 ok, resp = km.generate_text_with_fallback(prompt=base_prompt, system_instruction=lang_sys, model_name="groq-llama-3.3-70b")
                 st.session_state["gum_dev_text"] = resp
-                st.success("✅ Napi áhítat elkészült!")
+                st.success("✅ Napi áhítat elkészült!" if is_hu else "✅ Daily devotional text generated!")
 
         dev_t = st.session_state.get("gum_dev_text", "")
         if dev_t:
             st.markdown("---")
             st.markdown(dev_t)
-            st.download_button("📥 Kézirat Letöltése (.txt)", data=dev_t, file_name=f"Devotional_Day_{st.session_state.get('gum_day', 1):02d}.txt", mime="text/plain", use_container_width=True)
+            st.download_button(f"📥 {'Kézirat Letöltése' if is_hu else 'Download Manuscript'} (.txt)", data=dev_t, file_name=f"Devotional_Day_{st.session_state.get('gum_day', 1):02d}.txt", mime="text/plain", use_container_width=True)
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Mátrixhoz", use_container_width=True):
+            if st.button("⬅️ Vissza a Mátrixhoz" if is_hu else "⬅️ Back to Matrix", use_container_width=True):
                 st.session_state["gum_step"] = 0
                 st.rerun()
         with c_b2:
-            if st.button("Tovább az Értékesítési Szöveghez & Audio Upsellhez ➔", type="primary", use_container_width=True):
+            if st.button("Tovább az Értékesítési Szöveghez & Audio Upsellhez ➔" if is_hu else "Continue to Sales Letter & Audio Upsell ➔", type="primary", use_container_width=True):
                 st.session_state["gum_step"] = 2
                 st.rerun()
 
     # ── 3. LÉPÉS: SALES COPY & AUDIO UPSELL ($39) ──
     elif cur_step == 2:
-        render_ai_tool_badge("notebooklm", "A 10-15 perces Deep Dive Audio Overview (két műsorvezetős MP3 podcast) bónuszt a NotebookLM generálja ($39 upsell).")
-        st.markdown("#### 📜 3. Lépés: Russell Brunson Sales Letter & Audio Upsell ($39)")
-        st.caption("A NotebookLM Deep Dive Audio Overview (15 perces MP3 podcast) bónusz $29-ról $39-ra emeli a csomagárat (+$10 tiszta profit).")
+        render_ai_tool_badge("notebooklm", "A 10-15 perces Deep Dive Audio Overview (két műsorvezetős MP3 podcast) bónuszt a NotebookLM generálja ($39 upsell)." if is_hu else "Generate 10-15 min Deep Dive Audio Overview podcast in NotebookLM ($39 upsell).")
+        st.markdown(f"#### 📜 3. Lépés: Russell Brunson Sales Letter & Audio Upsell ($39)" if is_hu else f"#### 📜 Step 3: Russell Brunson Sales Letter & Audio Upsell ($39)")
+        st.caption("A NotebookLM Deep Dive Audio Overview (15 perces MP3 podcast) bónusz $29-ról $39-ra emeli a csomagárat (+$10 tiszta profit)." if is_hu else "NotebookLM Audio Overview companion lifts package value from $29 to $39 (+$10 pure profit).")
 
-        st.markdown("""
+        st.markdown(f"""
         <div class='zen-card'>
-            <strong style='color:#10b981;'>💰 Értékhalom (Value Stack):</strong><br>
-            • 30 Napos Vezetett Áhítat Napló (PDF): $47 érték<br>
-            • <strong>BÓNUSZ: Deep Dive Audio Overview Podcast (MP3):</strong> $19 érték<br>
-            • Nyomtatható Imakártyák: $15 érték<br>
-            <strong>➔ Teljes Prémium Csomag Ár: $39</strong> (Több mint 60% megtakarítás!)
+            <strong style='color:#10b981;'>💰 {'Értékhalom (Value Stack)' if is_hu else 'Value Stack'}:</strong><br>
+            • {'30 Napos Vezetett Áhítat Napló (PDF): $47 érték' if is_hu else '30-Day Guided Devotional Journal (PDF): $47 Value'}<br>
+            • <strong>{'BÓNUSZ: Deep Dive Audio Overview Podcast (MP3): $19 érték' if is_hu else 'BONUS: Deep Dive Audio Overview Podcast (MP3): $19 Value'}</strong><br>
+            • {'Nyomtatható Imakártyák: $15 érték' if is_hu else 'Printable Scripture Prayer Cards: $15 Value'}<br>
+            <strong>➔ {'Teljes Prémium Csomag Ár: $39' if is_hu else 'Full Premium Bundle Price: $39'}</strong> ({'Több mint 60% megtakarítás!' if is_hu else 'Over 60% Savings!'})
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown("---")
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            if st.button("⬅️ Vissza a Kézirathoz", use_container_width=True):
+            if st.button("⬅️ Vissza a Kézirathoz" if is_hu else "⬅️ Back to Manuscript", use_container_width=True):
                 st.session_state["gum_step"] = 1
                 st.rerun()
         with c_b2:
-            if st.button("Tovább a Gumroad Publikáláshoz ➔", type="primary", use_container_width=True):
+            if st.button("Tovább a Gumroad Publikáláshoz ➔" if is_hu else "Continue to Gumroad Publish ➔", type="primary", use_container_width=True):
                 st.session_state["gum_step"] = 3
                 st.rerun()
 
     # ── 4. LÉPÉS: GUMROAD PUBLIKÁLÁS ──
     elif cur_step == 3:
-        render_ai_tool_badge("gemini", "A termék 1-kattintással közvetlenül publikálható a Gumroad API v2-n keresztül.")
-        st.markdown("#### 🚀 4. Lépés: 1-Kattintásos Gumroad API Publikálás")
+        render_ai_tool_badge("gemini", "A termék 1-kattintással közvetlenül publikálható a Gumroad API v2-n keresztül." if is_hu else "Publish product directly via Gumroad API v2.")
+        st.markdown(f"#### 🚀 4. Lépés: 1-Kattintásos Gumroad API Publikálás" if is_hu else "#### 🚀 Step 4: 1-Click Gumroad API Publishing")
         p_title = st.session_state.get("gum_dev_title", st.session_state.get("wiz_gum_title", "30 Napos Keresztény Áhítat Csomag"))
-        p_price = st.number_input("Termék Ára ($ USD):", min_value=9, max_value=99, value=39)
-        p_drive_url = st.text_input("Google Drive Kézbesítési Mappa URL:", value="https://drive.google.com/drive/folders/...")
+        p_price = st.number_input("Termék Ára ($ USD):" if is_hu else "Product Price ($ USD):", min_value=9, max_value=99, value=39)
+        p_drive_url = st.text_input("Google Drive Kézbesítési Mappa URL:" if is_hu else "Google Drive Delivery Folder URL:", value="https://drive.google.com/drive/folders/...")
 
-        if st.button("🚀 Termék Publikálása Gumroadra (API)", type="primary", use_container_width=True):
+        btn_pub_txt = "🚀 Termék Publikálása Gumroadra (API)" if is_hu else "🚀 Publish Product to Gumroad (API)"
+        if st.button(btn_pub_txt, type="primary", use_container_width=True):
             with st.spinner("Publikálás a Gumroad fiókodba..."):
                 ok_g, g_url, raw = publish_to_gumroad(product_name=p_title, price_usd=str(p_price), description=f"30-Day Christian Devotional with Bonus MP3 Audio Companion.", drive_delivery_url=p_drive_url)
                 if ok_g:
-                    st.success(f"🎉 Termék sikeresen publikálva! Élő URL: {g_url}")
+                    st.success(f"🎉 {'Termék sikeresen publikálva! Élő URL:' if is_hu else 'Product published successfully! Live URL:'} {g_url}")
                 else:
                     st.error(f"Eredmény: {g_url}")
 
         st.markdown("---")
-        if st.button("🔄 Új Gumroad Termék Indítása (Reset)", use_container_width=True):
+        if st.button("🔄 Új Gumroad Termék Indítása (Reset)" if is_hu else "🔄 Start New Gumroad Project (Reset)", use_container_width=True):
             st.session_state["gum_step"] = 0
             st.rerun()
 
@@ -1051,19 +1054,24 @@ def render_gumroad_pipeline_wizard(km):
 # ─────────────────────────────────────────────────────────────
 
 def render_central_hub(km):
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border: 1px solid #334155; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;'>
-        <h3 style='margin:0; color:#f1f5f9; font-size:1.3rem;'>⚙️ 0. Központi Vezérlőközpont & Adótervező Hub</h3>
-        <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>2026-os magyar átalányadó kalkulátor, NotebookLM RAG motor, FFC marketing és AI konfiguráció.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    h_col1, h_col2 = st.columns([1.6, 1.4])
+    with h_col1:
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px;'>
+            <h3 style='margin:0; color:#f1f5f9; font-size:1.25rem;'>⚙️ 0. Központi Vezérlőközpont & Adótervező Hub</h3>
+            <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.84rem;'>2026-os átalányadó tervező, NotebookLM RAG motor, FFC marketing és API beállítások.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with h_col2:
+        st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#f1f5f9; margin-bottom:4px;'>🌐 VEZÉRLŐPULT NYELVE / LANGUAGE:</div>", unsafe_allow_html=True)
+        is_hu = render_sleek_language_bar("hub")
 
     tab_tax, tab_rag, tab_mktg, tab_vision, tab_settings = st.tabs([
-        "💰 1. 2026 Adótervező & Kalkulátor",
-        "📓 2. NotebookLM RAG Kutatás",
+        "💰 1. 2026 Adótervező & Kalkulátor" if is_hu else "💰 1. 2026 Tax Planner & Calculator",
+        "📓 2. NotebookLM RAG Kutatás" if is_hu else "📓 2. NotebookLM RAG Research",
         "📌 3. FFC & Pinterest SEO",
         "📷 4. AI Vision Lab",
-        "🔑 5. Rendszer & API Beállítások"
+        "🔑 5. Rendszer & API Beállítások" if is_hu else "🔑 5. System & API Keys"
     ])
 
     with tab_tax:
@@ -1091,8 +1099,8 @@ def render_central_hub(km):
             st.info("AI Vision Lab modul aktív.")
 
     with tab_settings:
-        st.markdown("#### 🔑 AI Szolgáltatók & API Kulcsok")
-        st.caption("Automatikus szöveges AI motorok: 1. Groq (Ingyenes) ➔ 2. OpenRouter ➔ 3. Gemini ➔ 4. Offline Sablonok.")
+        st.markdown(f"#### 🔑 {'AI Szolgáltatók & API Kulcsok' if is_hu else 'AI Providers & API Configuration'}")
+        st.caption("Automatikus szöveges AI motorok: 1. Groq (Ingyenes) ➔ 2. OpenRouter ➔ 3. Gemini ➔ 4. Offline Sablonok." if is_hu else "Multi-provider AI fallback: 1. Groq (Free) ➔ 2. OpenRouter ➔ 3. Gemini ➔ 4. Offline Templates.")
 
         cg1, cg2 = st.columns(2)
         with cg1:
@@ -1102,9 +1110,9 @@ def render_central_hub(km):
             gem_k = st.text_input("Google Gemini Fizetős API Kulcs:", value=km.paid_key, type="password", key="zen_gem_k")
             gum_t = st.text_input("Gumroad Access Token:", type="password", key="zen_gum_t")
 
-        if st.button("💾 Kulcsok & Beállítások Mentése", type="primary", use_container_width=True):
+        if st.button("💾 Kulcsok & Beállítások Mentése" if is_hu else "💾 Save Keys & Configuration", type="primary", use_container_width=True):
             km.save_configuration(paid_key=gem_k, groq_key=groq_k, openrouter_key=openr_k)
-            st.success("✅ Beállítások sikeresen mentve!")
+            st.success("✅ Beállítások sikeresen mentve!" if is_hu else "✅ Configuration saved successfully!")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1117,17 +1125,22 @@ def main():
 
     with st.sidebar:
         st.markdown("""
-        <div style='text-align: center; padding: 6px 0 14px 0;'>
+        <div style='text-align: center; padding: 6px 0 10px 0;'>
             <div style='font-size: 2.2rem;'>✝️</div>
             <h2 style='margin:0; font-size:1.15rem; font-weight:800; color:#f1f5f9;'>Keresztény Munkaállomás</h2>
             <span style='font-size:0.78rem; color:#94a3b8;'>Zen & Flow Pipeline Hub</span>
         </div>
         """, unsafe_allow_html=True)
 
+        # ── Globális Nyelvváltó az Oldalsáv Tetején ──
+        st.markdown("<div style='font-size:0.78rem; font-weight:800; color:#38bdf8; margin-bottom:4px;'>🌐 GLOBÁLIS NYELV / LANGUAGE:</div>", unsafe_allow_html=True)
+        is_global_hu = render_sleek_language_bar("sidebar")
+
+        st.markdown("---")
         # ── Keresztény Célcsoport & Alkategória Választó ──
         christian_niche_keys = list(CHRISTIAN_SUB_NICHES.keys())
         chosen_niche = st.selectbox(
-            "🎯 Keresztény Célcsoport:",
+            "🎯 Keresztény Célcsoport:" if is_global_hu else "🎯 Christian Target Audience:",
             options=christian_niche_keys,
             index=0,
             key="zen_niche_sel",
@@ -1136,17 +1149,19 @@ def main():
         st.session_state["active_niche_choice"] = chosen_niche
 
         st.markdown("---")
-        st.markdown("<div style='font-weight:700; color:#38bdf8; font-size:0.85rem; margin-bottom:6px;'>🧭 VÁLASSZ PIPELINE-T:</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-weight:700; color:#38bdf8; font-size:0.85rem; margin-bottom:6px;'>🧭 VÁLASSZ PIPELINE-T:</div>" if is_global_hu else "<div style='font-weight:700; color:#38bdf8; font-size:0.85rem; margin-bottom:6px;'>🧭 SELECT PIPELINE:</div>", unsafe_allow_html=True)
 
         # ── A 3 Fő Pipeline + 1 Hub ──
+        nav_opts = [
+            "📘 1. Amazon KDP Könyv Pipeline" if is_global_hu else "📘 1. Amazon KDP Book Pipeline",
+            "🖼️ 2. Etsy Wall Art & Clipart Pipeline",
+            "🎙️ 3. Gumroad Áhítat & Podcast Pipeline" if is_global_hu else "🎙️ 3. Gumroad Devotional & Podcast",
+            "⚙️ 0. Vezérlőközpont & Adó Hub" if is_global_hu else "⚙️ 0. Central Control & Tax Hub"
+        ]
+
         selected_nav = st.radio(
             "Navigáció:",
-            [
-                "📘 1. Amazon KDP Könyv Pipeline",
-                "🖼️ 2. Etsy Wall Art & Clipart Pipeline",
-                "🎙️ 3. Gumroad Áhítat & Podcast Pipeline",
-                "⚙️ 0. Vezérlőközpont & Adó Hub"
-            ],
+            nav_opts,
             index=0,
             label_visibility="collapsed",
             key="zen_main_nav"
@@ -1154,20 +1169,20 @@ def main():
 
         st.markdown("---")
         summary = km.get_summary()
-        st.caption(f"⚡ Szöveges AI Motor: {'Groq (Aktív)' if summary.get('has_groq') else 'Offline / Sablonok'}")
+        st.caption(f"⚡ Szöveges AI: {'Groq (Aktív)' if summary.get('has_groq') else 'Offline Sablonok'}")
 
     # ── Permanens AuDHD 120-Perces Időzítő a legfelső fejlécben ──
     if render_audhd_tracker:
         render_audhd_tracker()
 
     # ── Munkaterület Routing ──
-    if "1. Amazon KDP" in selected_nav:
+    if "1. Amazon KDP" in selected_nav or "1. Amazon" in selected_nav:
         render_kdp_pipeline_wizard(km)
     elif "2. Etsy" in selected_nav:
         render_etsy_pipeline_wizard(km)
     elif "3. Gumroad" in selected_nav:
         render_gumroad_pipeline_wizard(km)
-    elif "0. Vezérlőközpont" in selected_nav:
+    elif "0. Vezérlőközpont" in selected_nav or "0. Central" in selected_nav:
         render_central_hub(km)
 
     # ── Minden oldalon diszkréten elérhető Alsó Gyors-Híd ──
