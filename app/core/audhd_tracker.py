@@ -2,9 +2,9 @@
 AuDHD 120-Minute Focus Timer, Phase Tracker & Streak Calendar Engine
 ===================================================================
 Designed specifically for neurodivergent (AuDHD) asynchronous workflows:
-  - Giant digital dial (Emerald Green < 120m -> Fiery Red when overtime).
-  - Real-time client-side live ticking JavaScript clock.
-  - Section 8 NotebookLM-integrated 5-day daily task checklist.
+  - Permanent, non-collapsing top dashboard with giant real-time ticking LED clock.
+  - Emerald Green (< 120m) -> Fiery Red when overtime (> 120m).
+  - Section 8 NotebookLM-integrated 5-day daily task checklist in collapsible drawer.
   - Persistence of focus streaks in `time_log.json`.
 """
 
@@ -161,11 +161,11 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
     running_js = "true" if is_running else "false"
     
     html_code = f"""
-    <div id="clock_wrapper" style="text-align:center; padding: 14px 16px; background: #0b1120; border-radius: 14px; border: 1.5px solid #1e293b; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
-        <div id="clock_display" style="font-size: 3.4rem; font-weight: 900; font-family: 'SF Mono', Consolas, monospace, sans-serif; color: #10b981; letter-spacing: 3px; line-height: 1.1; text-shadow: 0 0 20px rgba(16,185,129,0.4);">
+    <div id="clock_wrapper" style="text-align:center; padding: 10px 14px; background: #0b1120; border-radius: 12px; border: 1.5px solid #1e293b; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
+        <div id="clock_display" style="font-size: 3.2rem; font-weight: 900; font-family: 'SF Mono', Consolas, monospace, sans-serif; color: #10b981; letter-spacing: 3px; line-height: 1.1; text-shadow: 0 0 20px rgba(16,185,129,0.4);">
             00:00:00
         </div>
-        <div id="clock_status" style="font-size: 0.85rem; font-weight: 600; color: #94a3b8; margin-top: 6px; letter-spacing: 0.5px;">
+        <div id="clock_status" style="font-size: 0.82rem; font-weight: 600; color: #94a3b8; margin-top: 4px; letter-spacing: 0.5px;">
             120 Perces Mélyfókusz Keret
         </div>
     </div>
@@ -200,7 +200,7 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
                     displayEl.style.color = "#ef4444";
                     displayEl.style.textShadow = "0 0 25px rgba(239, 68, 68, 0.6)";
                     if (statusEl) {{
-                        statusEl.innerHTML = "⚠️ <strong style='color:#ef4444;'>120 PERCES KERET TÚLLÉPVE (OVERTIME)!</strong>";
+                        statusEl.innerHTML = "⚠️ <strong style='color:#ef4444;'>120 PERC TÚLLÉPVE (OVERTIME)!</strong>";
                     }}
                 }} else {{
                     // Normal: Emerald Green
@@ -208,9 +208,9 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
                     displayEl.style.textShadow = "0 0 20px rgba(16, 185, 129, 0.4)";
                     if (statusEl) {{
                         if (isRunning) {{
-                            statusEl.innerHTML = "🟢 <strong style='color:#10b981;'>MÉLYFÓKUSZ FOLYAMATBAN (ÉLŐ SZÁMLÁLÁS)...</strong>";
+                            statusEl.innerHTML = "🟢 <strong style='color:#10b981;'>ÉLŐ SZÁMLÁLÁS FOLYAMATBAN...</strong>";
                         }} else {{
-                            statusEl.innerHTML = "⏸️ <span style='color:#94a3b8;'>Szüneteltetve · 120 perces napi keret</span>";
+                            statusEl.innerHTML = "⏸️ <span style='color:#94a3b8;'>Szüneteltetve · 120 perces keret</span>";
                         }}
                     }}
                 }}
@@ -224,11 +224,11 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
     }})();
     </script>
     """
-    components.html(html_code, height=125)
+    components.html(html_code, height=115)
 
 
 def render_audhd_tracker():
-    """Renders AuDHD 120-Minute Focus Timer in an expandable top bar with live ticking counter."""
+    """Renders permanent top dashboard bar with giant live green/red clock that never collapses."""
     if "timer_running" not in st.session_state:
         st.session_state["timer_running"] = False
     if "timer_elapsed_seconds" not in st.session_state:
@@ -242,65 +242,69 @@ def render_audhd_tracker():
     timer_hms = format_seconds_to_hms(cur_secs)
     target_secs = 120 * 60
     progress = min(1.0, max(0.0, cur_secs / target_secs))
-    is_overtime = cur_secs >= target_secs
 
     today_day = get_today_hungarian_day()
     day_plan = AUDHD_DAY_PLANS.get(st.session_state["audhd_selected_day"], AUDHD_DAY_PLANS["Hétfő"])
-    status_tag = "🟢 FUT" if st.session_state["timer_running"] else "⏸️ SZÜNETEL"
-    color_tag = "🔴 TÚLLÉPÉS" if is_overtime else status_tag
 
-    expander_title = f"⏱️ AuDHD 120-Perces Mélyfókusz Időzítő | {color_tag}: {timer_hms} / 02:00:00 | Mai Fókusz: {today_day} ({day_plan.get('short', '')})"
+    # ── PERMANENS FELSŐ FÓKUSZ KÁRTYA (SOSEM CSÚKÓDIK ÖSSZE) ──
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85)); border: 1.5px solid #1e293b; border-radius: 14px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);'>
+    """, unsafe_allow_html=True)
 
-    with st.expander(expander_title, expanded=False):
-        c_timer, c_tasks = st.columns([1.2, 1.8])
+    col_clock, col_info = st.columns([1.1, 1.9])
 
-        with c_timer:
-            # Giant real-time ticking clock display
-            render_live_clock_html(cur_secs, st.session_state["timer_running"])
-            st.progress(progress)
-
-            btn_c1, btn_c2, btn_c3 = st.columns(3)
-            with btn_c1:
-                if not st.session_state["timer_running"]:
-                    if st.button("▶️ Indítás", key="top_timer_start_btn", use_container_width=True, type="primary"):
-                        st.session_state["timer_running"] = True
-                        st.session_state["timer_start_time"] = time.time()
-                        st.rerun()
-                else:
-                    if st.button("⏸️ Szünet", key="top_timer_pause_btn", use_container_width=True):
-                        st.session_state["timer_running"] = False
-                        st.session_state["timer_elapsed_seconds"] = cur_secs
-                        st.session_state["timer_start_time"] = None
-                        st.rerun()
-
-            with btn_c2:
-                if st.button("🔄 Reset", key="top_timer_reset_btn", use_container_width=True):
+    with col_clock:
+        # Giant real-time ticking clock display
+        render_live_clock_html(cur_secs, st.session_state["timer_running"])
+        
+        btn_c1, btn_c2, btn_c3 = st.columns(3)
+        with btn_c1:
+            if not st.session_state["timer_running"]:
+                if st.button("▶️ Indítás", key="top_timer_start_btn", use_container_width=True, type="primary"):
+                    st.session_state["timer_running"] = True
+                    st.session_state["timer_start_time"] = time.time()
+                    st.rerun()
+            else:
+                if st.button("⏸️ Szünet", key="top_timer_pause_btn", use_container_width=True):
                     st.session_state["timer_running"] = False
-                    st.session_state["timer_elapsed_seconds"] = 0
+                    st.session_state["timer_elapsed_seconds"] = cur_secs
                     st.session_state["timer_start_time"] = None
                     st.rerun()
 
-            with btn_c3:
-                if st.button("💾 Zárás", key="top_timer_save_btn", use_container_width=True):
-                    if cur_secs >= 60:
-                        save_time_log_entry({
-                            "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                            "day": st.session_state["audhd_selected_day"],
-                            "duration_seconds": cur_secs,
-                            "duration_formatted": timer_hms,
-                            "completed": progress >= 0.90
-                        })
-                        st.session_state["timer_running"] = False
-                        st.session_state["timer_elapsed_seconds"] = 0
-                        st.session_state["timer_start_time"] = None
-                        st.success("✅ Fókuszblokk elmentve az időnaplóba!")
-                        st.rerun()
-                    else:
-                        st.warning("Legalább 1 perc szükséges a mentéshez.")
+        with btn_c2:
+            if st.button("🔄 Reset", key="top_timer_reset_btn", use_container_width=True):
+                st.session_state["timer_running"] = False
+                st.session_state["timer_elapsed_seconds"] = 0
+                st.session_state["timer_start_time"] = None
+                st.rerun()
 
-        with c_tasks:
+        with btn_c3:
+            if st.button("💾 Mentés", key="top_timer_save_btn", use_container_width=True):
+                if cur_secs >= 60:
+                    save_time_log_entry({
+                        "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "day": st.session_state["audhd_selected_day"],
+                        "duration_seconds": cur_secs,
+                        "duration_formatted": timer_hms,
+                        "completed": progress >= 0.90
+                    })
+                    st.session_state["timer_running"] = False
+                    st.session_state["timer_elapsed_seconds"] = 0
+                    st.session_state["timer_start_time"] = None
+                    st.success("✅ Fókuszblokk elmentve az időnaplóba!")
+                    st.rerun()
+                else:
+                    st.warning("Legalább 1 perc szükséges a mentéshez.")
+
+    with col_info:
+        st.markdown(f"<div style='font-size:1.15rem; font-weight:800; color:#38bdf8;'>⏱️ AuDHD 120-Perces Mélyfókusz Időzítő</div>", unsafe_allow_html=True)
+        st.markdown(f"**Mai Fókusz ({today_day}):** `{day_plan.get('title')}`")
+        st.caption(f"Haladás: {int(progress * 100)}% ({timer_hms} / 02:00:00)")
+        st.progress(progress)
+
+        with st.expander(f"📋 {st.session_state['audhd_selected_day']}i Timeboxing Feladatlista (Kattints a lenyitáshoz)", expanded=False):
             sel_day = st.selectbox(
-                "Napi Timeboxing Terv Kiválasztása:",
+                "Nap kiválasztása:",
                 options=HUNGARIAN_DAYS,
                 index=HUNGARIAN_DAYS.index(st.session_state["audhd_selected_day"]),
                 key="top_audhd_day_select"
@@ -308,10 +312,9 @@ def render_audhd_tracker():
             st.session_state["audhd_selected_day"] = sel_day
             cur_plan = AUDHD_DAY_PLANS[sel_day]
 
-            st.markdown(f"**{cur_plan['title']}**")
-            st.caption(cur_plan['description'])
-
             tasks = cur_plan.get("tasks", [])
             for t_idx, task_text in enumerate(tasks):
                 task_key = f"task_{sel_day}_{t_idx}"
                 st.checkbox(task_text, key=task_key)
+
+    st.markdown("</div>", unsafe_allow_html=True)
