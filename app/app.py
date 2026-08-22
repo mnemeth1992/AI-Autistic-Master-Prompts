@@ -31,6 +31,7 @@ st.set_page_config(
 try:
     from core.key_manager import get_key_manager
     from core.audhd_tracker import render_audhd_tracker
+    from core.sidecar_dock import render_sidecar_dock
     from core.project_manager import list_saved_projects, save_project, load_project, auto_save_current_project
     from core.drive_sync import get_drive_root, resolve_drive_folder, get_service_account_info
     from core.prompts_bank import NICHE_CATEGORIES, get_niche_prompt_context
@@ -49,6 +50,7 @@ try:
 except (ModuleNotFoundError, ImportError):
     from app.core.key_manager import get_key_manager
     from app.core.audhd_tracker import render_audhd_tracker
+    from app.core.sidecar_dock import render_sidecar_dock
     from app.core.project_manager import list_saved_projects, save_project, load_project, auto_save_current_project
     from app.core.drive_sync import get_drive_root, resolve_drive_folder, get_service_account_info
     from app.core.prompts_bank import NICHE_CATEGORIES, get_niche_prompt_context
@@ -262,6 +264,10 @@ def main():
         render_ffc_marketing_module()
     elif "12. Rendszerbeállítások" in active_workspace:
         render_settings_module(km)
+
+    # ── MINDEN OLDALON ELÉRHETŐ ALSÓ GEMINI & NOTEBOOKLM GYORS-HÍD & CSEVEGŐ ──
+    st.markdown("---")
+    render_sidecar_dock()
 
 
 def render_settings_module(km):
