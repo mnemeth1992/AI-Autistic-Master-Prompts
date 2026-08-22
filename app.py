@@ -122,6 +122,7 @@ try:
     from app.core.sidecar_dock import render_sidecar_dock
     from app.modules.ffc_marketing import render_ffc_marketing_module
     from app.modules.vision_lab import render_vision_lab_module
+    from app.modules.product_analytics import render_product_analytics_module
 except (ModuleNotFoundError, ImportError):
     try:
         from core.audhd_tracker import render_audhd_tracker
@@ -131,6 +132,7 @@ except (ModuleNotFoundError, ImportError):
         from core.sidecar_dock import render_sidecar_dock
         from modules.ffc_marketing import render_ffc_marketing_module
         from modules.vision_lab import render_vision_lab_module
+        from modules.product_analytics import render_product_analytics_module
     except Exception:
         render_audhd_tracker = None
         render_notebooklm_rag_module = None
@@ -139,6 +141,7 @@ except (ModuleNotFoundError, ImportError):
         render_sidecar_dock = None
         render_ffc_marketing_module = None
         render_vision_lab_module = None
+        render_product_analytics_module = None
 
 CONFIG_FILE = os.path.join(current_dir, "config.json")
 TIME_LOG_FILE = os.path.join(current_dir, "time_log.json")
@@ -1075,12 +1078,13 @@ def render_central_hub(km):
         st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#f1f5f9; margin-bottom:4px;'>🌐 VEZÉRLŐPULT NYELVE / LANGUAGE:</div>", unsafe_allow_html=True)
         is_hu = render_sleek_language_bar("hub")
 
-    tab_tax, tab_rag, tab_mktg, tab_vision, tab_settings = st.tabs([
+    tab_tax, tab_rag, tab_mktg, tab_vision, tab_analytics, tab_settings = st.tabs([
         "🏢 1. EV Pénzügy, Bizonylattár & Adó" if is_hu else "🏢 1. EV Accounting, Vault & Tax",
         "📓 2. NotebookLM RAG Kutatás" if is_hu else "📓 2. NotebookLM RAG Research",
         "📌 3. FFC & Pinterest SEO",
         "📷 4. AI Vision Lab",
-        "🔑 5. Rendszer & API Beállítások" if is_hu else "🔑 5. System & API Keys"
+        "📈 5. Termék & Eladási Analytics" if is_hu else "📈 5. Product & Sales Analytics",
+        "🔑 6. Rendszer & API Beállítások" if is_hu else "🔑 6. System & API Keys"
     ])
 
     with tab_tax:
@@ -1108,6 +1112,12 @@ def render_central_hub(km):
             render_vision_lab_module()
         else:
             st.info("AI Vision Lab modul aktív.")
+
+    with tab_analytics:
+        if render_product_analytics_module:
+            render_product_analytics_module()
+        else:
+            st.info("Termék Analytics modul aktív.")
 
     with tab_settings:
         st.markdown(f"#### 🔑 {'AI Szolgáltatók & API Kulcsok' if is_hu else 'AI Providers & API Configuration'}")
