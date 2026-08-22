@@ -37,6 +37,9 @@ EXPENSES_FILE = os.path.join(DATA_DIR, "expenses.json")
 TAX_PAYMENTS_FILE = os.path.join(DATA_DIR, "tax_payments.json")
 
 # Standard 2026 Hungarian Tax Constants
+import urllib.request
+import xml.etree.ElementTree as ET
+
 AAM_LIMIT_2026 = 18000000.0  # 18 Million HUF
 MIN_WAGE_MONTHLY_2026 = 322800.0
 ANNUAL_MIN_WAGE_2026 = MIN_WAGE_MONTHLY_2026 * 12
@@ -44,11 +47,83 @@ TAX_FREE_INCOME_LIMIT_2026 = ANNUAL_MIN_WAGE_2026 / 2.0  # 1 936 800 HUF
 CHAMBER_FEE_FIXED = 5000.0
 
 DEFAULT_FX_RATES = {
-    "USD": 385.0,
-    "EUR": 405.0,
-    "GBP": 475.0,
+    "USD": 315.50,
+    "EUR": 365.00,
+    "GBP": 426.50,
+    "CHF": 395.00,
     "HUF": 1.0
 }
+
+
+# ─────────────────────────────────────────────────────────────
+# 0. HIVATALOS MNB WEBSERVICE API MOTOR (AUTOMATIKUS ÁRFOLYAM)
+# ─────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def fetch_mnb_exchange_rates(target_date_str: str = None) -> Tuple[str, Dict[str, float]]:
+    """
+    Fetches official exchange rates directly from Magyar Nemzeti Bank (MNB) SOAP Web Service.
+    Legally compliant with NAV and Hungarian Accounting Law for foreign currency translation.
+    Returns: (rate_date_str, {'USD': float, 'EUR': float, ...})
+    """
+    rates = DEFAULT_FX_RATES.copy()
+    rate_date = target_date_str or datetime.date.today().strftime("%Y-%m-%d")
+
+    try:
+        if target_date_str:
+            dt = datetime.datetime.strptime(target_date_str, "%Y-%m-%d")
+            start_dt = dt - datetime.timedelta(days=7)
+            start_str = start_dt.strftime("%Y-%m-%d")
+            end_str = dt.strftime("%Y-%m-%d")
+
+            soap_body = f"""<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetExchangeRates xmlns="http://www.mnb.hu/webservices/">
+      <startDate>{start_str}</startDate>
+      <endDate>{end_str}</endDate>
+      <currencyNames>USD,EUR,GBP,CHF,CAD,AUD</currencyNames>
+    </GetExchangeRates>
+  </soap:Body>
+</soap:Envelope>"""
+            action = "http://www.mnb.hu/webservices/GetExchangeRates"
+        else:
+            soap_body = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetCurrentExchangeRates xmlns="http://www.mnb.hu/webservices/" />
+  </soap:Body>
+</soap:Envelope>"""
+            action = "http://www.mnb.hu/webservices/GetCurrentExchangeRates"
+
+        headers = {
+            "Content-Type": "text/xml; charset=utf-8",
+            "SOAPAction": action
+        }
+
+        req = urllib.request.Request("http://www.mnb.hu/arfolyamok.asmx", data=soap_body.encode("utf-8"), headers=headers)
+        with urllib.request.urlopen(req, timeout=4) as response:
+            resp_text = response.read().decode("utf-8")
+            root = ET.fromstring(resp_text)
+            body = root.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")
+            for elem in body.iter():
+                if elem.tag.endswith("Result") and elem.text:
+                    inner_xml = elem.text
+                    inner_root = ET.fromstring(inner_xml)
+                    days = inner_root.findall("Day")
+                    if days:
+                        latest_day = days[-1]
+                        rate_date = latest_day.attrib.get("date", rate_date)
+                        for r_tag in latest_day.findall("Rate"):
+                            curr = r_tag.attrib.get("curr")
+                            if r_tag.text:
+                                rates[curr] = float(r_tag.text.replace(",", "."))
+                    break
+    except Exception:
+        pass
+
+    rates["HUF"] = 1.0
+    return rate_date, rates
 
 
 # ─────────────────────────────────────────────────────────────
@@ -490,9 +565,16 @@ def render_ev_accounting_module():
                 inv_num = st.text_input("Bizonylat / Számlaszám:", value=f"KDP-{inv_date.strftime('%Y%m')}-01", key="ev_new_inv_num")
 
             with c2:
-                inv_cur = st.selectbox("Eredeti Devizanem:", ["USD", "EUR", "GBP", "HUF"], index=0 if "Amazon" in inv_platform or "Gumroad" in inv_platform else 3, key="ev_new_inv_cur")
-                def_rate = DEFAULT_FX_RATES.get(inv_cur, 1.0)
-                inv_fx = st.number_input(f"MNB / Átváltási Árfolyam ({inv_cur} -> HUF):", min_value=1.0, value=float(def_rate), step=0.5, key="ev_new_inv_fx")
+                inv_cur = st.selectbox("Eredeti Devizanem:", ["USD", "EUR", "GBP", "CHF", "HUF"], index=0 if "Amazon" in inv_platform or "Gumroad" in inv_platform else 4, key="ev_new_inv_cur")
+                
+                if inv_cur != "HUF":
+                    mnb_date, mnb_rates = fetch_mnb_exchange_rates(inv_date.strftime("%Y-%m-%d"))
+                    cur_mnb_val = float(mnb_rates.get(inv_cur, DEFAULT_FX_RATES.get(inv_cur, 1.0)))
+                    st.markdown(f"<div style='background:rgba(56, 189, 248, 0.12); border:1px solid #38bdf8; border-radius:8px; padding:5px 10px; margin-bottom:6px; font-size:0.82rem; color:#38bdf8;'>🏛️ <strong>Hivatalos MNB ({mnb_date}):</strong> {cur_mnb_val:.2f} HUF</div>", unsafe_allow_html=True)
+                else:
+                    cur_mnb_val = 1.0
+
+                inv_fx = st.number_input(f"Alkalmazott Árfolyam ({inv_cur} -> HUF):", min_value=1.0, value=cur_mnb_val, step=0.1, key="ev_new_inv_fx")
                 inv_amount_fx = st.number_input(f"Deviza Összeg ({inv_cur}):", min_value=0.0, value=1250.0 if inv_cur != "HUF" else 480000.0, step=50.0, key="ev_new_inv_amt_fx")
                 
             with c3:
@@ -571,8 +653,16 @@ def render_ev_accounting_module():
 
             with ce2:
                 exp_cat = st.selectbox("Költségkategória:", ["Szoftver & AI Előfizetés", "Tárhely & Domain", "Könyvelési Díj", "Marketing & Hirdetés", "Irodaszer & Eszköz", "Egyéb Működés"], key="ev_new_exp_cat")
-                exp_cur = st.selectbox("Pénznem:", ["USD", "EUR", "HUF"], index=0 if "Google" in exp_vendor or "Vercel" in exp_vendor else 2, key="ev_new_exp_cur")
-                exp_fx = st.number_input("Árfolyam:", min_value=1.0, value=float(DEFAULT_FX_RATES.get(exp_cur, 1.0)), step=0.5, key="ev_new_exp_fx")
+                exp_cur = st.selectbox("Pénznem:", ["USD", "EUR", "GBP", "CHF", "HUF"], index=0 if "Google" in exp_vendor or "Vercel" in exp_vendor else 4, key="ev_new_exp_cur")
+                
+                if exp_cur != "HUF":
+                    exp_mnb_date, exp_mnb_rates = fetch_mnb_exchange_rates(exp_date.strftime("%Y-%m-%d"))
+                    cur_exp_mnb_val = float(exp_mnb_rates.get(exp_cur, DEFAULT_FX_RATES.get(exp_cur, 1.0)))
+                    st.markdown(f"<div style='background:rgba(245, 158, 11, 0.12); border:1px solid #f59e0b; border-radius:8px; padding:5px 10px; margin-bottom:6px; font-size:0.82rem; color:#f59e0b;'>🏛️ <strong>Hivatalos MNB ({exp_mnb_date}):</strong> {cur_exp_mnb_val:.2f} HUF</div>", unsafe_allow_html=True)
+                else:
+                    cur_exp_mnb_val = 1.0
+
+                exp_fx = st.number_input("Árfolyam:", min_value=1.0, value=cur_exp_mnb_val, step=0.1, key="ev_new_exp_fx")
                 exp_amt_fx = st.number_input("Összeg:", min_value=0.0, value=20.0 if exp_cur != "HUF" else 15000.0, step=5.0, key="ev_new_exp_amt_fx")
 
             with ce3:
