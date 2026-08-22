@@ -85,6 +85,7 @@ def calculate_kdp_cover_dimensions(
         p_type_clean = "white"
         
     is_hardcover = "hardcover" in binding_type.lower() or "kemény" in binding_type.lower()
+    binding_key = "hardcover" if is_hardcover else "paperback"
     if trim_size_str:
         trim_size = trim_size_str
     trim_w, trim_h = parse_trim_size(trim_size)
