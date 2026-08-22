@@ -50,24 +50,58 @@ st.set_page_config(
 import key_manager
 from key_manager import get_key_manager, generate_image_with_fallback
 import prompts
-from prompts import (
-    CHRISTIAN_SUB_NICHES,
-    KDP_TASK_STYLES,
-    ETSY_TASK_STYLES,
-    GUMROAD_TASK_STYLES,
-    IMAGE_MODEL_PROFILES,
-    build_kdp_autopilot_manifest_prompt,
-    parse_kdp_autopilot_manifest_json,
-    build_strict_etsy_seo_prompt,
-    parse_strict_etsy_seo_output,
-    build_pinterest_pin_seo_prompt,
-    build_kdp_coloring_interior_master_prompt,
-    build_kdp_cover_master_prompt,
-    build_etsy_wallart_master_prompt,
-    build_etsy_clipart_master_prompt,
-    build_etsy_bg_removal_prompt,
-    build_gumroad_devotional_master_prompt
-)
+
+try:
+    from prompts import (
+        CHRISTIAN_SUB_NICHES,
+        KDP_TASK_STYLES,
+        ETSY_TASK_STYLES,
+        GUMROAD_TASK_STYLES,
+        IMAGE_MODEL_PROFILES,
+        build_kdp_autopilot_manifest_prompt,
+        parse_kdp_autopilot_manifest_json,
+        build_strict_etsy_seo_prompt,
+        parse_strict_etsy_seo_output,
+        build_pinterest_pin_seo_prompt,
+        build_kdp_coloring_interior_master_prompt,
+        build_kdp_cover_master_prompt,
+        build_etsy_wallart_master_prompt,
+        build_etsy_clipart_master_prompt,
+        build_etsy_bg_removal_prompt,
+        build_gumroad_devotional_master_prompt
+    )
+except ImportError:
+    # Safe inline fallbacks if an older version of prompts.py is cached in memory
+    CHRISTIAN_SUB_NICHES = getattr(prompts, "CHRISTIAN_SUB_NICHES", {
+        "👶 Gyermekek & Családok (Bible Stories & Coloring)": {
+            "default_kdp_title_en": "Noah's Ark Bible Adventures",
+            "default_kdp_title_hu": "Noé Bárkája Bibliai Kalandok",
+            "default_kdp_sub_en": "Inspiring Bible Verse Coloring Book for Children",
+            "default_kdp_sub_hu": "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek"
+        }
+    })
+    KDP_TASK_STYLES = getattr(prompts, "KDP_TASK_STYLES", {
+        "👶 Gyermek Vonalrajz (Section 5.1)": {"prompt_mod": "clean bold black line art, pure white background", "is_adult": False}
+    })
+    ETSY_TASK_STYLES = getattr(prompts, "ETSY_TASK_STYLES", {
+        "🌿 Skandináv Eukaliptusz Minimalista (Section 5.2)": {"prompt_mod": "minimalist watercolor eucalyptus", "tags_addon": ["scandinavian art"]}
+    })
+    GUMROAD_TASK_STYLES = getattr(prompts, "GUMROAD_TASK_STYLES", {
+        "🕊️ Meleg, Bátorító Lelkigondozói (Section 5.3)": {"instruction": "Írj meleg, mélyen bátorító tónusban."}
+    })
+    IMAGE_MODEL_PROFILES = getattr(prompts, "IMAGE_MODEL_PROFILES", {})
+    build_kdp_autopilot_manifest_prompt = getattr(prompts, "build_kdp_autopilot_manifest_prompt", lambda **k: "")
+    parse_kdp_autopilot_manifest_json = getattr(prompts, "parse_kdp_autopilot_manifest_json", lambda r: [])
+    build_strict_etsy_seo_prompt = getattr(prompts, "build_strict_etsy_seo_prompt", lambda t, c: "")
+    parse_strict_etsy_seo_output = getattr(prompts, "parse_strict_etsy_seo_output", lambda r: {})
+    build_pinterest_pin_seo_prompt = getattr(prompts, "build_pinterest_pin_seo_prompt", lambda t, c: "")
+    build_kdp_coloring_interior_master_prompt = getattr(prompts, "build_kdp_coloring_interior_master_prompt", lambda s: s)
+    build_kdp_cover_master_prompt = getattr(prompts, "build_kdp_cover_master_prompt", lambda s, t: s)
+    build_etsy_wallart_master_prompt = getattr(prompts, "build_etsy_wallart_master_prompt", lambda q: q)
+    build_etsy_clipart_master_prompt = getattr(prompts, "build_etsy_clipart_master_prompt", lambda s: s)
+    build_etsy_bg_removal_prompt = getattr(prompts, "build_etsy_bg_removal_prompt", lambda: "")
+    build_gumroad_devotional_master_prompt = getattr(prompts, "build_gumroad_devotional_master_prompt", lambda t, d, m: f"{t} Day {d}")
+
 import kdp_math
 from kdp_math import calculate_kdp_cover_dimensions, TRIM_SIZES, PAPER_MULTIPLIERS
 import kdp_pdf_engine
