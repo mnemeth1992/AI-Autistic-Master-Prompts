@@ -9,6 +9,7 @@ Magyar Egyéni Vállalkozói (EV) Pénzügyi, Bizonylatkezelő és Könyvelői R
 - 🏛️ 5. Adófizetési Napló & NAV Határidő Menedzser (1-Kattintásos Közlemény Másoló)
 - 📦 6. 1-Kattintásos Könyvelői Záró Csomag Export (Zero-Friction ZIP + CSV + E-mail)
 - 🗺️ 7. Könyvelői Módszertan & Feladatmegosztási Térkép (0-3. Fázisok & Ki Mit Csinál)
+100% Kétnyelvű (HU / EN).
 """
 
 import os
@@ -135,15 +136,15 @@ def load_ev_profile() -> Dict[str, Any]:
     default_profile = {
         "entrepreneur_name": "Németh Mihály EV",
         "tax_id": "12345678-1-42",
-        "eu_tax_id": "HU12345678",  # Közösségi EU adószám (Etsy, Gumroad, Amazon elszámoláshoz)
+        "eu_tax_id": "HU12345678",
         "reg_number": "56789012",
         "ksh_number": "12345678-7410-231-01",
         "registered_address": "1111 Budapest, Példa utca 1.",
         "bank_name": "Revolut Bank / OTP Bank",
         "iban_account": "HU42 1177 3016 1234 5678 0000 0000",
         "ovtj_codes": ["741001 – Formatervezés, grafikai dizájn", "581901 – Egyéb kiadói tevékenység"],
-        "cost_ratio": 45,  # 45% költséghányad digitális termékekre
-        "employment_type": "36h",  # '36h' (mellékállás) vagy 'full_time' (főállás)
+        "cost_ratio": 45,
+        "employment_type": "36h",
         "accountant_name": "Kiss Andrea Könyvelőiroda",
         "accountant_email": "konyvelo@pelda.hu",
         "ujegyke_authorized": True,
@@ -265,7 +266,6 @@ def calculate_ev_tax_summary(yearly_gross: float, cost_ratio: int = 45) -> Dict[
     tb = taxable_base * 0.185
     szocho = taxable_base * 0.13
 
-    # Tiered simplified HIPA in Hungary
     if yearly_gross <= 12000000:
         hipa = 50000.0 if yearly_gross > 0 else 0.0
     elif yearly_gross <= 18000000:
@@ -330,7 +330,6 @@ def generate_accountant_pack_zip(year: int, month: int, profile: Dict[str, Any])
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        # 1. Generate Combined CSV Ledger
         csv_buffer = io.StringIO()
         writer = csv.writer(csv_buffer, delimiter=";", quoting=csv.QUOTE_MINIMAL)
         writer.writerow(["Tipus", "Datum", "Bizonylatszam", "Partner / Szolgaltato", "Deviza", "Devizaosszeg", "MNB_Arfolyam", "Forintosszeg_HUF", "Forditott_AFA_A60", "Kategoria / Megjegyzes"])
@@ -366,7 +365,6 @@ def generate_accountant_pack_zip(year: int, month: int, profile: Dict[str, Any])
         csv_bytes = csv_buffer.getvalue().encode("utf-8-sig")
         zip_file.writestr(f"{year}_{month_str}_Szamla_Osszesito_{profile.get('entrepreneur_name', 'EV').replace(' ', '_')}.csv", csv_bytes)
 
-        # 2. Attach Invoices PDFs
         for inv in month_invoices:
             pdf_rel = inv.get("pdf_path")
             if pdf_rel:
@@ -375,7 +373,6 @@ def generate_accountant_pack_zip(year: int, month: int, profile: Dict[str, Any])
                     arcname = os.path.join("Kimeno_Szamlak", os.path.basename(pdf_abs))
                     zip_file.write(pdf_abs, arcname=arcname)
 
-        # 3. Attach Expense PDFs
         for exp in month_expenses:
             pdf_rel = exp.get("pdf_path")
             if pdf_rel:
@@ -384,7 +381,6 @@ def generate_accountant_pack_zip(year: int, month: int, profile: Dict[str, Any])
                     arcname = os.path.join("Koltsegszamlak", os.path.basename(pdf_abs))
                     zip_file.write(pdf_abs, arcname=arcname)
 
-        # 4. Generate Cover Letter Text
         cover_letter = f"""Kedves {profile.get('accountant_name', 'Könyvelőm')}!
 
 Csatoltan küldöm a(z) {profile.get('entrepreneur_name', 'Egyéni Vállalkozásom')} 
@@ -426,8 +422,11 @@ IBAN: {profile.get('iban_account', '')}
 # 4. STREAMLIT FŐVEZÉRLŐ FELÜLET
 # ─────────────────────────────────────────────────────────────
 
-def render_ev_accounting_module():
-    """Renders the comprehensive EV Financial, Vault & Accounting Control Center."""
+def render_ev_accounting_module(is_hu: bool = None):
+    """Renders the comprehensive EV Financial, Vault & Accounting Control Center with 100% bilingual support."""
+    if is_hu is None:
+        is_hu = st.session_state.get("app_global_lang", "HU") == "HU"
+
     profile = load_ev_profile()
     invoices = load_invoices()
     expenses = load_expenses()
@@ -435,11 +434,9 @@ def render_ev_accounting_module():
 
     current_year = datetime.datetime.now().year
     
-    # Calculate YTD Gross Revenue
     ytd_invoices = [inv for inv in invoices if inv.get("date", "").startswith(str(current_year))]
     ytd_gross_huf = sum(inv.get("amount_huf", 0.0) for inv in ytd_invoices)
 
-    # Calculate YTD Expenses
     ytd_expenses = [exp for exp in expenses if exp.get("date", "").startswith(str(current_year))]
     ytd_exp_huf = sum(exp.get("amount_huf", 0.0) for exp in ytd_expenses)
 
@@ -449,49 +446,66 @@ def render_ev_accounting_module():
     <div style='background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border: 1.5px solid #38bdf8; border-radius: 14px; padding: 16px 22px; margin-bottom: 20px; box-shadow: 0 4px 18px rgba(0,0,0,0.3);'>
         <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;'>
             <div>
-                <h3 style='margin:0; color:#38bdf8; font-size:1.35rem;'>🏢 EV Pénzügyi, Bizonylattár & Könyvelői Vezérlőközpont</h3>
+                <h3 style='margin:0; color:#38bdf8; font-size:1.35rem;'>🏢 {'EV Pénzügyi, Bizonylattár & Könyvelői Vezérlőközpont' if is_hu else 'EV Financial, Vault & Accounting Control Center'}</h3>
                 <p style='margin:4px 0 0 0; color:#94a3b8; font-size:0.88rem;'>
-                    Vállalkozó: <strong>{profile.get('entrepreneur_name')}</strong> · Adószám: <code>{profile.get('tax_id')}</code> · Közösségi: <code>{profile.get('eu_tax_id', 'HU' + profile.get('tax_id','')[:8])}</code> · Forma: <strong>Átalányadó ({profile.get('cost_ratio')}% költséghányad, {profile.get('employment_type')})</strong>
+                    {'Vállalkozó' if is_hu else 'Sole Trader'}: <strong>{profile.get('entrepreneur_name')}</strong> · {'Adószám' if is_hu else 'Tax ID'}: <code>{profile.get('tax_id')}</code> · {'Közösségi EU' if is_hu else 'EU Tax ID'}: <code>{profile.get('eu_tax_id', 'HU' + profile.get('tax_id','')[:8])}</code> · {'Adózás' if is_hu else 'Tax Regime'}: <strong>{'Átalányadó' if is_hu else 'Flat-Rate Tax'} ({profile.get('cost_ratio')}% {'költséghányad' if is_hu else 'expense ratio'}, {profile.get('employment_type')})</strong>
                 </p>
             </div>
             <div>
-                <span class='param-badge'>📅 {current_year}. Év</span>
-                <span class='param-badge'>📑 {len(ytd_invoices)} db Számla</span>
-                <span class='param-badge'>📦 {len(ytd_expenses)} db Költség</span>
+                <span class='param-badge'>📅 {current_year}. {'Év' if is_hu else 'Year'}</span>
+                <span class='param-badge'>📑 {len(ytd_invoices)} {'db Számla' if is_hu else 'Invoices'}</span>
+                <span class='param-badge'>📦 {len(ytd_expenses)} {'db Költség' if is_hu else 'Expenses'}</span>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     tab_dash, tab_inv, tab_exp, tab_tax, tab_export, tab_roadmap, tab_profile = st.tabs([
-        "📊 1. Áttekintés & Keretek",
-        "💸 2. Bevételek & Számlák",
-        "🏷️ 3. Kiadások & Költségek",
-        "🏛️ 4. Adók & NAV Határidők",
-        "📦 5. Könyvelői Export (1-Kattintás)",
-        "🗺️ 6. Könyvelői Módszertan & Roadmap",
-        "⚙️ 7. EV Törzsadatok & Profil"
+        "📊 1. Áttekintés & Keretek" if is_hu else "📊 1. Overview & Limits",
+        "💸 2. Bevételek & Számlák" if is_hu else "💸 2. Revenues & Invoices",
+        "🏷️ 3. Kiadások & Költségek" if is_hu else "🏷️ 3. Expenses & Costs",
+        "🏛️ 4. Adók & NAV Határidők" if is_hu else "🏛️ 4. Taxes & Deadlines",
+        "📦 5. Könyvelői Export (1-Kattintás)" if is_hu else "📦 5. Accountant Export (1-Click)",
+        "🗺️ 6. Könyvelői Módszertan & Roadmap" if is_hu else "🗺️ 6. Methodology & Roadmap",
+        "⚙️ 7. EV Törzsadatok & Profil" if is_hu else "⚙️ 7. Master Profile"
     ])
 
     # ─────────────────────────────────────────────────────────
     # TAB 1: ÁTTEKINTÉS & ÉLŐ KERETFIGYELŐ
     # ─────────────────────────────────────────────────────────
     with tab_dash:
-        st.markdown(f"#### 📊 {current_year}. Éves Pénzügyi Mérleg & Élő Keretfigyelő")
+        st.markdown(f"#### 📊 {current_year}. {'Éves Pénzügyi Mérleg & Élő Keretfigyelő' if is_hu else 'Annual Financial Balance & Real-Time Ceiling Monitor'}")
         
-        # 4 Fő KPI Metrika Kártya
         k1, k2, k3, k4 = st.columns(4)
         with k1:
-            st.metric("Éves Összesített Bruttó Bevétel", fmt_huf(ytd_gross_huf), delta=f"{len(ytd_invoices)} db számla")
+            st.metric(
+                "Éves Összesített Bruttó Bevétel" if is_hu else "Yearly Gross Revenue (YTD)",
+                fmt_huf(ytd_gross_huf),
+                delta=f"{len(ytd_invoices)} " + ("db számla" if is_hu else "invoices")
+            )
         with k2:
-            st.metric("Tiszta Éves Nettó (Zsebben)", fmt_huf(tax_summary["net_yearly"]), delta="Adózás utáni haszon")
+            st.metric(
+                "Tiszta Éves Nettó (Zsebben)" if is_hu else "Net Income After Tax",
+                fmt_huf(tax_summary["net_yearly"]),
+                delta="Adózás utáni haszon" if is_hu else "After-tax net profit"
+            )
         with k3:
-            st.metric("Összes Éves Adóteher (Becsült)", fmt_huf(tax_summary["total_tax"]), delta=f"{tax_summary['effective_rate']:.1f}% effektív adó", delta_color="inverse")
+            st.metric(
+                "Összes Éves Adóteher (Becsült)" if is_hu else "Total Tax Liability (Est.)",
+                fmt_huf(tax_summary["total_tax"]),
+                delta=f"{tax_summary['effective_rate']:.1f}% " + ("effektív adó" if is_hu else "effective rate"),
+                delta_color="inverse"
+            )
         with k4:
-            st.metric("Tényleges Igazolt Kiadások", fmt_huf(ytd_exp_huf), delta=f"{len(ytd_expenses)} db tétel", delta_color="off")
+            st.metric(
+                "Tényleges Igazolt Kiadások" if is_hu else "Documented Business Expenses",
+                fmt_huf(ytd_exp_huf),
+                delta=f"{len(ytd_expenses)} " + ("db tétel" if is_hu else "expense items"),
+                delta_color="off"
+            )
 
         st.markdown("---")
-        st.markdown("##### 🛡️ Törvényi Adó- és ÁFA Keret Telítettsége (2026):")
+        st.markdown(f"##### 🛡️ {'Törvényi Adó- és ÁFA Keret Telítettsége (2026):' if is_hu else 'Statutory Tax & VAT Threshold Status (2026):'}")
 
         c_aam, c_taxfree = st.columns(2)
         with c_aam:
@@ -499,12 +513,15 @@ def render_ev_accounting_module():
             aam_rem = max(0.0, AAM_LIMIT_2026 - ytd_gross_huf)
             
             status_color = "#10b981" if aam_pct < 75 else ("#f59e0b" if aam_pct < 90 else "#ef4444")
-            status_text = "🟢 Biztonságos zóna" if aam_pct < 75 else ("🟡 Figyelmeztetés (75%+)" if aam_pct < 90 else "🔴 Limitközeli veszély!")
+            if is_hu:
+                status_text = "🟢 Biztonságos zóna" if aam_pct < 75 else ("🟡 Figyelmeztetés (75%+)" if aam_pct < 90 else "🔴 Limitközeli veszély!")
+            else:
+                status_text = "🟢 Safe Zone" if aam_pct < 75 else ("🟡 Warning (75%+)" if aam_pct < 90 else "🔴 Near Limit!")
 
             st.markdown(f"""
             <div class='zen-card'>
                 <div style='display:flex; justify-content:space-between; align-items:center;'>
-                    <strong style='color:#38bdf8;'>🏛️ AAM (Alanyi ÁFA-mentesség) Keret:</strong>
+                    <strong style='color:#38bdf8;'>🏛️ {'AAM (Alanyi ÁFA-mentesség) Keret:' if is_hu else 'AAM (VAT-Exemption) Ceiling:'}</strong>
                     <span style='color:{status_color}; font-weight:800;'>{status_text}</span>
                 </div>
                 <div style='margin:10px 0;'>
@@ -513,11 +530,11 @@ def render_ev_accounting_module():
                     </div>
                 </div>
                 <div style='display:flex; justify-content:space-between; font-size:0.85rem; color:#cbd5e1;'>
-                    <span>Aktuális: <strong>{fmt_huf(ytd_gross_huf)}</strong> ({aam_pct:.1f}%)</span>
-                    <span>Keret: <strong>{fmt_huf(AAM_LIMIT_2026)}</strong></span>
+                    <span>{'Aktuális' if is_hu else 'Current'}: <strong>{fmt_huf(ytd_gross_huf)}</strong> ({aam_pct:.1f}%)</span>
+                    <span>{'Keret' if is_hu else 'Ceiling'}: <strong>{fmt_huf(AAM_LIMIT_2026)}</strong></span>
                 </div>
                 <div style='margin-top:6px; font-size:0.82rem; color:#94a3b8;'>
-                    Még hátralévő AAM keret: <strong style='color:#38bdf8;'>{fmt_huf(aam_rem)}</strong>
+                    {'Még hátralévő AAM keret' if is_hu else 'Remaining AAM headroom'}: <strong style='color:#38bdf8;'>{fmt_huf(aam_rem)}</strong>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -528,12 +545,15 @@ def render_ev_accounting_module():
             tf_rem = max(0.0, tf_gross_limit - ytd_gross_huf)
 
             tf_color = "#10b981" if tf_pct < 100 else "#64748b"
-            tf_msg = f"🟢 0 Ft SZJA & TB fizetés érvényben" if tf_pct < 100 else "🔵 Adóköteles sávba lépett (SZJA/TB aktív)"
+            if is_hu:
+                tf_msg = "🟢 0 Ft SZJA & TB fizetés érvényben" if tf_pct < 100 else "🔵 Adóköteles sávba lépett (SZJA/TB aktív)"
+            else:
+                tf_msg = "🟢 0 HUF Tax Free Bracket Active" if tf_pct < 100 else "🔵 Taxable Tier Active"
 
             st.markdown(f"""
             <div class='zen-card'>
                 <div style='display:flex; justify-content:space-between; align-items:center;'>
-                    <strong style='color:#10b981;'>🛡️ Átalányadó Adómentes Sáv (0 Ft Adó):</strong>
+                    <strong style='color:#10b981;'>🛡️ {'Átalányadó Adómentes Sáv (0 Ft Adó):' if is_hu else 'Flat-Tax 0 HUF Tax-Free Bracket:'}</strong>
                     <span style='color:{tf_color}; font-weight:800;'>{tf_msg}</span>
                 </div>
                 <div style='margin:10px 0;'>
@@ -542,16 +562,16 @@ def render_ev_accounting_module():
                     </div>
                 </div>
                 <div style='display:flex; justify-content:space-between; font-size:0.85rem; color:#cbd5e1;'>
-                    <span>Felhasznált: <strong>{fmt_huf(min(ytd_gross_huf, tf_gross_limit))}</strong> ({tf_pct:.1f}%)</span>
-                    <span>0 Ft határ: <strong>{fmt_huf(tf_gross_limit)}</strong></span>
+                    <span>{'Felhasznált' if is_hu else 'Utilized'}: <strong>{fmt_huf(min(ytd_gross_huf, tf_gross_limit))}</strong> ({tf_pct:.1f}%)</span>
+                    <span>{'0 Ft határ' if is_hu else '0 HUF Limit'}: <strong>{fmt_huf(tf_gross_limit)}</strong></span>
                 </div>
                 <div style='margin-top:6px; font-size:0.82rem; color:#94a3b8;'>
-                    Hátralévő adómentes bruttó: <strong style='color:#10b981;'>{fmt_huf(tf_rem)}</strong>
+                    {'Hátralévő adómentes bruttó' if is_hu else 'Remaining tax-free headroom'}: <strong style='color:#10b981;'>{fmt_huf(tf_rem)}</strong>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("##### 📈 Platform Szerinti Bevétel Megoszlás:")
+        st.markdown(f"##### 📈 {'Platform Szerinti Bevétel Megoszlás:' if is_hu else 'Revenue Breakdown by Sales Platform:'}")
         platform_totals = {}
         for inv in ytd_invoices:
             p = inv.get("platform", "Egyéb")
@@ -563,49 +583,49 @@ def render_ev_accounting_module():
                 with cols[i]:
                     st.metric(plat, fmt_huf(amt), delta=f"{(amt/ytd_gross_huf*100):.1f}%" if ytd_gross_huf > 0 else "")
         else:
-            st.info("Még nincs rögzített számla a(z) " + str(current_year) + ". évben. Rögzíts számlákat a 'Bevételek & Számlák' fülön!")
+            st.info("Még nincs rögzített számla a(z) " + str(current_year) + ". évben." if is_hu else "No recorded invoices for " + str(current_year) + " yet.")
 
     # ─────────────────────────────────────────────────────────
     # TAB 2: BEVÉTELEK & SZÁMLÁK (DEVIZA + MNB API TÁMOGATÁSSAL)
     # ─────────────────────────────────────────────────────────
     with tab_inv:
-        st.markdown("#### 💸 Kimenő Számlák & Platform Bevételek Rögzítése")
-        st.caption("Rögzítsd az Amazon KDP, Etsy, Gumroad kifizetéseket és közvetlen számlákat eredeti devizában, automatikus hivatalos MNB középárfolyammal és PDF bizonylat mentéssel.")
+        st.markdown(f"#### 💸 {'Kimenő Számlák & Platform Bevételek Rögzítése' if is_hu else 'Outgoing Invoices & Foreign Revenue'}")
+        st.caption("Rögzítsd az Amazon KDP, Etsy, Gumroad kifizetéseket és közvetlen számlákat eredeti devizában, automatikus hivatalos MNB középárfolyammal és PDF bizonylat mentéssel." if is_hu else "Log Amazon KDP, Etsy, Gumroad payouts in foreign currency with automatic MNB SOAP exchange rates.")
 
-        with st.expander("➕ Új Kimenő Számla / Kifizetés Rögzítése", expanded=False):
+        with st.expander("➕ " + ("Új Kimenő Számla / Kifizetés Rögzítése" if is_hu else "Record New Outgoing Invoice / Payout"), expanded=False):
             c1, c2, c3 = st.columns(3)
             with c1:
-                inv_date = st.date_input("Kifizetés / Számla Dátuma:", value=datetime.date.today(), key="ev_new_inv_date")
-                platform_opts = ["Amazon KDP (Royalty)", "Etsy Payments (Wall Art / Clipart)", "Gumroad (Devotionals / Audio)", "Stripe / Direct Client", "Egyéb Belföldi Vevő"]
+                inv_date = st.date_input("Kifizetés / Számla Dátuma:" if is_hu else "Payout / Invoice Date:", value=datetime.date.today(), key="ev_new_inv_date")
+                platform_opts = ["Amazon KDP (Royalty)", "Etsy Payments (Wall Art / Clipart)", "Gumroad (Devotionals / Audio)", "Stripe / Direct Client", "Egyéb Belföldi Vevő" if is_hu else "Other Domestic Buyer"]
                 inv_platform = st.selectbox("Partner / Platform:", platform_opts, key="ev_new_inv_platform")
-                inv_num = st.text_input("Bizonylat / Számlaszám:", value=f"KDP-{inv_date.strftime('%Y%m')}-01", key="ev_new_inv_num")
+                inv_num = st.text_input("Bizonylat / Számlaszám:" if is_hu else "Invoice / Payout Number:", value=f"KDP-{inv_date.strftime('%Y%m')}-01", key="ev_new_inv_num")
 
             with c2:
-                inv_cur = st.selectbox("Eredeti Devizanem:", ["USD", "EUR", "GBP", "CHF", "HUF"], index=0 if "Amazon" in inv_platform or "Gumroad" in inv_platform else 4, key="ev_new_inv_cur")
+                inv_cur = st.selectbox("Eredeti Devizanem:" if is_hu else "Currency:", ["USD", "EUR", "GBP", "CHF", "HUF"], index=0 if "Amazon" in inv_platform or "Gumroad" in inv_platform else 4, key="ev_new_inv_cur")
                 
                 if inv_cur != "HUF":
                     mnb_date, mnb_rates = fetch_mnb_exchange_rates(inv_date.strftime("%Y-%m-%d"))
                     cur_mnb_val = float(mnb_rates.get(inv_cur, DEFAULT_FX_RATES.get(inv_cur, 1.0)))
-                    st.markdown(f"<div style='background:rgba(56, 189, 248, 0.12); border:1px solid #38bdf8; border-radius:8px; padding:5px 10px; margin-bottom:6px; font-size:0.82rem; color:#38bdf8;'>🏛️ <strong>Hivatalos MNB ({mnb_date}):</strong> {cur_mnb_val:.2f} HUF</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='background:rgba(56, 189, 248, 0.12); border:1px solid #38bdf8; border-radius:8px; padding:5px 10px; margin-bottom:6px; font-size:0.82rem; color:#38bdf8;'>🏛️ <strong>{'Hivatalos MNB' if is_hu else 'Official MNB Rate'} ({mnb_date}):</strong> {cur_mnb_val:.2f} HUF</div>", unsafe_allow_html=True)
                 else:
                     cur_mnb_val = 1.0
 
-                inv_fx = st.number_input(f"Alkalmazott Árfolyam ({inv_cur} -> HUF):", min_value=1.0, value=cur_mnb_val, step=0.1, key="ev_new_inv_fx")
-                inv_amount_fx = st.number_input(f"Deviza Összeg ({inv_cur}):", min_value=0.0, value=1250.0 if inv_cur != "HUF" else 480000.0, step=50.0, key="ev_new_inv_amt_fx")
+                inv_fx = st.number_input(f"{'Alkalmazott Árfolyam' if is_hu else 'Applied FX Rate'} ({inv_cur} -> HUF):", min_value=1.0, value=cur_mnb_val, step=0.1, key="ev_new_inv_fx")
+                inv_amount_fx = st.number_input(f"{'Deviza Összeg' if is_hu else 'Amount'} ({inv_cur}):", min_value=0.0, value=1250.0 if inv_cur != "HUF" else 480000.0, step=50.0, key="ev_new_inv_amt_fx")
                 
             with c3:
                 inv_amount_huf = inv_amount_fx * inv_fx
                 st.markdown(f"""
                 <div class='zen-card' style='margin-top:24px;'>
-                    <strong style='color:#38bdf8;'>Számított Forintérték (MNB szerint):</strong><br>
+                    <strong style='color:#38bdf8;'>{'Számított Forintérték (MNB szerint):' if is_hu else 'Calculated Value in HUF (MNB):'}</strong><br>
                     <span style='font-size:1.4rem; font-weight:800; color:#10b981;'>{fmt_huf(inv_amount_huf)}</span>
                 </div>
                 """, unsafe_allow_html=True)
-                inv_desc = st.text_input("Megjegyzés / Termékleírás:", value=f"{inv_platform} havi jogdíj kifizetés", key="ev_new_inv_desc")
+                inv_desc = st.text_input("Megjegyzés / Termékleírás:" if is_hu else "Description / Notes:", value=f"{inv_platform} " + ("havi kifizetés" if is_hu else "monthly payout"), key="ev_new_inv_desc")
 
-            uploaded_pdf = st.file_uploader("📄 PDF Bizonylat / Kifizetési Értesítő Csatolása (Opcionális):", type=["pdf", "png", "jpg"], key="ev_new_inv_pdf")
+            uploaded_pdf = st.file_uploader("📄 " + ("PDF Bizonylat / Kifizetési Értesítő Csatolása:" if is_hu else "Attach PDF Statement / Invoice:"), type=["pdf", "png", "jpg"], key="ev_new_inv_pdf")
 
-            if st.button("💾 Kimenő Számla Mentése az Adatbázisba", type="primary", use_container_width=True):
+            if st.button("💾 " + ("Kimenő Számla Mentése az Adatbázisba" if is_hu else "Save Invoice to Database"), type="primary", use_container_width=True):
                 new_id = str(uuid.uuid4())
                 pdf_rel_path = None
                 if uploaded_pdf:
@@ -626,11 +646,11 @@ def render_ev_accounting_module():
                 }
                 invoices.insert(0, new_inv)
                 save_invoices(invoices)
-                st.success(f"✅ Számla sikeresen rögzítve ({fmt_huf(inv_amount_huf)})!")
+                st.success(f"✅ " + ("Számla sikeresen rögzítve" if is_hu else "Invoice recorded successfully") + f" ({fmt_huf(inv_amount_huf)})!")
                 st.rerun()
 
         st.markdown("---")
-        st.markdown(f"##### 📑 Rögzített Kimenő Számlák ({len(invoices)} db összesen):")
+        st.markdown(f"##### 📑 {'Rögzített Kimenő Számlák' if is_hu else 'Logged Invoices'} ({len(invoices)} {'db összesen' if is_hu else 'total'}):")
         
         if invoices:
             for idx, inv in enumerate(invoices):
@@ -647,55 +667,55 @@ def render_ev_accounting_module():
                         with open(os.path.join(ROOT_DIR, pdf_path), "rb") as f:
                             st.download_button("⬇️ PDF", data=f.read(), file_name=os.path.basename(pdf_path), mime="application/pdf", key=f"dl_inv_{inv.get('id')}")
                     else:
-                        st.caption("Nincs PDF")
+                        st.caption("Nincs PDF" if is_hu else "No PDF")
                 st.markdown("<hr style='margin:4px 0; border-color:#334155;'>", unsafe_allow_html=True)
         else:
-            st.info("Még nem rögzítettél kimenő számlát. Nyisd le a fenti 'Új Kimenő Számla' dobozt a rögzítéshez!")
+            st.info("Még nem rögzítettél kimenő számlát." if is_hu else "No invoices recorded yet.")
 
     # ─────────────────────────────────────────────────────────
     # TAB 3: KIADÁSOK & KÖLTSÉGEK (REVERSE CHARGE / FORDÍTOTT ÁFA)
     # ─────────────────────────────────────────────────────────
     with tab_exp:
-        st.markdown("#### 🏷️ Bejövő Költségszámlák & Külföldi Szolgáltatások")
-        st.caption("Rögzítsd a tényleges szoftver és működési kiadásokat. Külföldi szolgáltatások (Etsy díjak, Google Cloud, Vercel, Adobe) esetén a könyvelőd a megjelölés alapján készíti el az 'A60 és '65 bevallásokat.")
+        st.markdown(f"#### 🏷️ {'Bejövő Költségszámlák & Külföldi Szolgáltatások' if is_hu else 'Incoming Expenses & Foreign Services'}")
+        st.caption("Rögzítsd a tényleges szoftver és működési kiadásokat. Külföldi szolgáltatások (Etsy díjak, Google Cloud, Vercel, Adobe) esetén a könyvelőd a megjelölés alapján készíti el az 'A60 és '65 bevallásokat." if is_hu else "Log operational business costs. Tag foreign reverse-charge items for accountant A60/65 VAT reporting.")
 
-        with st.expander("➕ Új Költségszámla Rögzítése", expanded=False):
+        with st.expander("➕ " + ("Új Költségszámla Rögzítése" if is_hu else "Record New Expense"), expanded=False):
             ce1, ce2, ce3 = st.columns(3)
             with ce1:
-                exp_date = st.date_input("Költség Dátuma:", value=datetime.date.today(), key="ev_new_exp_date")
-                exp_vendor_opts = ["Etsy Seller Fees / Commission", "Google Cloud / Google AI Pro ($20/hó)", "Vercel / Hosting ($20/hó)", "Cloudflare / Domain", "Könyvelői havidíj (15 000 Ft)", "Adobe / Canva Pro", "Irodaszer / Posta", "Hardver / Eszköz", "Egyéb Szolgáltatás"]
-                exp_vendor = st.selectbox("Szolgáltató / Kiadás Típusa:", exp_vendor_opts, key="ev_new_exp_vendor")
-                exp_num = st.text_input("Költségszámla Száma:", value=f"EXP-{exp_date.strftime('%Y%m')}-01", key="ev_new_exp_num")
+                exp_date = st.date_input("Költség Dátuma:" if is_hu else "Expense Date:", value=datetime.date.today(), key="ev_new_exp_date")
+                exp_vendor_opts = ["Etsy Seller Fees / Commission", "Google Cloud / Google AI Pro ($20/hó)", "Vercel / Hosting ($20/hó)", "Cloudflare / Domain", "Könyvelői havidíj (15 000 Ft)" if is_hu else "Accountant Fee", "Adobe / Canva Pro", "Irodaszer / Posta" if is_hu else "Office Supplies", "Hardver / Eszköz" if is_hu else "Hardware", "Egyéb Szolgáltatás" if is_hu else "Other Service"]
+                exp_vendor = st.selectbox("Szolgáltató / Kiadás Típusa:" if is_hu else "Vendor / Type:", exp_vendor_opts, key="ev_new_exp_vendor")
+                exp_num = st.text_input("Költségszámla Száma:" if is_hu else "Expense Invoice #:", value=f"EXP-{exp_date.strftime('%Y%m')}-01", key="ev_new_exp_num")
 
             with ce2:
-                exp_cat = st.selectbox("Költségkategória:", ["Szoftver & AI Előfizetés", "Platform Jutalék & Tranzakciós Díj", "Tárhely & Domain", "Könyvelési Díj", "Marketing & Hirdetés", "Irodaszer & Eszköz", "Egyéb Működés"], key="ev_new_exp_cat")
-                exp_cur = st.selectbox("Pénznem:", ["USD", "EUR", "GBP", "CHF", "HUF"], index=0 if "Google" in exp_vendor or "Vercel" in exp_vendor or "Etsy" in exp_vendor else 4, key="ev_new_exp_cur")
+                exp_cat = st.selectbox("Költségkategória:" if is_hu else "Category:", ["Szoftver & AI Előfizetés" if is_hu else "Software & AI Subscriptions", "Platform Jutalék & Tranzakciós Díj" if is_hu else "Platform Fees", "Tárhely & Domain" if is_hu else "Hosting & Domain", "Könyvelési Díj" if is_hu else "Accounting Fees", "Marketing & Hirdetés" if is_hu else "Marketing & Ads", "Irodaszer & Eszköz" if is_hu else "Office Supplies", "Egyéb Működés" if is_hu else "Other Operations"], key="ev_new_exp_cat")
+                exp_cur = st.selectbox("Pénznem:" if is_hu else "Currency:", ["USD", "EUR", "GBP", "CHF", "HUF"], index=0 if "Google" in exp_vendor or "Vercel" in exp_vendor or "Etsy" in exp_vendor else 4, key="ev_new_exp_cur")
                 
                 if exp_cur != "HUF":
                     exp_mnb_date, exp_mnb_rates = fetch_mnb_exchange_rates(exp_date.strftime("%Y-%m-%d"))
                     cur_exp_mnb_val = float(exp_mnb_rates.get(exp_cur, DEFAULT_FX_RATES.get(exp_cur, 1.0)))
-                    st.markdown(f"<div style='background:rgba(245, 158, 11, 0.12); border:1px solid #f59e0b; border-radius:8px; padding:5px 10px; margin-bottom:6px; font-size:0.82rem; color:#f59e0b;'>🏛️ <strong>Hivatalos MNB ({exp_mnb_date}):</strong> {cur_exp_mnb_val:.2f} HUF</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='background:rgba(245, 158, 11, 0.12); border:1px solid #f59e0b; border-radius:8px; padding:5px 10px; margin-bottom:6px; font-size:0.82rem; color:#f59e0b;'>🏛️ <strong>{'Hivatalos MNB' if is_hu else 'Official MNB Rate'} ({exp_mnb_date}):</strong> {cur_exp_mnb_val:.2f} HUF</div>", unsafe_allow_html=True)
                 else:
                     cur_exp_mnb_val = 1.0
 
-                exp_fx = st.number_input("Árfolyam:", min_value=1.0, value=cur_exp_mnb_val, step=0.1, key="ev_new_exp_fx")
-                exp_amt_fx = st.number_input("Összeg:", min_value=0.0, value=20.0 if exp_cur != "HUF" else 15000.0, step=5.0, key="ev_new_exp_amt_fx")
+                exp_fx = st.number_input("Árfolyam:" if is_hu else "FX Rate:", min_value=1.0, value=cur_exp_mnb_val, step=0.1, key="ev_new_exp_fx")
+                exp_amt_fx = st.number_input("Összeg:" if is_hu else "Amount:", min_value=0.0, value=20.0 if exp_cur != "HUF" else 15000.0, step=5.0, key="ev_new_exp_amt_fx")
 
             with ce3:
                 exp_amount_huf = exp_amt_fx * exp_fx
                 st.markdown(f"""
                 <div class='zen-card' style='margin-top:24px;'>
-                    <strong style='color:#f59e0b;'>Költség Forintértéke:</strong><br>
+                    <strong style='color:#f59e0b;'>{'Költség Forintértéke:' if is_hu else 'Expense Value in HUF:'}</strong><br>
                     <span style='font-size:1.4rem; font-weight:800; color:#f59e0b;'>{fmt_huf(exp_amount_huf)}</span>
                 </div>
                 """, unsafe_allow_html=True)
-                exp_pay_method = st.selectbox("Fizetési Mód:", ["Vállalkozói Bankkártya", "Banki Átutalás", "Készpénz", "PayPal / Stripe"], key="ev_new_exp_pay")
-                is_rev_charge = st.checkbox("🇪🇺 Külföldi / EU-s Szolgáltatás (Fordított ÁFA / Reverse Charge - 'A60 / '65 bevallásköteles)", value=True if exp_cur != "HUF" or "Etsy" in exp_vendor or "Google" in exp_vendor else False, key="ev_new_exp_rev_charge")
-                exp_desc = st.text_input("Megjegyzés:", value=f"{exp_vendor} elszámolás", key="ev_new_exp_desc")
+                exp_pay_method = st.selectbox("Fizetési Mód:" if is_hu else "Payment Method:", ["Vállalkozói Bankkártya" if is_hu else "Business Debit Card", "Banki Átutalás" if is_hu else "Bank Wire", "Készpénz" if is_hu else "Cash", "PayPal / Stripe"], key="ev_new_exp_pay")
+                is_rev_charge = st.checkbox("🇪🇺 " + ("Külföldi / EU-s Szolgáltatás (Fordított ÁFA / Reverse Charge - 'A60 / '65)" if is_hu else "Foreign / EU Service (Reverse Charge VAT - 'A60 / '65)"), value=True if exp_cur != "HUF" or "Etsy" in exp_vendor or "Google" in exp_vendor else False, key="ev_new_exp_rev_charge")
+                exp_desc = st.text_input("Megjegyzés:" if is_hu else "Notes:", value=f"{exp_vendor} " + ("elszámolás" if is_hu else "invoice"), key="ev_new_exp_desc")
 
-            uploaded_exp_pdf = st.file_uploader("📄 Költségszámla PDF Csatolása:", type=["pdf", "png", "jpg"], key="ev_new_exp_pdf")
+            uploaded_exp_pdf = st.file_uploader("📄 " + ("Költségszámla PDF Csatolása:" if is_hu else "Attach Expense PDF:"), type=["pdf", "png", "jpg"], key="ev_new_exp_pdf")
 
-            if st.button("💾 Költségszámla Mentése", type="primary", use_container_width=True):
+            if st.button("💾 " + ("Költségszámla Mentése" if is_hu else "Save Expense"), type="primary", use_container_width=True):
                 new_id = str(uuid.uuid4())
                 pdf_rel_path = None
                 if uploaded_exp_pdf:
@@ -719,11 +739,11 @@ def render_ev_accounting_module():
                 }
                 expenses.insert(0, new_exp)
                 save_expenses(expenses)
-                st.success(f"✅ Költség elmentve ({fmt_huf(exp_amount_huf)})!")
+                st.success(f"✅ " + ("Költség elmentve" if is_hu else "Expense saved") + f" ({fmt_huf(exp_amount_huf)})!")
                 st.rerun()
 
         st.markdown("---")
-        st.markdown(f"##### 🏷️ Rögzített Költségek ({len(expenses)} db):")
+        st.markdown(f"##### 🏷️ {'Rögzített Költségek' if is_hu else 'Logged Expenses'} ({len(expenses)} {'db' if is_hu else 'items'}):")
         if expenses:
             for exp in expenses:
                 c_e1, c_e2, c_e3, c_e4 = st.columns([1.2, 2.0, 1.4, 1.2])
@@ -740,82 +760,82 @@ def render_ev_accounting_module():
                         with open(os.path.join(ROOT_DIR, pdf_path), "rb") as f:
                             st.download_button("⬇️ PDF", data=f.read(), file_name=os.path.basename(pdf_path), mime="application/pdf", key=f"dl_exp_{exp.get('id')}")
                     else:
-                        st.caption("Nincs PDF")
+                        st.caption("Nincs PDF" if is_hu else "No PDF")
                 st.markdown("<hr style='margin:4px 0; border-color:#334155;'>", unsafe_allow_html=True)
         else:
-            st.info("Még nincsenek rögzített költségszámlák.")
+            st.info("Még nincsenek rögzített költségszámlák." if is_hu else "No expenses recorded yet.")
 
     # ─────────────────────────────────────────────────────────
     # TAB 4: ADÓK & NAV HATÁRIDŐK
     # ─────────────────────────────────────────────────────────
     with tab_tax:
-        st.markdown(f"#### 🏛️ 2026-os Adófizetési Naptár & NAV Határidő Menedzser")
-        st.caption("Negyedéves átalányadó kötelezettségek (SZJA, TB, SZOCHO, HIPA, Kamara) és 1-kattintásos banki utalási segéd.")
+        st.markdown(f"#### 🏛️ {current_year}. {'Éves Adófizetési Naptár & NAV Határidő Menedzser' if is_hu else 'Tax Deadlines & NAV Settlement Calendar'}")
+        st.caption("Negyedéves átalányadó kötelezettségek (SZJA, TB, SZOCHO, HIPA, Kamara) és 1-kattintásos banki utalási segéd." if is_hu else "Quarterly tax liabilities, NAV statutory bank accounts and wire transfer notice helper.")
 
         q_deadlines = [
-            {"period": "2026. I. Negyedév", "deadline": "2026-04-12", "desc": "Január, Február, Március havi kötelezettség ('58 járulékbevallás)"},
-            {"period": "2026. II. Negyedév", "deadline": "2026-07-12", "desc": "Április, Május, Június havi kötelezettség ('58 járulékbevallás)"},
-            {"period": "2026. III. Negyedév", "deadline": "2026-10-12", "desc": "Július, Augusztus, Szeptember havi kötelezettség ('58 járulékbevallás)"},
-            {"period": "2026. IV. Negyedév", "deadline": "2027-01-12", "desc": "Október, November, December havi kötelezettség ('58 járulékbevallás)"}
+            {"period": "2026. I. Negyedév" if is_hu else "2026 Q1", "deadline": "2026-04-12", "desc": "Január, Február, Március havi kötelezettség ('58 járulékbevallás)" if is_hu else "Q1 Tax Liability ('58 NAV return)"},
+            {"period": "2026. II. Negyedév" if is_hu else "2026 Q2", "deadline": "2026-07-12", "desc": "Április, Május, Június havi kötelezettség ('58 járulékbevallás)" if is_hu else "Q2 Tax Liability ('58 NAV return)"},
+            {"period": "2026. III. Negyedév" if is_hu else "2026 Q3", "deadline": "2026-10-12", "desc": "Július, Augusztus, Szeptember havi kötelezettség ('58 járulékbevallás)" if is_hu else "Q3 Tax Liability ('58 NAV return)"},
+            {"period": "2026. IV. Negyedév" if is_hu else "2026 Q4", "deadline": "2027-01-12", "desc": "Október, November, December havi kötelezettség ('58 járulékbevallás)" if is_hu else "Q4 Tax Liability ('58 NAV return)"}
         ]
 
         for q in q_deadlines:
-            with st.expander(f"📅 {q['period']} — Határidő: {q['deadline']}", expanded=False):
-                st.write(f"**Leírás:** {q['desc']}")
+            with st.expander(f"📅 {q['period']} — {'Határidő' if is_hu else 'Deadline'}: {q['deadline']}", expanded=False):
+                st.write(f"**{'Leírás' if is_hu else 'Description'}:** {q['desc']}")
                 c_tax1, c_tax2 = st.columns(2)
                 with c_tax1:
                     st.markdown(f"""
-                    **NAV Adószámlák & Bankszámlaszámok:**
+                    **NAV {'Adószámlák & Bankszámlaszámok' if is_hu else 'Official Bank Accounts'}:**
                     - 🔹 **SZJA (15%):** `10032000-06056353` (NAV Személyi jövedelemadó)
-                    - 🔹 **TB Járulék (18.5%):** `10032000-06056229` (NAV Társadalombiztosítás)
+                    - 🔹 **TB {'Járulék' if is_hu else 'Contribution'} (18.5%):** `10032000-06056229` (NAV Társadalombiztosítás)
                     - 🔹 **SZOCHO (13%):** `10032000-06055912` (NAV Szociális hozzájárulás)
                     """)
                 with c_tax2:
                     notice_example = f"{profile.get('tax_id')} - {profile.get('entrepreneur_name')} - {q['period']}"
                     st.markdown(f"""
-                    **Másolható Utalási Közlemény:**
+                    **{'Másolható Utalási Közlemény' if is_hu else 'Copyable Wire Transfer Notice'}:**
                     ```text
                     {notice_example}
                     ```
                     """)
 
         st.markdown("---")
-        st.markdown("##### 💳 1-Kattintásos Éves Kamarai Hozzájárulás (MKIK - Fix 5 000 Ft):")
+        st.markdown(f"##### 💳 {'1-Kattintásos Éves Kamarai Hozzájárulás (MKIK - Fix 5 000 Ft):' if is_hu else 'Annual Chamber Registration Fee (MKIK - Fixed 5,000 HUF):'}")
         st.markdown("""
-        - **Kedvezményezett:** Magyar Kereskedelmi és Iparkamara
-        - **Számlaszám:** `12100011-10639683`
-        - **Összeg:** `5 000 Ft` (Minden év március 31-ig)
+        - **Kedvezményezett / Beneficiary:** Magyar Kereskedelmi és Iparkamara
+        - **Számlaszám / Account:** `12100011-10639683`
+        - **Összeg / Amount:** `5 000 Ft` (Minden év március 31-ig / By March 31 annually)
         """)
 
     # ─────────────────────────────────────────────────────────
     # TAB 5: KÖNYVELŐI EXPORT (1-KATTINTÁS)
     # ─────────────────────────────────────────────────────────
     with tab_export:
-        st.markdown("#### 📦 1-Kattintásos Könyvelői Záró Csomag Export")
-        st.caption("A hónap végén egyetlen kattintással letöltheted a könyvelőd számára szükséges összes számlát, Excel/CSV táblázatot és a kész kísérőlevelet.")
+        st.markdown(f"#### 📦 {'1-Kattintásos Könyvelői Záró Csomag Export' if is_hu else '1-Click Accountant Package Export'}")
+        st.caption("A hónap végén egyetlen kattintással letöltheted a könyvelőd számára szükséges összes számlát, Excel/CSV táblázatot és a kész kísérőlevelet." if is_hu else "1-click export of complete monthly package (invoices, expenses, reverse-charge tags, CSV ledger, PDFs and email cover letter).")
 
         c_ex1, c_ex2 = st.columns(2)
         with c_ex1:
-            sel_year = st.selectbox("Zárási Év:", [2026, 2025], index=0, key="ev_exp_sel_year")
-            sel_month = st.selectbox("Zárási Hónap:", list(range(1, 13)), index=datetime.datetime.now().month - 1, format_func=lambda m: f"{m:02d}. Hónap", key="ev_exp_sel_month")
+            sel_year = st.selectbox("Zárási Év:" if is_hu else "Year:", [2026, 2025], index=0, key="ev_exp_sel_year")
+            sel_month = st.selectbox("Zárási Hónap:" if is_hu else "Month:", list(range(1, 13)), index=datetime.datetime.now().month - 1, format_func=lambda m: f"{m:02d}. " + ("Hónap" if is_hu else "Month"), key="ev_exp_sel_month")
 
         zip_bytes, zip_filename, pack_summary = generate_accountant_pack_zip(sel_year, sel_month, profile)
 
         with c_ex2:
             st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#10b981;'>📦 Csomag Tartalma ({sel_year}. {sel_month:02d}. hó):</strong><br>
-                • <strong>Kimenő számlák:</strong> {pack_summary['invoice_count']} db ({fmt_huf(pack_summary['gross_huf'])})<br>
-                • <strong>Költségszámlák:</strong> {pack_summary['expense_count']} db ({fmt_huf(pack_summary['exp_huf'])})<br>
-                • <strong>Külföldi Fordított Áfás tételek:</strong> <span style='color:#f87171; font-weight:700;'>{pack_summary.get('reverse_charge_count', 0)} db ('A60 / '65)</span><br>
-                • <strong>Összesítő CSV:</strong> Excel-kompatibilis magyar táblázat<br>
-                • <strong>Kísérőlevél:</strong> Automatikus könyvelői levél
+                <strong style='color:#10b981;'>📦 {'Csomag Tartalma' if is_hu else 'Package Contents'} ({sel_year}. {sel_month:02d}. {'hó' if is_hu else 'month'}):</strong><br>
+                • <strong>{'Kimenő számlák' if is_hu else 'Outgoing Invoices'}:</strong> {pack_summary['invoice_count']} db ({fmt_huf(pack_summary['gross_huf'])})<br>
+                • <strong>{'Költségszámlák' if is_hu else 'Expense Invoices'}:</strong> {pack_summary['expense_count']} db ({fmt_huf(pack_summary['exp_huf'])})<br>
+                • <strong>{'Külföldi Fordított Áfás tételek' if is_hu else 'Reverse Charge VAT items'}:</strong> <span style='color:#f87171; font-weight:700;'>{pack_summary.get('reverse_charge_count', 0)} db ('A60 / '65)</span><br>
+                • <strong>{'Összesítő CSV' if is_hu else 'Ledger CSV'}:</strong> {'Excel-kompatibilis magyar táblázat' if is_hu else 'Excel-compatible CSV'} <br>
+                • <strong>{'Kísérőlevél' if is_hu else 'Cover Letter'}:</strong> {'Automatikus könyvelői levél' if is_hu else 'Formatted cover letter'}
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("---")
         st.download_button(
-            f"📥 {zip_filename} Letöltése (ZIP)",
+            f"📥 {zip_filename} " + ("Letöltése (ZIP)" if is_hu else "Download (ZIP)"),
             data=zip_bytes,
             file_name=zip_filename,
             mime="application/zip",
@@ -824,70 +844,106 @@ def render_ev_accounting_module():
         )
 
         st.markdown("---")
-        st.markdown("##### ✉️ Másolható Kísérő E-mail Sablon a Könyvelőnek:")
+        st.markdown(f"##### ✉️ {'Másolható Kísérő E-mail Sablon a Könyvelőnek:' if is_hu else 'Copyable Accountant Cover Email Template:'}")
         st.code(pack_summary["cover_letter"], language="text")
 
     # ─────────────────────────────────────────────────────────
     # TAB 6: KÖNYVELŐI MÓDSZERTAN & ROADMAP (0-3. FÁZISOK)
     # ─────────────────────────────────────────────────────────
     with tab_roadmap:
-        st.markdown("#### 🗺️ Könyvelői Módszertan, Idővonal & Feladatmegosztás")
-        st.caption("Teljes körű, átlátható útmutató: pontosan mit csinál a könyvelő, és hol van a határ a te feladatod és az ő feladata között.")
+        st.markdown(f"#### 🗺️ {'Könyvelői Módszertan, Idővonal & Feladatmegosztás' if is_hu else 'Accounting Methodology, Timeline & Responsibility Matrix'}")
+        st.caption("Teljes körű, átlátható útmutató: pontosan mit csinál a könyvelő, és hol van a határ a te feladatod és az ő feladata között." if is_hu else "Clear division of roles between sole trader and certified accountant.")
 
         r_tab0, r_tab1, r_tab2, r_tab3, r_tab_matrix = st.tabs([
-            "🏛️ 0. Fázis: Indulás",
-            "🔄 1. Fázis: Havi / Negyedéves Rutin",
-            "📅 2. Fázis: Éves Zárás",
-            "🛡️ 3. Fázis: Védelem & NAV",
-            "⚖️ Ki Mit Csinál? Mátrix"
+            "🏛️ 0. Fázis: Indulás" if is_hu else "🏛️ Phase 0: Setup",
+            "🔄 1. Fázis: Rutin" if is_hu else "🔄 Phase 1: Monthly Routine",
+            "📅 2. Fázis: Éves Zárás" if is_hu else "📅 Phase 2: Annual Closing",
+            "🛡️ 3. Fázis: Védelem" if is_hu else "🛡️ Phase 3: Compliance & NAV",
+            "⚖️ Ki Mit Csinál? Mátrix" if is_hu else "⚖️ Responsibility Matrix"
         ])
 
         with r_tab0:
-            st.markdown("""
-            ##### 🏛️ 0. FÁZIS: Az Indulás és Bejelentkezés (Egyszeri feladatok az elején)
-            A könyvelő az alábbi hivatalos lépéseket végzi el:
-            1. **Adózási stratégia ellenőrzése:** Főállású vs. heti 36 órás munkaviszony melletti státusz és a 45%-os átalányadó költséghányad rögzítése.
-            2. **ÖVTJ tevékenységi körök validálása:** Ellenőrzi, hogy a felvett kódok (`741001` – Formatervezés, `581901` – Egyéb kiadói tevékenység) nem igényelnek képesítést.
-            3. **Közösségi (EU-s) adószám megkérése:** Létfontosságú az Etsy (Írország), Gumroad és Amazon elszámolásokhoz.
-            4. **Meghatalmazás beállítása (UJEGYKE nyomtatvány):** Hivatalos NAV meghatalmazás a nevedben történő eljáráshoz és folyószámla lekérdezéshez.
-            5. **Önkormányzati & Kamarai bejelentkezés:** HIPA bejelentés a székhely szerinti önkormányzatnál és regisztráció az MKIK-nál (5 000 Ft).
-            """)
+            if is_hu:
+                st.markdown("""
+                ##### 🏛️ 0. FÁZIS: Az Indulás és Bejelentkezés (Egyszeri feladatok az elején)
+                A könyvelő az alábbi hivatalos lépéseket végzi el:
+                1. **Adózási stratégia ellenőrzése:** Főállású vs. heti 36 órás munkaviszony melletti státusz és a 45%-os átalányadó költséghányad rögzítése.
+                2. **ÖVTJ tevékenységi körök validálása:** Ellenőrzi, hogy a felvett kódok (`741001` – Formatervezés, `581901` – Egyéb kiadói tevékenység) nem igényelnek képesítést.
+                3. **Közösségi (EU-s) adószám megkérése:** Létfontosságú az Etsy (Írország), Gumroad és Amazon elszámolásokhoz.
+                4. **Meghatalmazás beállítása (UJEGYKE nyomtatvány):** Hivatalos NAV meghatalmazás a nevedben történő eljáráshoz és folyószámla lekérdezéshez.
+                5. **Önkormányzati & Kamarai bejelentkezés:** HIPA bejelentés a székhely szerinti önkormányzatnál és regisztráció az MKIK-nál (5 000 Ft).
+                """)
+            else:
+                st.markdown("""
+                ##### 🏛️ PHASE 0: Business Onboarding & Setup
+                1. **Tax Regime Verification:** 45% flat-tax expense ratio and secondary employment status.
+                2. **Activity Code Validation:** Checking qualification-free ÖVTJ codes (741001, 581901).
+                3. **EU Community Tax Number (VAT ID):** Essential for reverse charge VAT with Etsy (Ireland) and Amazon.
+                4. **NAV Authorization (UJEGYKE):** Accountant authorized to file returns on your behalf.
+                5. **Municipality & Chamber Registration:** Local business tax (HIPA) and MKIK chamber registration.
+                """)
 
         with r_tab1:
-            st.markdown("""
-            ##### 🔄 1. FÁZIS: Rendszeres Havi / Negyedéves Menetrend
-            `[Te elküldöd a havi ZIP-et]` ➔ `[Könyvelő feldolgoz & kalkulál]` ➔ `[Beküldi a NAV-nak]` ➔ `[Fizetési értesítőt kapsz]`
-            
-            **Mit csinál a könyvelő a beküldött anyagaiddal?**
-            - **MNB Forintosítás ellenőrzése:** A devizás (USD/EUR) bevételeket a teljesítés napján érvényes hivatalos MNB devizaárfolyamra számolja át.
-            - **Külföldi fordított adózás (Reverse Charge) kezelése:** Külföldi szolgáltatások (Etsy díjak, Google Cloud, szoftverek) fordított ÁFA kötelezettségét kiszámolja.
-            - **Nyomtatványok beküldése:**
-              - `'58-as Járulékbevallás` (negyedévente: SZJA 15%, TB 18.5%, Szocho 13%)
-              - `'A60-as Összesítő nyilatkozat` (havonta, ha volt EU-s tranzakció)
-              - `'65-ös ÁFA bevallás` (külföldi fordított áfás szolgáltatások esetén)
-            - **Fizetési Értesítő kiküldése:** Pontos kivonat a fizetendő adókról, számlaszámokról és határidőről (követő hó 12.).
-            """)
+            if is_hu:
+                st.markdown("""
+                ##### 🔄 1. FÁZIS: Rendszeres Havi / Negyedéves Menetrend
+                `[Te elküldöd a havi ZIP-et]` ➔ `[Könyvelő feldolgoz & kalkulál]` ➔ `[Beküldi a NAV-nak]` ➔ `[Fizetési értesítőt kapsz]`
+                
+                **Mit csinál a könyvelő a beküldött anyagaiddal?**
+                - **MNB Forintosítás ellenőrzése:** A devizás (USD/EUR) bevételeket a teljesítés napján érvényes hivatalos MNB devizaárfolyamra számolja át.
+                - **Külföldi fordított adózás (Reverse Charge) kezelése:** Külföldi szolgáltatások (Etsy díjak, Google Cloud, szoftverek) fordított ÁFA kötelezettségét kiszámolja.
+                - **Nyomtatványok beküldése:**
+                  - `'58-as Járulékbevallás` (negyedévente: SZJA 15%, TB 18.5%, Szocho 13%)
+                  - `'A60-as Összesítő nyilatkozat` (havonta, ha volt EU-s tranzakció)
+                  - `'65-ös ÁFA bevallás` (külföldi fordított áfás szolgáltatások esetén)
+                - **Fizetési Értesítő kiküldése:** Pontos kivonat a fizetendő adókról, számlaszámokról és határidőről (követő hó 12.).
+                """)
+            else:
+                st.markdown("""
+                ##### 🔄 PHASE 1: Monthly & Quarterly Operating Routine
+                `[You send monthly ZIP]` ➔ `[Accountant reconciles & logs]` ➔ `[Files returns to NAV]` ➔ `[Sends you tax payment slip]`
+                - MNB exchange rate reconciliation for USD/EUR platform payouts.
+                - Reverse charge VAT calculation on foreign SaaS tools (Google, Vercel, Etsy fees).
+                - Submitting statutory tax returns: '58 (Quarterly taxes), 'A60 & '65 (EU Reverse charge).
+                """)
 
         with r_tab2:
-            st.markdown("""
-            ##### 📅 2. FÁZIS: Az Éves Zárás (Minden év tavaszán)
-            - **Éves SZJA bevallás (május 20.):** Egész éves vállalkozói bevétel és jövedelem végleges zárása.
-            - **Éves HIPA bevallás (május 31.):** Önkormányzati iparűzési adó elszámolása egyszerűsített sávos formában.
-            - **Keret-ellenőrzési Audit:** Ellenőrzi, hogy az éves bevételed a 18 milliós AAM kereten és az átalányadó felső határán belül maradt-e.
-            """)
+            if is_hu:
+                st.markdown("""
+                ##### 📅 2. FÁZIS: Az Éves Zárás (Minden év tavaszán)
+                - **Éves SZJA bevallás (május 20.):** Egész éves vállalkozói bevétel és jövedelem végleges zárása.
+                - **Éves HIPA bevallás (május 31.):** Önkormányzati iparűzési adó elszámolása egyszerűsített sávos formában.
+                - **Keret-ellenőrzési Audit:** Ellenőrzi, hogy az éves bevételed a 18 milliós AAM kereten és az átalányadó felső határán belül maradt-e.
+                """)
+            else:
+                st.markdown("""
+                ##### 📅 PHASE 2: Annual Closing (Spring)
+                - **Annual Personal Income Tax Return (SZJA - May 20):** Final reconciliation of flat-tax revenue.
+                - **Annual Local Business Tax Return (HIPA - May 31):** Tiered municipal tax filing.
+                - **AAM & Tax-Free Bracket Audit:** Verifying compliance within 18M HUF VAT ceiling.
+                """)
 
         with r_tab3:
-            st.markdown("""
-            ##### 🛡️ 3. FÁZIS: Folyamatos Védelem és Képviselet
-            - **NAV Tárhely figyelése:** A könyvelő a saját fiókjában azonnal látja a NAV hivatalos leveleit és értesítőit.
-            - **Folyószámla egyeztetés:** Rendszeresen ellenőrzi, hogy a befizetések a megfelelő adónemre érkeztek-e be, nincs-e tévesen elkönyvelt hátralék vagy túlfizetés.
-            - **Szakmai tanácsadás:** Új digitális termékvonalak indításakor előzetes adózási iránymutatást ad.
-            """)
+            if is_hu:
+                st.markdown("""
+                ##### 🛡️ 3. FÁZIS: Folyamatos Védelem és Képviselet
+                - **NAV Tárhely figyelése:** A könyvelő a saját fiókjában azonnal látja a NAV hivatalos leveleit és értesítőit.
+                - **Folyószámla egyeztetés:** Rendszeresen ellenőrzi, hogy a befizetések a megfelelő adónemre érkeztek-e be, nincs-e tévesen elkönyvelt hátralék vagy túlfizetés.
+                - **Szakmai tanácsadás:** Új digitális termékvonalak indításakor előzetes adózási iránymutatást ad.
+                """)
+            else:
+                st.markdown("""
+                ##### 🛡️ PHASE 3: Ongoing Compliance & Representation
+                - Official NAV mailbox monitoring.
+                - Tax account ledger reconciliation.
+                - Guidance on scaling digital products and expanding overseas.
+                """)
 
         with r_tab_matrix:
-            st.markdown("""
-            ##### ⚖️ Feladatmegosztási Gyors-Térkép (Ki Mit Csinál?)
-            
+            if is_hu:
+                st.markdown("""
+                ##### ⚖️ Feladatmegosztási Gyors-Térkép (Ki Mit Csinál?)
+                
 | Teendő | Ki csinálja? | Részletek és Eszköz |
 | :--- | :--- | :--- |
 | **Számlák kiállítása a vevőknek** | **TE** | A számlázóddal (pl. Billingo/Számlázz.hu) automatikusan kiállítod. |
@@ -897,36 +953,50 @@ def render_ev_accounting_module():
 | **Nyomtatványok beküldése a NAV-hoz** | **KÖNYVELŐ** | Ő küldi be Ügyfélkapun/DÁP-on keresztül ('58, 'A60, '65, SZJA, HIPA). |
 | **Az adó tényleges átutalása** | **TE** | A könyvelő értesítője alapján a netbankodból átutalod. |
 | **Kapcsolattartás a NAV-val** | **KÖNYVELŐ** | Meghatalmazottként ő kezeli a hivatalos technikai levelezést. |
-            """)
+                """)
+            else:
+                st.markdown("""
+                ##### ⚖️ Division of Responsibilities Matrix
+                
+| Task | Responsible | Details |
+| :--- | :--- | :--- |
+| **Issuing Invoices to Customers** | **YOU** | Automated via invoicing software. |
+| **Collecting PDF Statements** | **YOU** | Generated in 1-click monthly ZIP via this app. |
+| **FX Currency Translation (MNB)** | **APP & ACCOUNTANT** | Automatically translated via MNB SOAP API in app. |
+| **Tax & Social Contribution Math** | **ACCOUNTANT** | Calculated according to statutory brackets. |
+| **Filing Returns to NAV** | **ACCOUNTANT** | Submits '58, 'A60, '65, SZJA, HIPA via Client Gate. |
+| **Executing Tax Wire Transfers** | **YOU** | Wire payment sent via your online banking. |
+| **NAV Communication & Audits** | **ACCOUNTANT** | Handles official inquiries as authorized agent. |
+                """)
 
     # ─────────────────────────────────────────────────────────
     # TAB 7: EV TÖRZSDATOK & BEÁLLÍTÁSOK
     # ─────────────────────────────────────────────────────────
     with tab_profile:
-        st.markdown("#### ⚙️ Egyéni Vállalkozás Törzsadatlap & Konfiguráció")
-        st.caption("Az itt megadott adatok automatikusan bekerülnek a könyvelői exportokba, kísérőlevelekbe és adószámításokba.")
+        st.markdown(f"#### ⚙️ {'Egyéni Vállalkozás Törzsadatlap & Konfiguráció' if is_hu else 'Sole Trader Master Profile & Configuration'}")
+        st.caption("Az itt megadott adatok automatikusan bekerülnek a könyvelői exportokba, kísérőlevelekbe és adószámításokba." if is_hu else "Profile details automatically populate monthly accountant packages and tax filings.")
 
         with st.form("ev_profile_form"):
             cp1, cp2 = st.columns(2)
             with cp1:
-                p_name = st.text_input("Vállalkozó Neve:", value=profile.get("entrepreneur_name", ""))
-                p_tax = st.text_input("Belföldi Adószám (NAV):", value=profile.get("tax_id", ""))
-                p_eu_tax = st.text_input("Közösségi (EU-s) Adószám:", value=profile.get("eu_tax_id", "HU" + profile.get("tax_id", "")[:8]))
-                p_reg = st.text_input("Nyilvántartási Szám:", value=profile.get("reg_number", ""))
-                p_ksh = st.text_input("KSH Statisztikai Szám:", value=profile.get("ksh_number", ""))
-                p_addr = st.text_input("Székhely Címe:", value=profile.get("registered_address", ""))
+                p_name = st.text_input("Vállalkozó Neve:" if is_hu else "Sole Trader Name:", value=profile.get("entrepreneur_name", ""))
+                p_tax = st.text_input("Belföldi Adószám (NAV):" if is_hu else "Domestic Tax ID (NAV):", value=profile.get("tax_id", ""))
+                p_eu_tax = st.text_input("Közösségi (EU-s) Adószám:" if is_hu else "EU Community VAT ID:", value=profile.get("eu_tax_id", "HU" + profile.get("tax_id", "")[:8]))
+                p_reg = st.text_input("Nyilvántartási Szám:" if is_hu else "Registry Number:", value=profile.get("reg_number", ""))
+                p_ksh = st.text_input("KSH Statisztikai Szám:" if is_hu else "KSH Statistical ID:", value=profile.get("ksh_number", ""))
+                p_addr = st.text_input("Székhely Címe:" if is_hu else "Registered Address:", value=profile.get("registered_address", ""))
 
             with cp2:
-                p_bank = st.text_input("Bank Neve:", value=profile.get("bank_name", ""))
-                p_iban = st.text_input("IBAN Számlaszám:", value=profile.get("iban_account", ""))
-                p_cost = st.selectbox("Átalányadó Költséghányad:", [45, 40, 80], index=0 if profile.get("cost_ratio") == 45 else 1)
-                p_emp = st.selectbox("Foglalkoztatás Jellege:", ["36h (Heti 36 órás munkaviszony melletti)", "full_time (Főállású egyéni vállalkozó)"], index=0 if profile.get("employment_type") == "36h" else 1)
-                p_acc_name = st.text_input("Könyvelő Neve:", value=profile.get("accountant_name", ""))
-                p_acc_email = st.text_input("Könyvelő E-mail Címe:", value=profile.get("accountant_email", ""))
-                p_hipa_mun = st.text_input("Székhely szerinti Önkormányzat (HIPA):", value=profile.get("hipa_municipality", "Budapest"))
-                p_mkik_reg = st.text_input("MKIK Kamarai Regisztrációs Szám:", value=profile.get("mkik_reg_number", "MKIK-123456"))
+                p_bank = st.text_input("Bank Neve:" if is_hu else "Bank Name:", value=profile.get("bank_name", ""))
+                p_iban = st.text_input("IBAN Számlaszám:" if is_hu else "IBAN Account Number:", value=profile.get("iban_account", ""))
+                p_cost = st.selectbox("Átalányadó Költséghányad:" if is_hu else "Flat-Tax Expense Ratio:", [45, 40, 80], index=0 if profile.get("cost_ratio") == 45 else 1)
+                p_emp = st.selectbox("Foglalkoztatás Jellege:" if is_hu else "Employment Status:", ["36h (Heti 36 órás munkaviszony melletti)" if is_hu else "36h (Secondary employment / 36+ hrs)", "full_time (Főállású egyéni vállalkozó)" if is_hu else "full_time (Full-time sole trader)"], index=0 if profile.get("employment_type") == "36h" else 1)
+                p_acc_name = st.text_input("Könyvelő Neve:" if is_hu else "Accountant Name:", value=profile.get("accountant_name", ""))
+                p_acc_email = st.text_input("Könyvelő E-mail Címe:" if is_hu else "Accountant Email:", value=profile.get("accountant_email", ""))
+                p_hipa_mun = st.text_input("Székhely szerinti Önkormányzat (HIPA):" if is_hu else "Municipality for Local Tax (HIPA):", value=profile.get("hipa_municipality", "Budapest"))
+                p_mkik_reg = st.text_input("MKIK Kamarai Regisztrációs Szám:" if is_hu else "Chamber Registration # (MKIK):", value=profile.get("mkik_reg_number", "MKIK-123456"))
 
-            submitted = st.form_submit_button("💾 Vállalkozói Törzsadatok Mentése", type="primary", use_container_width=True)
+            submitted = st.form_submit_button("💾 " + ("Vállalkozói Törzsadatok Mentése" if is_hu else "Save Master Profile"), type="primary", use_container_width=True)
             if submitted:
                 updated_profile = {
                     "entrepreneur_name": p_name,
@@ -947,7 +1017,7 @@ def render_ev_accounting_module():
                     "ovtj_codes": profile.get("ovtj_codes", [])
                 }
                 save_ev_profile(updated_profile)
-                st.success("✅ EV Törzsadatok sikeresen elmentve!")
+                st.success("✅ " + ("EV Törzsadatok sikeresen elmentve!" if is_hu else "Master profile saved successfully!"))
                 st.rerun()
 
 

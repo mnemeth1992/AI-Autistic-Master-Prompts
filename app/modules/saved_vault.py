@@ -3,6 +3,7 @@ Központi Mentett Dolgok, Ötletek & Projekttár Modul (Saved Vault)
 ================================================================
 Automatikus és manuális mentési központ: témák, 30 napos vázlatok, 4K Gemini promptek,
 Gemini Custom Gem leírások, 2026 Etsy SEO címkék, kéziratok és sales szövegek.
+100% Kétnyelvű támogatás (HU / EN).
 """
 
 import os
@@ -10,6 +11,7 @@ import io
 import json
 import uuid
 import datetime
+import re
 from typing import List, Dict, Any, Tuple
 import streamlit as st
 
@@ -79,11 +81,21 @@ def render_saved_vault_module(is_hu: bool = True):
     """, unsafe_allow_html=True)
 
     # Action Toolbar
+    filter_opts = [
+        "Mind / All",
+        "💡 Témák & Vázlatok" if is_hu else "💡 Topics & Outlines",
+        "🖼️ 4K Gemini Promptek" if is_hu else "🖼️ 4K Gemini Prompts",
+        "💎 Gemini Custom Gems",
+        "🛍️ Etsy SEO Készletek" if is_hu else "🛍️ Etsy SEO Sets",
+        "✍️ Kéziratok & Sales Copy" if is_hu else "✍️ Manuscripts & Sales Copy",
+        "📓 NotebookLM RAG"
+    ]
+
     col_t1, col_t2 = st.columns([1.5, 1.0])
     with col_t1:
         cat_filter = st.selectbox(
             "🔍 Szűrés Kategória Szerint:" if is_hu else "🔍 Filter by Category:",
-            options=["Mind / All", "💡 Témák & Vázlatok", "🖼️ 4K Gemini Promptek", "💎 Gemini Custom Gems", "🛍️ Etsy SEO Készletek", "✍️ Kéziratok & Sales Copy", "📓 NotebookLM RAG"],
+            options=filter_opts,
             key="vault_cat_filter"
         )
     with col_t2:
@@ -97,17 +109,22 @@ def render_saved_vault_module(is_hu: bool = True):
         with st.form("manual_vault_add_form"):
             ca1, ca2 = st.columns(2)
             with ca1:
-                v_title = st.text_input("Cím / Megnevezés:" if is_hu else "Title / Name:", placeholder="Pl. Dániel Oroszlánok Vermében 10 Képprompt")
+                v_title = st.text_input("Cím / Megnevezés:" if is_hu else "Title / Name:", placeholder="Pl. Dániel Oroszlánok Vermében 10 Képprompt" if is_hu else "e.g. Daniel in the Lions' Den 10 Image Prompts")
                 v_cat = st.selectbox("Kategória:" if is_hu else "Category:", [
-                    "💡 Témák & Vázlatok",
-                    "🖼️ 4K Gemini Promptek",
+                    "💡 Témák & Vázlatok" if is_hu else "💡 Topics & Outlines",
+                    "🖼️ 4K Gemini Promptek" if is_hu else "🖼️ 4K Gemini Prompts",
                     "💎 Gemini Custom Gems",
-                    "🛍️ Etsy SEO Készletek",
-                    "✍️ Kéziratok & Sales Copy",
+                    "🛍️ Etsy SEO Készletek" if is_hu else "🛍️ Etsy SEO Sets",
+                    "✍️ Kéziratok & Sales Copy" if is_hu else "✍️ Manuscripts & Sales Copy",
                     "📓 NotebookLM RAG"
                 ])
             with ca2:
-                v_pipe = st.selectbox("Kapcsolódó Pipeline:" if is_hu else "Related Pipeline:", ["Amazon KDP", "Etsy Wall Art & Clipart", "Gumroad Devotionals", "Központi Hub / RAG"])
+                v_pipe = st.selectbox("Kapcsolódó Pipeline:" if is_hu else "Related Pipeline:", [
+                    "Amazon KDP",
+                    "Etsy Wall Art & Clipart",
+                    "Gumroad Devotionals",
+                    "Központi Hub / RAG" if is_hu else "Control Hub / RAG"
+                ])
 
             v_content = st.text_area("Mentendő Tartalom / Prompt / Szöveg:" if is_hu else "Content / Prompt / Text:", height=120)
             
@@ -121,7 +138,7 @@ def render_saved_vault_module(is_hu: bool = True):
 
     # Filter Items
     if cat_filter != "Mind / All":
-        filtered_vault = [item for item in vault if item.get("category") == cat_filter]
+        filtered_vault = [item for item in vault if (cat_filter.split()[1] if len(cat_filter.split()) > 1 else "") in item.get("category", "")]
     else:
         filtered_vault = vault
 
@@ -130,7 +147,7 @@ def render_saved_vault_module(is_hu: bool = True):
     else:
         for idx, item in enumerate(filtered_vault):
             with st.expander(f"📌 [{item.get('category', 'Jegyzet')}] {item.get('title')} ({item.get('date', '')})", expanded=(idx == 0)):
-                st.markdown(f"**Pipeline:** `{item.get('pipeline', 'Általános')}` · **Dátum:** `{item.get('date', '')}`")
+                st.markdown(f"**Pipeline:** `{item.get('pipeline', 'Általános')}` · **{'Dátum' if is_hu else 'Date'}:** `{item.get('date', '')}`")
                 st.code(item.get("content", ""), language="text")
 
                 c_act1, c_act2 = st.columns([1.5, 1.0])
@@ -144,8 +161,8 @@ def render_saved_vault_module(is_hu: bool = True):
                         key=f"dl_vault_{item.get('id')}_{idx}"
                     )
                 with c_act2:
-                    if st.button("🗑️ Elem Törlése" if is_hu else "🗑️ Delete Item", key=f"del_vault_{item.get('id')}_{idx}", type="secondary"):
+                    if st.button("🗑️ " + ("Elem Törlése" if is_hu else "Delete Item"), key=f"del_vault_{item.get('id')}_{idx}", type="secondary"):
                         vault = [v for v in vault if v.get("id") != item.get("id")]
                         save_saved_vault(vault)
-                        st.success("🗑️ Elem törölve!" if is_hu else "🗑️ Item deleted!")
+                        st.success("🗑️ " + ("Elem törölve!" if is_hu else "Item deleted!"))
                         st.rerun()

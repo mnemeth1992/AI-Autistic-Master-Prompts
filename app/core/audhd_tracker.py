@@ -5,7 +5,7 @@ Designed specifically for neurodivergent (AuDHD) asynchronous workflows:
   - Permanent, non-collapsing top dashboard with giant real-time ticking LED clock.
   - Emerald Green (< 120m) -> Fiery Red when overtime (> 120m).
   - Synchronous 7-day selector with instant day switching and persistent tasks.
-  - Persistence of focus streaks in `time_log.json`.
+  - Full Hungarian & English bilingual localization.
 """
 
 import os
@@ -18,7 +18,7 @@ import streamlit.components.v1 as components
 
 TIME_LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "time_log.json")
 
-AUDHD_DAY_PLANS = {
+AUDHD_DAY_PLANS_HU = {
     "Hétfő": {
         "title": "🔍 Hétfő: Tiszta Kutatás & RAG Data Mining (NotebookLM & Gemini)",
         "short": "Kutatás & Mining",
@@ -46,7 +46,7 @@ AUDHD_DAY_PLANS = {
         ]
     },
     "Szerda": {
-        "title": "🎨 Szerda: Vizuális Generálás & Képszerkesztés (FLUX / Gemini)",
+        "title": "🎨 Szerda: Vizuális Generálás & Képszerkesztés (Gemini Web)",
         "short": "4K Képek & Clipart",
         "description": "2 órás mélyfókusz: 8.5x11 4K fekete-fehér színezők, 4:5 faliképek, clipart csomagok és többkörös háttéreltávolítás.",
         "target_minutes": 120,
@@ -87,7 +87,7 @@ AUDHD_DAY_PLANS = {
     "Szombat": {
         "title": "🌿 Szombat: Pihenés & Regeneráció",
         "short": "Offline Pihenés",
-        "description": "Kötelező képernyőmentes idő az idegrendszeri regeneráció és az AudHD túlterhelődés elkerülése érdekében.",
+        "description": "Kötelező képernyőmentes idő az idegrendszeri regeneráció és az AuDHD túlterhelődés elkerülése érdekében.",
         "target_minutes": 0,
         "tasks": [
             "🌿 Séta a természetben és képernyőmentes offline pihenés",
@@ -108,13 +108,103 @@ AUDHD_DAY_PLANS = {
     }
 }
 
-HUNGARIAN_DAYS = ["Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"]
+AUDHD_DAY_PLANS_EN = {
+    "Monday": {
+        "title": "🔍 Monday: Pure Research & RAG Data Mining (NotebookLM & Gemini)",
+        "short": "Research & Mining",
+        "description": "2-hour deep focus: Amazon/Etsy keyword mining, 100% verified KJV scripture extraction, competitor 1-3 star review mining.",
+        "target_minutes": 120,
+        "tasks": [
+            "🎯 1. [🌐 Amazon/Etsy] Keyword research (High Volume, Low Competition) (30 min)",
+            "📖 2. [📓 NotebookLM] Upload KJV Bible & extract 30 scenes/scriptures (30 min)",
+            "⭐ 3. [📓 NotebookLM] Competitor 1-3 star review mining & gap analysis (30 min)",
+            "📁 4. [💾 Drive] Save market gaps and 5 unique value propositions (15 min)",
+            "📋 5. [📓 NotebookLM] Finalize weekly product specifications in RAG tab (15 min)"
+        ]
+    },
+    "Tuesday": {
+        "title": "📑 Tuesday: Theological Matrix & Manuscript Generation (NotebookLM & Gemini)",
+        "short": "Matrix & Manuscript",
+        "description": "2-hour deep focus: Build 30-day grounded theological table, execute Gemini Advanced Master Prompts.",
+        "target_minutes": 120,
+        "tasks": [
+            "🕊️ 1. [📓 NotebookLM] Upload theological source materials into notebook (20 min)",
+            "📑 2. [📓 NotebookLM] Generate 30-day structured matrix table with prompt (40 min)",
+            "💎 3. [💎 Gemini Advanced] Run Master Prompts for each matrix row (40 min)",
+            "✍️ 4. [💎 Gemini Advanced] Polish 200-word reflections, prayers and 3 prompts (10 min)",
+            "💾 5. [💾 Drive/Docs] Save complete manuscript into 05_GUMROAD folder (10 min)"
+        ]
+    },
+    "Wednesday": {
+        "title": "🎨 Wednesday: Visual Generation & Image Editing (Gemini Web)",
+        "short": "4K Art & Clipart",
+        "description": "2-hour deep focus: 8.5x11 4K black & white coloring pages, 4:5 wall arts, clipart bundles & multi-turn background removal.",
+        "target_minutes": 120,
+        "tasks": [
+            "🎨 1. [💎 Gemini Web] Generate KDP coloring pages with Custom Gem (45 min)",
+            "🖼️ 2. [💎 Gemini Web] Generate Etsy 4:5 Scandinavian eucalyptus wall arts (30 min)",
+            "✂️ 3. [💎 Gemini Web] Generate clipart illustrations on pure white BG (25 min)",
+            "✨ 4. [💎 Gemini Web] Multi-turn conversational background removal (Transparent PNG) (10 min)",
+            "📁 5. [💾 Drive] Save and organize artwork in project folders (10 min)"
+        ]
+    },
+    "Thursday": {
+        "title": "📐 Thursday: Publication Layout & PDF Compilation (ReportLab / Canva)",
+        "short": "Book Layout & PDF",
+        "description": "2-hour deep focus: ReportLab print-ready KDP interior PDF assembly, wrap-around cover math, Etsy ZIP packaging.",
+        "target_minutes": 120,
+        "tasks": [
+            "📖 1. [🖨️ ReportLab] Compile KDP interior PDF with bleed margins & test pages (40 min)",
+            "🎨 2. [💎 Gemini / Canva] Generate 17.412:11.25 Wrap-Around KDP cover (35 min)",
+            "🛍️ 3. [📐 Canva / ZIP] Prepare Etsy wall art size bundles (4:5, 3:4, 2:3) (25 min)",
+            "📦 4. [📐 ZIP] Package clipart PNG sets and user instructions (10 min)",
+            "💾 5. [💾 Drive] Archive print-ready files in Google Drive (10 min)"
+        ]
+    },
+    "Friday": {
+        "title": "🚀 Friday: Automated Publishing & Audio Upsell (KDP, Etsy, Gumroad)",
+        "short": "Publish & Audio",
+        "description": "2-hour deep focus: Upload products with 13 SEO tags, Pinterest passive pins, and generate NotebookLM Audio Devotional ($39 upsell).",
+        "target_minutes": 120,
+        "tasks": [
+            "🛍️ 1. [🛍️ KDP / Etsy] Publish listings with 13 SEO tags and copy (40 min)",
+            "📌 2. [📌 Pinterest] Schedule passive SEO pins with direct product links (20 min)",
+            "🎙️ 3. [📓 NotebookLM] Generate Audio Overview (Deep Dive MP3 podcast) (35 min)",
+            "💰 4. [🛍️ Gumroad] Publish product bundle + Audio Companion ($39) upsell (15 min)",
+            "🏆 5. [⏱️ Time Log] Review weekly focus streak and prepare for weekend rest (10 min)"
+        ]
+    },
+    "Saturday": {
+        "title": "🌿 Saturday: Rest & Nervous System Recovery",
+        "short": "Offline Rest",
+        "description": "Mandatory screen-free time for nervous system regulation and AuDHD sensory decompression.",
+        "target_minutes": 0,
+        "tasks": [
+            "🌿 Nature walks and screen-free offline relaxation",
+            "☕ Nurture family and meaningful friendships",
+            "📖 Quiet reading, offline hobbies, sensory recovery"
+        ]
+    },
+    "Sunday": {
+        "title": "🕊️ Sunday: Spiritual Renewal & Quiet Reflection",
+        "short": "Spiritual Quietness",
+        "description": "Spiritual renewal, worship and peaceful grounding for the upcoming weekly 10-hour asynchronous cycle.",
+        "target_minutes": 0,
+        "tasks": [
+            "🕊️ Community, worship, gratitude and prayer",
+            "🧘 Quiet contemplation and peace",
+            "✨ Grounded and inspired outlook for Monday research"
+        ]
+    }
+}
+
+DAYS_HU = ["Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"]
+DAYS_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
-def get_today_hungarian_day() -> str:
-    """Returns today's day name in Hungarian."""
-    weekday_idx = datetime.datetime.now().weekday()
-    return HUNGARIAN_DAYS[weekday_idx]
+def get_today_index() -> int:
+    """Returns today's weekday index (0=Monday, 6=Sunday)."""
+    return datetime.datetime.now().weekday()
 
 
 def load_time_logs() -> List[Dict[str, Any]]:
@@ -156,9 +246,12 @@ def format_seconds_to_hms(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{rem_secs:02d}"
 
 
-def render_live_clock_html(cur_secs: float, is_running: bool):
+def render_live_clock_html(cur_secs: float, is_running: bool, is_hu: bool = True):
     """Renders giant live client-side ticking digital clock in Emerald Green (or Fiery Red when overtime)."""
     running_js = "true" if is_running else "false"
+    normal_status = "🟢 ÉLŐ SZÁMLÁLÁS FOLYAMATBAN..." if is_hu else "🟢 LIVE COUNTING IN PROGRESS..."
+    paused_status = "⏸️ Szüneteltetve · 120 perces keret" if is_hu else "⏸️ Paused · 120-minute frame"
+    overtime_status = "⚠️ 120 PERC TÚLLÉPVE (OVERTIME)!" if is_hu else "⚠️ 120 MINUTES EXCEEDED (OVERTIME)!"
     
     html_code = f"""
     <div id="clock_wrapper" style="text-align:center; padding: 10px 14px; background: #0b1120; border-radius: 12px; border: 1.5px solid #1e293b; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
@@ -166,7 +259,7 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
             00:00:00
         </div>
         <div id="clock_status" style="font-size: 0.82rem; font-weight: 600; color: #94a3b8; margin-top: 4px; letter-spacing: 0.5px;">
-            120 Perces Mélyfókusz Keret
+            {'120 Perces Mélyfókusz Keret' if is_hu else '120-Minute Deep Focus Frame'}
         </div>
     </div>
 
@@ -200,7 +293,7 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
                     displayEl.style.color = "#ef4444";
                     displayEl.style.textShadow = "0 0 25px rgba(239, 68, 68, 0.6)";
                     if (statusEl) {{
-                        statusEl.innerHTML = "⚠️ <strong style='color:#ef4444;'>120 PERC TÚLLÉPVE (OVERTIME)!</strong>";
+                        statusEl.innerHTML = "<strong style='color:#ef4444;'>{overtime_status}</strong>";
                     }}
                 }} else {{
                     // Normal: Emerald Green
@@ -208,9 +301,9 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
                     displayEl.style.textShadow = "0 0 20px rgba(16, 185, 129, 0.4)";
                     if (statusEl) {{
                         if (isRunning) {{
-                            statusEl.innerHTML = "🟢 <strong style='color:#10b981;'>ÉLŐ SZÁMLÁLÁS FOLYAMATBAN...</strong>";
+                            statusEl.innerHTML = "<strong style='color:#10b981;'>{normal_status}</strong>";
                         }} else {{
-                            statusEl.innerHTML = "⏸️ <span style='color:#94a3b8;'>Szüneteltetve · 120 perces keret</span>";
+                            statusEl.innerHTML = "<span style='color:#94a3b8;'>{paused_status}</span>";
                         }}
                     }}
                 }}
@@ -227,34 +320,31 @@ def render_live_clock_html(cur_secs: float, is_running: bool):
     components.html(html_code, height=115)
 
 
-def on_day_select_change():
-    """Instant callback when user clicks a different day."""
-    sel = st.session_state.get("top_audhd_day_select")
-    if sel:
-        st.session_state["audhd_selected_day"] = sel
-
-
 def render_audhd_tracker():
     """Renders permanent top dashboard bar with live green/red clock and synchronous day switcher."""
+    is_hu = st.session_state.get("app_global_lang", "HU") == "HU"
+
     if "timer_running" not in st.session_state:
         st.session_state["timer_running"] = False
     if "timer_elapsed_seconds" not in st.session_state:
         st.session_state["timer_elapsed_seconds"] = 0
     if "timer_start_time" not in st.session_state:
         st.session_state["timer_start_time"] = None
-    if "audhd_selected_day" not in st.session_state:
-        st.session_state["audhd_selected_day"] = get_today_hungarian_day()
+    if "audhd_day_index" not in st.session_state:
+        st.session_state["audhd_day_index"] = get_today_index()
 
-    # Synchronize day state immediately
-    current_selected_day = st.session_state.get("audhd_selected_day", get_today_hungarian_day())
-    cur_plan = AUDHD_DAY_PLANS.get(current_selected_day, AUDHD_DAY_PLANS["Hétfő"])
+    day_idx = st.session_state.get("audhd_day_index", get_today_index())
+    day_plans = AUDHD_DAY_PLANS_HU if is_hu else AUDHD_DAY_PLANS_EN
+    day_names = DAYS_HU if is_hu else DAYS_EN
+    current_day_name = day_names[day_idx]
+    cur_plan = day_plans.get(current_day_name, day_plans[day_names[0]])
 
     cur_secs = get_current_timer_seconds()
     timer_hms = format_seconds_to_hms(cur_secs)
     target_secs = 120 * 60
     progress = min(1.0, max(0.0, cur_secs / target_secs))
 
-    # ── PERMANENS FELSŐ FÓKUSZ KÁRTYA (MINDIG NYITVA, AZONNALI SZINKRON) ──
+    # ── PERMANENS FELSŐ FÓKUSZ KÁRTYA ──
     st.markdown("""
     <div style='background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.92)); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 16px; padding: 16px 20px; margin-bottom: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);'>
     """, unsafe_allow_html=True)
@@ -262,18 +352,17 @@ def render_audhd_tracker():
     col_clock, col_info = st.columns([1.1, 1.9])
 
     with col_clock:
-        # Giant real-time ticking clock display
-        render_live_clock_html(cur_secs, st.session_state["timer_running"])
+        render_live_clock_html(cur_secs, st.session_state["timer_running"], is_hu)
         
         btn_c1, btn_c2, btn_c3 = st.columns(3)
         with btn_c1:
             if not st.session_state["timer_running"]:
-                if st.button("▶️ Indítás", key="top_timer_start_btn", use_container_width=True, type="primary"):
+                if st.button("▶️ " + ("Indítás" if is_hu else "Start"), key="top_timer_start_btn", use_container_width=True, type="primary"):
                     st.session_state["timer_running"] = True
                     st.session_state["timer_start_time"] = time.time()
                     st.rerun()
             else:
-                if st.button("⏸️ Szünet", key="top_timer_pause_btn", use_container_width=True):
+                if st.button("⏸️ " + ("Szünet" if is_hu else "Pause"), key="top_timer_pause_btn", use_container_width=True):
                     st.session_state["timer_running"] = False
                     st.session_state["timer_elapsed_seconds"] = cur_secs
                     st.session_state["timer_start_time"] = None
@@ -287,11 +376,11 @@ def render_audhd_tracker():
                 st.rerun()
 
         with btn_c3:
-            if st.button("💾 Mentés", key="top_timer_save_btn", use_container_width=True):
+            if st.button("💾 " + ("Mentés" if is_hu else "Save"), key="top_timer_save_btn", use_container_width=True):
                 if cur_secs >= 60:
                     save_time_log_entry({
                         "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        "day": st.session_state["audhd_selected_day"],
+                        "day": current_day_name,
                         "duration_seconds": cur_secs,
                         "duration_formatted": timer_hms,
                         "completed": progress >= 0.90
@@ -299,43 +388,46 @@ def render_audhd_tracker():
                     st.session_state["timer_running"] = False
                     st.session_state["timer_elapsed_seconds"] = 0
                     st.session_state["timer_start_time"] = None
-                    st.success("✅ Fókuszblokk elmentve az időnaplóba!")
+                    st.success("✅ " + ("Fókuszblokk elmentve az időnaplóba!" if is_hu else "Focus session saved to time log!"))
                     st.rerun()
                 else:
-                    st.warning("Legalább 1 perc szükséges a mentéshez.")
+                    st.warning("Legalább 1 perc szükséges a mentéshez." if is_hu else "At least 1 minute required to save.")
 
     with col_info:
         top_c1, top_c2 = st.columns([1.2, 1.0])
         with top_c1:
-            st.markdown(f"<div style='font-size:1.1rem; font-weight:800; color:#38bdf8;'>⏱️ AuDHD 120-Perces Mélyfókusz</div>", unsafe_allow_html=True)
-            st.markdown(f"**Aktuális Nap:** `{cur_plan.get('title')}`")
+            st.markdown(f"<div style='font-size:1.1rem; font-weight:800; color:#38bdf8;'>⏱️ {'AuDHD 120-Perces Mélyfókusz' if is_hu else 'AuDHD 120-Minute Deep Focus'}</div>", unsafe_allow_html=True)
+            st.markdown(f"**{'Aktuális Nap' if is_hu else 'Current Day'}:** `{cur_plan.get('title')}`")
         with top_c2:
-            sel_day = st.selectbox(
-                "📅 Válassz Napot:",
-                options=HUNGARIAN_DAYS,
-                index=HUNGARIAN_DAYS.index(current_selected_day),
-                key="top_audhd_day_select",
-                on_change=on_day_select_change
+            chosen_day_idx = st.selectbox(
+                "📅 " + ("Válassz Napot:" if is_hu else "Select Day:"),
+                options=list(range(7)),
+                index=day_idx,
+                format_func=lambda i: day_names[i],
+                key="top_audhd_day_idx_select"
             )
+            if chosen_day_idx != st.session_state["audhd_day_index"]:
+                st.session_state["audhd_day_index"] = chosen_day_idx
+                st.rerun()
 
-        st.caption(f"Haladás: {int(progress * 100)}% ({timer_hms} / 02:00:00)")
+        st.caption(f"{'Haladás' if is_hu else 'Progress'}: {int(progress * 100)}% ({timer_hms} / 02:00:00)")
         st.progress(progress)
 
-        # Permanensen látható feladatlista (sosem csukódik be magától!)
-        with st.expander(f"📋 {current_selected_day}i 2 Órás Timeboxing Ellenőrzőlista (Kattints a nyitáshoz/záráshoz)", expanded=True):
+        exp_title = f"📋 {current_day_name} {'2 Órás Timeboxing Ellenőrzőlista (Kattints a nyitáshoz/záráshoz)' if is_hu else '2-Hour Timeboxing Checklist (Click to expand)'}"
+        with st.expander(exp_title, expanded=True):
             tasks = cur_plan.get("tasks", [])
             for t_idx, task_text in enumerate(tasks):
-                task_key = f"task_{current_selected_day}_{t_idx}"
-                st.checkbox(task_text, key=task_key)
+                st.checkbox(task_text, key=f"task_{current_day_name}_{t_idx}")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ── JÓL LÁTHATÓ GLOWING ELVÁLASZTÓ SÁV AZ AUDHD SZÁMLÁLÓ ÉS AZ ALSÓ RÉSZ KÖZÉ ──
-    st.markdown("""
+    # ── GLOWING ELVÁLASZTÓ SÁV AZ AUDHD SZÁMLÁLÓ ÉS AZ ALSÓ RÉSZ KÖZÉ ──
+    sep_badge_text = "⚡ AKTÍV MUNKATERÜLET & PIPELINE ⚡" if is_hu else "⚡ ACTIVE WORKSPACE & PIPELINE ⚡"
+    st.markdown(f"""
     <div style='margin: 22px 0 26px 0; position: relative; text-align: center;'>
         <div style='height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.25) 15%, rgba(56, 189, 248, 0.95) 50%, rgba(16, 185, 129, 0.85) 75%, transparent 100%); box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);'></div>
         <div style='display: inline-block; position: relative; top: -13px; background: #0b1329; padding: 3px 20px; border-radius: 20px; border: 1.5px solid #38bdf8; font-size: 0.76rem; font-weight: 800; letter-spacing: 2px; color: #38bdf8; text-transform: uppercase; box-shadow: 0 4px 15px rgba(0,0,0,0.7), 0 0 10px rgba(56, 189, 248, 0.25);'>
-            ⚡ AKTÍV MUNKATERÜLET & PIPELINE ⚡
+            {sep_badge_text}
         </div>
     </div>
     """, unsafe_allow_html=True)
