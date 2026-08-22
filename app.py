@@ -51,8 +51,10 @@ import key_manager
 from key_manager import get_key_manager, generate_image_with_fallback
 import prompts
 from prompts import (
-    NICHE_CATEGORIES,
-    get_niche_prompt_context,
+    CHRISTIAN_SUB_NICHES,
+    KDP_TASK_STYLES,
+    ETSY_TASK_STYLES,
+    GUMROAD_TASK_STYLES,
     IMAGE_MODEL_PROFILES,
     build_kdp_autopilot_manifest_prompt,
     parse_kdp_autopilot_manifest_json,
@@ -276,12 +278,15 @@ def render_ai_tool_badge(tool_type: str, note: str = ""):
 def on_kdp_lang_change():
     """Callback triggered immediately when KDP language radio changes."""
     lang = st.session_state.get("kdp_lang_radio", "")
+    niche_key = st.session_state.get("zen_niche_sel", list(CHRISTIAN_SUB_NICHES.keys())[0])
+    niche_data = CHRISTIAN_SUB_NICHES.get(niche_key, CHRISTIAN_SUB_NICHES[list(CHRISTIAN_SUB_NICHES.keys())[0]])
+
     if "Magyar" in lang:
-        st.session_state["wiz_kdp_title"] = "Noé Bárkája Bibliai Kalandok"
-        st.session_state["wiz_kdp_sub"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek"
+        st.session_state["wiz_kdp_title"] = niche_data.get("default_kdp_title_hu", "Noé Bárkája Bibliai Kalandok")
+        st.session_state["wiz_kdp_sub"] = niche_data.get("default_kdp_sub_hu", "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek")
     else:
-        st.session_state["wiz_kdp_title"] = "Noah's Ark Bible Adventures"
-        st.session_state["wiz_kdp_sub"] = "Inspiring Bible Verse Coloring Book for Children"
+        st.session_state["wiz_kdp_title"] = niche_data.get("default_kdp_title_en", "Noah's Ark Bible Adventures")
+        st.session_state["wiz_kdp_sub"] = niche_data.get("default_kdp_sub_en", "Inspiring Bible Verse Coloring Book for Children")
 
 
 def on_etsy_lang_change():
@@ -304,6 +309,11 @@ def on_gum_lang_change():
     else:
         st.session_state["wiz_gum_title"] = "30 Days of Peace in the Storm Devotional Journal"
         st.session_state["wiz_gum_matrix"] = "[Day 1 | Philippians 4:6-7 | God's peace guards hearts | 1. What worries you today? 2. How do you surrender it? 3. What can you thank God for?]"
+
+
+def on_niche_change():
+    """Callback triggered when Christian sub-niche changes in sidebar."""
+    on_kdp_lang_change()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -336,7 +346,7 @@ def render_kdp_pipeline_wizard(km):
         st.session_state["wiz_kdp_sub"] = "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek" if is_hu else "Inspiring Bible Verse Coloring Book for Children"
 
     kdp_steps = [
-        "1. Niche & Ötlet",
+        "1. Niche & Stílus",
         "2. Vázlat & Igék",
         "3. Képgenerálás",
         "4. Borító & Gerinc",
@@ -349,23 +359,35 @@ def render_kdp_pipeline_wizard(km):
     cur_step = st.session_state["kdp_step"]
     render_stepper(kdp_steps, cur_step)
 
-    # ── 1. LÉPÉS: NICHE & ÖTLET ──
+    # ── 1. LÉPÉS: NICHE & FELADAT-SPECIFIKUS STÍLUS ──
     if cur_step == 0:
-        render_ai_tool_badge("gemini", "A könyvcím, alcím és célközönség meghatározásához használd a Geminit vagy az app beépített 22 Niche sablonjait.")
-        st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím és Formátum")
+        render_ai_tool_badge("gemini", "A könyvcím, alcím és illusztrációs stílus meghatározásához használd a Geminit vagy az alábbi KDP stílusokat.")
+        st.markdown("#### 🎯 1. Lépés: Könyv Cél, Cím, Stílus és Formátum")
+        
         c1, c2 = st.columns([1.2, 1.0])
         with c1:
             title = st.text_input("Könyv Főcíme:", key="wiz_kdp_title")
             subtitle = st.text_input("Alcím:", key="wiz_kdp_sub")
-            aud_choice = st.selectbox(
-                "Célközönség & Stílus:",
-                ["👶 Gyermek (Vastag fekete vonalak, cuki formák, tiszta fehér háttér)", "🧘 Felnőtt (Intrikát mandala, zentangle vonalrajz)"],
-                key="wiz_kdp_aud"
+            
+            # Feladat-specifikus KDP stílusválasztó
+            kdp_style = st.selectbox(
+                "🎨 KDP Művészeti & Vizuális Stílus:",
+                options=list(KDP_TASK_STYLES.keys()),
+                key="wiz_kdp_style_select"
             )
+            st.session_state["kdp_chosen_style"] = kdp_style
+            st.session_state["kdp_is_adult"] = KDP_TASK_STYLES[kdp_style]["is_adult"]
+
         with c2:
             trim = st.selectbox("KDP Formátum (Trim Size):", ["8.5x11", "8.5x8.5", "8x10", "6x9"], index=0, key="wiz_kdp_trim")
-            page_count = st.slider("Színező Oldalak Száma:", 4, 30, value=st.session_state.get("kdp_page_count", 10), key="wiz_kdp_pages")
-            st.session_state["kdp_is_adult"] = "Felnőtt" in aud_choice
+            page_count = st.slider("Színező / Illusztrált Oldalak Száma:", 4, 30, value=st.session_state.get("kdp_page_count", 10), key="wiz_kdp_pages")
+            
+            st.markdown(f"""
+            <div class='zen-card'>
+                <strong style='color:#38bdf8;'>✨ Kiválasztott Stílus Módosító:</strong><br>
+                <code>{KDP_TASK_STYLES[kdp_style]['prompt_mod']}</code>
+            </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("---")
         if st.button("Mentés és Tovább a Vázlathoz ➔", type="primary", use_container_width=True):
@@ -394,17 +416,18 @@ def render_kdp_pipeline_wizard(km):
                 ok, resp = km.generate_text_with_fallback(prompt=prompt, system_instruction=f"Te egy KDP kiadói szakértő vagy. {lang_sys}", model_name="groq-llama-3.3-70b")
                 scenes = parse_kdp_autopilot_manifest_json(resp)
                 if not scenes:
+                    style_mod = KDP_TASK_STYLES.get(st.session_state.get("kdp_chosen_style", list(KDP_TASK_STYLES.keys())[0]), {}).get("prompt_mod", "")
                     if is_hu:
                         scenes = [
-                            {"page_number": 1, "title": "Noé építi a bárkát", "scripture_reference": "1Mózes 6:14", "scripture_text": "Csinálj magadnak bárkát gófer-fából...", "visual_prompt": build_kdp_coloring_interior_master_prompt("Noé építi a fából készült bárkát szerszámokkal")},
-                            {"page_number": 2, "title": "Az állatok megérkezése", "scripture_reference": "1Mózes 7:9", "scripture_text": "Kettő-kettő ment be Noéhoz a bárkába...", "visual_prompt": build_kdp_coloring_interior_master_prompt("Két zsiráf és két oroszlán sétál a bárka felé")},
-                            {"page_number": 3, "title": "A szövetség szivárványa", "scripture_reference": "1Mózes 9:13", "scripture_text": "Ívemet helyezem a felhőkbe...", "visual_prompt": build_kdp_coloring_interior_master_prompt("Noé és családja imádkozik egy hatalmas szivárvány alatt")}
+                            {"page_number": 1, "title": "Noé építi a bárkát", "scripture_reference": "1Mózes 6:14", "scripture_text": "Csinálj magadnak bárkát gófer-fából...", "visual_prompt": f"Noé építi a fából készült bárkát szerszámokkal, {style_mod}"},
+                            {"page_number": 2, "title": "Az állatok megérkezése", "scripture_reference": "1Mózes 7:9", "scripture_text": "Kettő-kettő ment be Noéhoz a bárkába...", "visual_prompt": f"Két zsiráf és két oroszlán sétál a bárka felé, {style_mod}"},
+                            {"page_number": 3, "title": "A szövetség szivárványa", "scripture_reference": "1Mózes 9:13", "scripture_text": "Ívemet helyezem a felhőkbe...", "visual_prompt": f"Noé és családja imádkozik egy hatalmas szivárvány alatt, {style_mod}"}
                         ]
                     else:
                         scenes = [
-                            {"page_number": 1, "title": "Noah building the ark", "scripture_reference": "Genesis 6:14", "scripture_text": "Make thee an ark of gopher wood...", "visual_prompt": build_kdp_coloring_interior_master_prompt("Noah building the wooden ark with tools")},
-                            {"page_number": 2, "title": "Animals arriving two by two", "scripture_reference": "Genesis 7:9", "scripture_text": "There went in two and two unto Noah...", "visual_prompt": build_kdp_coloring_interior_master_prompt("Two giraffes and two lions walking toward the ark")},
-                            {"page_number": 3, "title": "The rainbow of promise", "scripture_reference": "Genesis 9:13", "scripture_text": "I do set my bow in the cloud...", "visual_prompt": build_kdp_coloring_interior_master_prompt("Noah praying with family under a big rainbow")}
+                            {"page_number": 1, "title": "Noah building the ark", "scripture_reference": "Genesis 6:14", "scripture_text": "Make thee an ark of gopher wood...", "visual_prompt": f"Noah building the wooden ark with tools, {style_mod}"},
+                            {"page_number": 2, "title": "Animals arriving two by two", "scripture_reference": "Genesis 7:9", "scripture_text": "There went in two and two unto Noah...", "visual_prompt": f"Two giraffes and two lions walking toward the ark, {style_mod}"},
+                            {"page_number": 3, "title": "The rainbow of promise", "scripture_reference": "Genesis 9:13", "scripture_text": "I do set my bow in the cloud...", "visual_prompt": f"Noah praying with family under a big rainbow, {style_mod}"}
                         ]
                 st.session_state["kdp_scenes_manifest"] = scenes
                 st.success("✅ Könyvvázlat sikeresen elkészült!")
@@ -561,7 +584,7 @@ def render_etsy_pipeline_wizard(km):
         st.session_state["wiz_etsy_verse"] = "Lelkemet megvidámítja, az igazság ösvényein vezet engem az ő nevéért." if is_hu else "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake."
 
     etsy_steps = [
-        "1. Koncepció & Ige",
+        "1. Koncepció & Stílus",
         "2. Vizuális Generálás",
         "3. Háttéreltávolítás",
         "4. 2026 SEO & CSV"
@@ -573,10 +596,11 @@ def render_etsy_pipeline_wizard(km):
     cur_step = st.session_state["etsy_step"]
     render_stepper(etsy_steps, cur_step)
 
-    # ── 1. LÉPÉS: KONCEPCIÓ & IGE ──
+    # ── 1. LÉPÉS: KONCEPCIÓ & FELADAT-SPECIFIKUS STÍLUS ──
     if cur_step == 0:
         render_ai_tool_badge("notebooklm", "A szó szerinti, pontos bibliai igéket a forrásalapú NotebookLM jegyzetfüzetből emeljük át.")
-        st.markdown("#### 🌿 1. Lépés: Terméktípus és Bibliai Igehely")
+        st.markdown("#### 🌿 1. Lépés: Terméktípus, Igehely és Művészeti Stílus")
+        
         p_type = st.radio("Terméktípus:", ["🖼️ Skandináv Igés Falikép (4:5 Wall Art)", "✂️ Chibi / Akvarell Clipart Csomag (Fehér Háttér)"], key="wiz_etsy_ptype")
         st.session_state["etsy_is_clipart"] = "Clipart" in p_type
 
@@ -584,12 +608,22 @@ def render_etsy_pipeline_wizard(km):
         with c1:
             ref = st.text_input("Igehely:", key="wiz_etsy_ref")
             verse = st.text_area("Szó szerinti Ige:", height=70, key="wiz_etsy_verse")
+            
+            # Feladat-specifikus Etsy stílusválasztó
+            etsy_style = st.selectbox(
+                "🎨 Etsy Művészeti & Dekor Stílus:",
+                options=list(ETSY_TASK_STYLES.keys()),
+                key="wiz_etsy_style_select"
+            )
+            st.session_state["etsy_chosen_style"] = etsy_style
+
         with c2:
-            st.markdown("""
+            st.markdown(f"""
             <div class='zen-card'>
-                <strong style='color:#34d399;'>🎨 Section 5.2 Stíluskövetelmény:</strong><br>
-                • <strong>Falikép:</strong> Elegáns minimalista akvarell eukaliptusz levelekkel keretezett tiszta idézet (4:5 arány).<br>
-                • <strong>Clipart:</strong> Izolált tiszta fehér háttér, egységes chibi stílus.
+                <strong style='color:#34d399;'>🎨 Kiválasztott Stílus Módosító:</strong><br>
+                <code>{ETSY_TASK_STYLES[etsy_style]['prompt_mod']}</code><br><br>
+                <strong style='color:#cbd5e1;'>🏷️ SEO Címkék kiegészítése:</strong><br>
+                <code>{', '.join(ETSY_TASK_STYLES[etsy_style]['tags_addon'])}</code>
             </div>
             """, unsafe_allow_html=True)
 
@@ -605,14 +639,16 @@ def render_etsy_pipeline_wizard(km):
         render_ai_tool_badge("flux", "A 4:5 Skandináv faliképeket és a Chibi clipart illusztrációkat a FLUX.1 300 DPI motor generálja.")
         st.markdown("#### 🎨 2. Lépés: FLUX 300 DPI Képgenerálás")
         is_clipart = st.session_state.get("etsy_is_clipart", False)
-        
+        style_info = ETSY_TASK_STYLES.get(st.session_state.get("etsy_chosen_style", list(ETSY_TASK_STYLES.keys())[0]), {})
+        style_prompt = style_info.get("prompt_mod", "")
+
         if is_clipart:
             subject = "fiatal bibliai Mózes a kőtáblákkal" if is_hu else "young biblical Moses holding the stone tablets"
-            prompt_in = build_etsy_clipart_master_prompt(subject)
+            prompt_in = f"{build_etsy_clipart_master_prompt(subject)}, {style_prompt}"
             ratio = "1:1"
         else:
             quote_text = f"{st.session_state.get('etsy_verse', st.session_state.get('wiz_etsy_verse', ''))} - {st.session_state.get('etsy_ref', st.session_state.get('wiz_etsy_ref', ''))}"
-            prompt_in = build_etsy_wallart_master_prompt(quote_text)
+            prompt_in = f"An elegant Christian wall art with text: '{quote_text}', {style_prompt}"
             ratio = "4:5"
 
         st.markdown("**Generálandó Master Prompt:**")
@@ -745,7 +781,7 @@ def render_gumroad_pipeline_wizard(km):
 
     gum_steps = [
         "1. NotebookLM RAG",
-        "2. Napi Kézirat & Ima",
+        "2. Napi Kézirat & Stílus",
         "3. Copy & Audio Upsell ($39)",
         "4. Gumroad Publikálás"
     ]
@@ -781,20 +817,29 @@ def render_gumroad_pipeline_wizard(km):
             st.session_state["gum_step"] = 1
             st.rerun()
 
-    # ── 2. LÉPÉS: NAPI KÉZIRAT & IMA ──
+    # ── 2. LÉPÉS: NAPI KÉZIRAT & FELADAT-SPECIFIKUS TÓNUS STÍLUS ──
     elif cur_step == 1:
         render_ai_tool_badge("gemini", "A 200 szavas mély lelkigondozói reflexiókat, imákat és naplókérdéseket a Gemini Advanced Master Prompt fejti ki.")
         st.markdown(f"#### ✍️ 2. Lépés: {st.session_state.get('gum_day', 1)}. Napi Áhítat Kifejtése (Gemini Master Prompt)")
         
+        # Feladat-specifikus Gumroad tónusválasztó
+        gum_style = st.selectbox(
+            "✍️ Lelkigondozói & Irodalmi Hangvétel Stílus:",
+            options=list(GUMROAD_TASK_STYLES.keys()),
+            key="wiz_gum_style_select"
+        )
+        st.session_state["gum_chosen_style"] = gum_style
+        tone_instruction = GUMROAD_TASK_STYLES[gum_style]["instruction"]
+
         if st.button(f"✨ Napi Áhítat Generálása ({'Magyarul' if is_hu else 'Angolul'})", type="primary", use_container_width=True):
             with st.spinner("AI írja a mély, lelkigondozói szöveget..."):
-                prompt = build_gumroad_devotional_master_prompt(
+                base_prompt = build_gumroad_devotional_master_prompt(
                     st.session_state.get("gum_dev_title", st.session_state.get("wiz_gum_title", "Áhítat")),
                     st.session_state.get("gum_day", 1),
                     st.session_state.get("gum_matrix_row", st.session_state.get("wiz_gum_matrix", ""))
                 )
-                lang_sys = "Kizárólag mély, hiteles magyar nyelven írj, meleg lelkigondozói tónusban." if is_hu else "Write strictly in deep, authentic English devotional tone."
-                ok, resp = km.generate_text_with_fallback(prompt=prompt, system_instruction=lang_sys, model_name="groq-llama-3.3-70b")
+                lang_sys = f"Kizárólag mély, hiteles magyar nyelven írj. Stílusutasítás: {tone_instruction}" if is_hu else f"Write strictly in deep, authentic English devotional tone. Style instruction: {tone_instruction}"
+                ok, resp = km.generate_text_with_fallback(prompt=base_prompt, system_instruction=lang_sys, model_name="groq-llama-3.3-70b")
                 st.session_state["gum_dev_text"] = resp
                 st.success("✅ Napi áhítat elkészült!")
 
@@ -942,9 +987,15 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-        # ── 22 Niche választó ──
-        niche_keys = list(NICHE_CATEGORIES.keys())
-        chosen_niche = st.selectbox("🎯 Cél Niche (22 Piac):", options=niche_keys, index=0, key="zen_niche_sel")
+        # ── Keresztény Célcsoport & Alkategória Választó ──
+        christian_niche_keys = list(CHRISTIAN_SUB_NICHES.keys())
+        chosen_niche = st.selectbox(
+            "🎯 Keresztény Célcsoport:",
+            options=christian_niche_keys,
+            index=0,
+            key="zen_niche_sel",
+            on_change=on_niche_change
+        )
         st.session_state["active_niche_choice"] = chosen_niche
 
         st.markdown("---")

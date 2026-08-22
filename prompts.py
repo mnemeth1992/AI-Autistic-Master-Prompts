@@ -5,8 +5,113 @@ Based on the Autism-Friendly 100% Async Digital Business System Document
 """
 
 # ─────────────────────────────────────────────────────────
-# 22 HIGH-DEMAND NICHE CATEGORIES (5 SUPERGROUPS)
+# KERESZTÉNY CÉLCSOPORTOK & FELADAT-SPECIFIKUS STÍLUSOK
 # ─────────────────────────────────────────────────────────
+
+CHRISTIAN_SUB_NICHES = {
+    "👶 Gyermekek & Családok (Bible Stories & Coloring)": {
+        "audience": "Keresztény családok, vasárnapi iskolások és kisgyermekes édesanyák",
+        "keywords": ["bible stories for kids", "christian coloring book", "noah ark", "toddler scripture"],
+        "tone": "Kedves, vidám, tiszta és bátorító",
+        "default_kdp_title_en": "Noah's Ark Bible Adventures",
+        "default_kdp_title_hu": "Noé Bárkája Bibliai Kalandok",
+        "default_kdp_sub_en": "Inspiring Bible Verse Coloring Book for Children",
+        "default_kdp_sub_hu": "Inspiráló Bibliai Igés Színezőkönyv Gyermekeknek"
+    },
+    "🌸 Édesanyák & Keresztény Nők (Devotionals & Peace)": {
+        "audience": "Túlterhelt keresztény édesanyák és nők, akik lelki megújulásra vágynak",
+        "keywords": ["devotional for women", "christian mom journal", "peace in the storm", "prayer journal"],
+        "tone": "Meleg, mélyen lelkigondozói, megértő és vigasztaló",
+        "default_kdp_title_en": "Peace in the Storm: Daily Devotional for Mothers",
+        "default_kdp_title_hu": "Békesség a Viharban: Napi Áhítat Édesanyáknak",
+        "default_kdp_sub_en": "30 Days of Guided Scripture & Prayer Journal",
+        "default_kdp_sub_hu": "30 Napos Vezetett Igés Imádságos Napló"
+    },
+    "🛡️ Férfiak & Családfők (Faith & Leadership)": {
+        "audience": "Keresztény férfiak, apák és vezetők",
+        "keywords": ["christian men devotional", "biblical leadership", "strength in faith", "men prayer"],
+        "tone": "Erőt adó, bátor, gyakorlatias és hitvalló",
+        "default_kdp_title_en": "Armor of God: Daily Devotional for Men",
+        "default_kdp_title_hu": "Isten Fegyverzete: Napi Áhítat Férfiaknak",
+        "default_kdp_sub_en": "Strength, Courage and Biblical Wisdom for Daily Battles",
+        "default_kdp_sub_hu": "Erő, Bátorság és Bibliai Bölcsesség a Mindennapi Harcokhoz"
+    },
+    "🕊️ Lelki Béke & Csendesség (Mindfulness & Prayer)": {
+        "audience": "Belső békét, imádságos elcsendesedést és Isten jelenlétét keresők",
+        "keywords": ["christian mindfulness", "prayer journal", "psalms of peace", "silent prayer"],
+        "tone": "Leföldelő, békés, kontemplatív és hálaadó",
+        "default_kdp_title_en": "Be Still and Know: Guided Prayer Journal",
+        "default_kdp_title_hu": "Csendesedjetek El: Vezetett Imádságos Napló",
+        "default_kdp_sub_en": "Quiet Meditations and Scripture Reflections",
+        "default_kdp_sub_hu": "Csendes Elmélkedések és Bibliai Reflexiók"
+    },
+    "📖 Zsoltárok & Dicsőítés (Wall Art & Devotional)": {
+        "audience": "Igei otthondekorációt és dicsőítő reflexiókat keresők",
+        "keywords": ["psalms wall art", "scripture prints", "worship journal", "eucalyptus bible art"],
+        "tone": "Ünnepélyes, felemelő, biblikus és dicsőítő",
+        "default_kdp_title_en": "Psalms of Grace: Scripture Coloring & Reflection",
+        "default_kdp_title_hu": "A Kegyelem Zsoltárai: Igés Színező és Elmélkedés",
+        "default_kdp_sub_en": "Beautiful Bible Verse Art and Meditations",
+        "default_kdp_sub_hu": "Gyönyörű Bibliai Igés Grafikák és Elmélkedések"
+    }
+}
+
+KDP_TASK_STYLES = {
+    "👶 Gyermek Vonalrajz (Section 5.1 - Vastag kontúrok, cuki formák, tiszta fehér háttér, árnyékmentes)": {
+        "prompt_mod": "clean bold black line art, cute simple vector style for children coloring book, pure white background, no shading, no grayscale, no gradients, 8.5:11 inch, 4K resolution",
+        "is_adult": False
+    },
+    "🧘 Felnőtt Meditációs Színező (Intrikát botanikai minták, mandala, zentangle, finom vonalháló)": {
+        "prompt_mod": "intricate black and white line art, botanical zentangle patterns, detailed coloring page for adult relaxation, pure white background, crisp outlines, 8.5:11 inch, 4K",
+        "is_adult": True
+    },
+    "📖 Akvarell Mesekönyv Illusztráció (Lágy pasztell akvarell, következetes karakterek, meleg fények)": {
+        "prompt_mod": "soft watercolor storybook illustration, gentle pastel colors, warm glowing light, consistent children's book art style, high detail, 8.5:8.5 inch",
+        "is_adult": False
+    },
+    "🎨 Élénk Vektoros Borító (17.412:11.25 Wrap-Around, pasztell harmónia, tiszta tipográfia)": {
+        "prompt_mod": "professional children's book wrap-around cover, pastel color palette, clean modern vector art, bold typography header, 17.412:11.25 aspect ratio",
+        "is_adult": False
+    }
+}
+
+ETSY_TASK_STYLES = {
+    "🌿 Skandináv Eukaliptusz Minimalista (Section 5.2 - Lágy zöld akvarell levelek, letisztult KJV tipográfia, 4:5)": {
+        "prompt_mod": "elegant minimalist watercolor design with soft green eucalyptus leaves framing central text, Scandinavian Christian wall art style, 4:5 aspect ratio",
+        "tags_addon": ["scandinavian art", "eucalyptus print", "minimalist poster", "modern wall art"]
+    },
+    "✨ Modern Arany & Márvány Prémium (Arany fólia elemek, finom márvány textúra, luxus serif betűk)": {
+        "prompt_mod": "luxury Christian wall art, gold foil geometric accents, subtle white marble background, elegant serif scripture typography, 4:5 ratio",
+        "tags_addon": ["gold scripture art", "marble wall art", "luxury faith decor", "elegant poster"]
+    },
+    "🎨 Vintage Botanikai & Vadvirágos (Klasszikus herbárium stílus, antik papír árnyalat, finom virágkoszorú)": {
+        "prompt_mod": "vintage botanical watercolor illustration, pressed wildflowers wreath framing scripture text, antique warm paper tone, 4:5 ratio",
+        "tags_addon": ["vintage scripture", "botanical wall art", "wildflower print", "cottagecore faith"]
+    },
+    "✂️ Cuki Chibi Clipart (Izolált tiszta fehér háttér, matrica kontúr, pasztell akvarell karakter)": {
+        "prompt_mod": "cute chibi watercolor clipart character, soft pastel palette, isolated on pure white background, sticker outline, high resolution, 1:1 ratio",
+        "tags_addon": ["chibi clipart", "watercolor sticker", "christian clipart", "digital png"]
+    },
+    "🕊️ Rusztikus Farmhouse & Fa Textúra (Meleg barna tónusok, fehérre meszelt deszka háttér, vintage kalligráfia)": {
+        "prompt_mod": "rustic farmhouse Christian wall art, whitewashed wood background, dark charcoal modern calligraphy scripture, 4:5 ratio",
+        "tags_addon": ["farmhouse decor", "rustic scripture", "wooden wall art", "country faith"]
+    }
+}
+
+GUMROAD_TASK_STYLES = {
+    "🕊️ Meleg, Bátorító Lelkigondozói (Section 5.3 - Mélyen emberi, vigasztaló, békességet sugárzó)": {
+        "instruction": "Írj meleg, mélyen bátorító, lelki békességet sugárzó, tiszteletteljes és emberi tónusban. Kerüld a mesterkélt AI fordulatokat és a száraz teológiai fejtegetéseket."
+    },
+    "🧘 Csendes Meditatív & Imádságos (Lassú reflexió, mély belső elcsendesedés, kontemplatív kérdések)": {
+        "instruction": "Írj csendes, meditatív, imádságos hangvételben, amely segít lelassulni, elengedni a szorongást és Isten jelenlétében megnyugodni."
+    },
+    "⚔️ Hitvalló, Bátor & Gyakorlatias (Erőt adó, bibliai igazságok gyakorlati alkalmazása a mindennapi harcokban)": {
+        "instruction": "Írj dinamikus, erőt adó, bátor és gyakorlatias stílusban, amely konkrét cselekvésre és hitbeli kitartásra ösztönöz a mindennapokban."
+    },
+    "🌸 Édesanyáknak & Nőknek Szóló Gyengéd Tónus (Család, anyaság, hálaadás, lelki feltöltődés a rohanásban)": {
+        "instruction": "Írj gyengéd, megértő, édesanyák szívéhez szóló hangvételben, amely elismeri a mindennapi fáradtságot és Isten megújító kegyelmére mutat."
+    }
+}
 
 NICHE_CATEGORIES = {
     "✝️ Keresztény & Bibliai Rétegpiac (Alapértelmezett)": {
