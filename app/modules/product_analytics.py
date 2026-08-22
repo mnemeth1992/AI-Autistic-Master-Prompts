@@ -21,7 +21,6 @@ DATA_DIR = os.path.join(ROOT_DIR, "data", "ev_data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 PRODUCT_SALES_FILE = os.path.join(DATA_DIR, "product_sales.json")
-INVOICES_FILE = os.path.join(DATA_DIR, "invoices.json")
 
 
 def fmt_huf(val: float) -> str:
@@ -77,7 +76,7 @@ def load_product_catalog() -> List[Dict[str, Any]]:
         {
             "id": "prod-gum-01",
             "name": "30 Napos Békesség a Viharban Áhítat + Audio Podcast ($39)",
-            "name_en": "30-Day Peace in the Storm Devotional + MP3 Audio Overview Bundle",
+            "name_en": "30-Day Devotional + Audio Podcast Bundle",
             "category": "🎙️ Gumroad Áhítat & Podcast",
             "platform": "Gumroad",
             "price_usd": 39.00,
@@ -140,7 +139,7 @@ def render_product_analytics_module():
     # Recalculate totals
     total_units_sold = sum(p.get("units_sold", 0) for p in catalog)
     total_revenue_huf = sum(p.get("total_revenue_huf", p.get("units_sold", 0) * p.get("price_huf", 0.0)) for p in catalog)
-    avg_order_val = (total_revenue_huf / total_units_sold) if total_units_sold > 0 else 0.0
+    bestseller_count = sum(1 for p in catalog if p.get("is_bestseller"))
 
     # Sort products by total revenue descending
     sorted_by_rev = sorted(catalog, key=lambda x: x.get("total_revenue_huf", 0.0), reverse=True)
@@ -156,20 +155,20 @@ def render_product_analytics_module():
 
     top_cat = max(cat_totals.items(), key=lambda x: x[1])[0] if cat_totals else "N/A"
 
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.95)); border: 1.5px solid #10b981; border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);'>
-        <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
-            <div>
-                <h3 style='margin:0; color:#34d399; font-size:1.3rem;'>📈 Termék Piac & Értékesítési Analytics Hub</h3>
-                <p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.86rem;'>Valós idejű termékkimutatások, eladási darabszámok, bestseller rangsor és profitmegoszlás.</p>
-            </div>
-            <div>
-                <span class='param-badge'>📦 {len(catalog)} Aktív Termék</span>
-                <span class='param-badge'>🏆 {sum(1 for p in catalog if p.get('is_bestseller'))} Bestseller</span>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Header Banner
+    header_html = f"""<div style='background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.95)); border: 1.5px solid #10b981; border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);'>
+<div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
+<div>
+<h3 style='margin:0; color:#34d399; font-size:1.3rem;'>📈 Termék Piac & Értékesítési Analytics Hub</h3>
+<p style='margin:3px 0 0 0; color:#94a3b8; font-size:0.86rem;'>Valós idejű termékkimutatások, eladási darabszámok, bestseller rangsor és profitmegoszlás.</p>
+</div>
+<div>
+<span class='param-badge'>📦 {len(catalog)} Aktív Termék</span>
+<span class='param-badge'>🏆 {bestseller_count} Bestseller</span>
+</div>
+</div>
+</div>"""
+    st.markdown(header_html, unsafe_allow_html=True)
 
     # ── 4 FŐ KPI METRIKA KÁRTYA ──
     k1, k2, k3, k4 = st.columns(4)
@@ -203,29 +202,29 @@ def render_product_analytics_module():
             is_best = prod.get("is_bestseller", False)
             p_rev = prod.get("total_revenue_huf", 0.0)
             share_pct = (p_rev / total_revenue_huf * 100.0) if total_revenue_huf > 0 else 0.0
+            border_col = '#f59e0b' if idx == 0 else ('#38bdf8' if idx == 1 else ('#10b981' if idx == 2 else '#334155'))
+            badge_html = "<span style='background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #f59e0b; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:8px;'>👑 BESTSELLER</span>" if is_best else ""
 
-            st.markdown(f"""
-            <div class='zen-card' style='border-left: 4px solid {'#f59e0b' if idx==0 else ('#38bdf8' if idx==1 else ('#10b981' if idx==2 else '#334155'))}; margin-bottom: 12px;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
-                    <div style='display:flex; align-items:center; gap: 12px;'>
-                        <span style='font-size: 1.8rem;'>{rank_icon}</span>
-                        <div>
-                            <strong style='font-size: 1.05rem; color: #f1f5f9;'>{prod.get('name')}</strong>
-                            {f"<span style='background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #f59e0b; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:800; margin-left:8px;'>👑 BESTSELLER</span>" if is_best else ""}
-                            <div style='font-size:0.83rem; color:#94a3b8; margin-top:2px;'>
-                                Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platform: <strong>{prod.get('platform')}</strong> · Értékelés: ⭐ <strong>{prod.get('rating', 5.0):.1f}</strong> ({prod.get('reviews_count', 0)} vélemény)
-                            </div>
-                        </div>
-                    </div>
-                    <div style='text-align: right;'>
-                        <div style='font-size: 1.25rem; font-weight: 900; color: #10b981;'>{fmt_huf(p_rev)}</div>
-                        <div style='font-size: 0.82rem; color: #cbd5e1;'>
-                            <strong>{prod.get('units_sold', 0)} db eladva</strong> · {share_pct:.1f}% részesedés
-                        </div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            card_html = f"""<div class='zen-card' style='border-left: 4px solid {border_col}; margin-bottom: 12px;'>
+<div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;'>
+<div style='display:flex; align-items:center; gap: 12px;'>
+<span style='font-size: 1.8rem;'>{rank_icon}</span>
+<div>
+<strong style='font-size: 1.05rem; color: #f1f5f9;'>{prod.get('name')}</strong> {badge_html}
+<div style='font-size:0.83rem; color:#94a3b8; margin-top:2px;'>
+Kategória: <span style='color:#38bdf8;'>{prod.get('category')}</span> · Platform: <strong>{prod.get('platform')}</strong> · Értékelés: ⭐ <strong>{prod.get('rating', 5.0):.1f}</strong> ({prod.get('reviews_count', 0)} vélemény)
+</div>
+</div>
+</div>
+<div style='text-align: right;'>
+<div style='font-size: 1.25rem; font-weight: 900; color: #10b981;'>{fmt_huf(p_rev)}</div>
+<div style='font-size: 0.82rem; color: #cbd5e1;'>
+<strong>{prod.get('units_sold', 0)} db eladva</strong> · {share_pct:.1f}% részesedés
+</div>
+</div>
+</div>
+</div>"""
+            st.markdown(card_html, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────
     # TAB 2: KATEGÓRIA & PLATFORM MEGOSZLÁS
@@ -241,33 +240,31 @@ def render_product_analytics_module():
                 cat_pct = (cat_amt / total_revenue_huf * 100.0) if total_revenue_huf > 0 else 0.0
                 bar_color = "#38bdf8" if "KDP" in cat_name else ("#10b981" if "Etsy" in cat_name else "#a855f7")
 
-                st.markdown(f"""
-                <div style='margin-bottom: 14px;'>
-                    <div style='display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:4px;'>
-                        <strong>{cat_name}</strong>
-                        <span style='color:#f1f5f9; font-weight:700;'>{fmt_huf(cat_amt)} ({cat_pct:.1f}%)</span>
-                    </div>
-                    <div style='background:#0f172a; border-radius:10px; height:14px; width:100%; overflow:hidden; border:1px solid #334155;'>
-                        <div style='background:{bar_color}; width:{cat_pct:.1f}%; height:100%;'></div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                cat_bar_html = f"""<div style='margin-bottom: 14px;'>
+<div style='display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:4px;'>
+<strong>{cat_name}</strong>
+<span style='color:#f1f5f9; font-weight:700;'>{fmt_huf(cat_amt)} ({cat_pct:.1f}%)</span>
+</div>
+<div style='background:#0f172a; border-radius:10px; height:14px; width:100%; overflow:hidden; border:1px solid #334155;'>
+<div style='background:{bar_color}; width:{cat_pct:.1f}%; height:100%;'></div>
+</div>
+</div>"""
+                st.markdown(cat_bar_html, unsafe_allow_html=True)
 
         with c_p2:
             st.markdown("##### 📦 Eladott Darabszám Megoszlás (Units):")
             for cat_name, u_count in cat_units.items():
                 u_pct = (u_count / total_units_sold * 100.0) if total_units_sold > 0 else 0.0
-                st.markdown(f"""
-                <div style='margin-bottom: 14px;'>
-                    <div style='display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:4px;'>
-                        <strong>{cat_name}</strong>
-                        <span style='color:#38bdf8; font-weight:700;'>{u_count} db ({u_pct:.1f}%)</span>
-                    </div>
-                    <div style='background:#0f172a; border-radius:10px; height:14px; width:100%; overflow:hidden; border:1px solid #334155;'>
-                        <div style='background:#f59e0b; width:{u_pct:.1f}%; height:100%;'></div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                unit_bar_html = f"""<div style='margin-bottom: 14px;'>
+<div style='display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:4px;'>
+<strong>{cat_name}</strong>
+<span style='color:#38bdf8; font-weight:700;'>{u_count} db ({u_pct:.1f}%)</span>
+</div>
+<div style='background:#0f172a; border-radius:10px; height:14px; width:100%; overflow:hidden; border:1px solid #334155;'>
+<div style='background:#f59e0b; width:{u_pct:.1f}%; height:100%;'></div>
+</div>
+</div>"""
+                st.markdown(unit_bar_html, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────
     # TAB 3: ÚJ TERMÉK / ELADÁS RÖGZÍTÉSE
@@ -341,28 +338,30 @@ def render_product_analytics_module():
         st.markdown("#### 🧠 AuDHD Portfólió Elemzés & Skálázási Iránytű")
         st.caption("Döntési bénulás (choice paralysis) helyett 3 fókuszált, magas hatékonyságú lépés a meglévő eladásaid alapján:")
 
-        st.markdown(f"""
-        <div class='zen-card' style='border-left: 4px solid #38bdf8; margin-bottom: 14px;'>
-            <h5 style='color:#38bdf8; margin:0 0 6px 0;'>🎯 1. Skálázási Fókusz: '{top_product.get('name', 'Bestseller')}' Multipack Keresztértékesítés</h5>
-            <p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
-                Ez a termék generálja a teljes bevételed <strong>{(top_product.get('total_revenue_huf', 0)/total_revenue_huf*100):.1f}%</strong>-át! 
-                <strong>Teendő:</strong> Ne indíts 10 teljesen új témát. Hozz létre ebből a témából egy kapcsolódó <em>Etsy Clipart csomagot</em> és egy <em>Gumroad Áhítatot</em>, mert a már meglévő vevőid azonnal megvásárolják a kapcsolódó terméket is.
-            </p>
-        </div>
+        top_share = (top_product.get('total_revenue_huf', 0) / total_revenue_huf * 100) if total_revenue_huf > 0 else 0
+        aam_share = (total_revenue_huf / 18000000 * 100) if total_revenue_huf > 0 else 0
 
-        <div class='zen-card' style='border-left: 4px solid #a855f7; margin-bottom: 14px;'>
-            <h5 style='color:#a855f7; margin:0 0 6px 0;'>🎙️ 2. Profit Multiplikátor: A $39-os Gumroad Audio Upsell Erőssége</h5>
-            <p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
-                A <strong>30 Napos Áhítat + Deep Dive Audio Podcast</strong> terméked adja a legmagasabb egységárat ($39 = 15 000 Ft/vásárlás). 
-                <strong>Teendő:</strong> Már mindössze heti 3 db Gumroad eladás havi <strong>180 000 Ft</strong> tiszta plusz profitot termel minimális extra energiával.
-            </p>
-        </div>
+        strat_html = f"""<div class='zen-card' style='border-left: 4px solid #38bdf8; margin-bottom: 14px;'>
+<h5 style='color:#38bdf8; margin:0 0 6px 0;'>🎯 1. Skálázási Fókusz: '{top_product.get('name', 'Bestseller')}' Multipack Keresztértékesítés</h5>
+<p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
+Ez a termék generálja a teljes bevételed <strong>{top_share:.1f}%</strong>-át! 
+<strong>Teendő:</strong> Ne indíts 10 teljesen új témát. Hozz létre ebből a témából egy kapcsolódó <em>Etsy Clipart csomagot</em> és egy <em>Gumroad Áhítatot</em>, mert a már meglévő vevőid azonnal megvásárolják a kapcsolódó terméket is.
+</p>
+</div>
 
-        <div class='zen-card' style='border-left: 4px solid #10b981;'>
-            <h5 style='color:#10b981; margin:0 0 6px 0;'>🛡️ 3. AAM Keretbiztonság (18 000 000 Ft)</h5>
-            <p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
-                A jelenlegi termékportfóliód <strong>{fmt_huf(total_revenue_huf)}</strong> éves forgalmat realizált, ami 
-                <strong>{(total_revenue_huf/18000000*100):.1f}%</strong>-os AAM keretkihasználtságot jelent. A vállalkozásod teljesen biztonságos, adómentes zónában működik!
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+<div class='zen-card' style='border-left: 4px solid #a855f7; margin-bottom: 14px;'>
+<h5 style='color:#a855f7; margin:0 0 6px 0;'>🎙️ 2. Profit Multiplikátor: A $39-os Gumroad Audio Upsell Erőssége</h5>
+<p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
+A <strong>30 Napos Áhítat + Deep Dive Audio Podcast</strong> terméked adja a legmagasabb egységárat ($39 = 15 000 Ft/vásárlás). 
+<strong>Teendő:</strong> Már mindössze heti 3 db Gumroad eladás havi <strong>180 000 Ft</strong> tiszta plusz profitot termel minimális extra energiával.
+</p>
+</div>
+
+<div class='zen-card' style='border-left: 4px solid #10b981;'>
+<h5 style='color:#10b981; margin:0 0 6px 0;'>🛡️ 3. AAM Keretbiztonság (18 000 000 Ft)</h5>
+<p style='margin:0; color:#cbd5e1; font-size:0.9rem;'>
+A jelenlegi termékportfóliód <strong>{fmt_huf(total_revenue_huf)}</strong> éves forgalmat realizált, ami 
+<strong>{aam_share:.1f}%</strong>-os AAM keretkihasználtságot jelent. A vállalkozásod teljesen biztonságos, adómentes zónában működik!
+</p>
+</div>"""
+        st.markdown(strat_html, unsafe_allow_html=True)
