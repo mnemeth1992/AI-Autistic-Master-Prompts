@@ -108,6 +108,9 @@ def render_tax_calculator_2026_module():
             </div>
             """, unsafe_allow_html=True)
 
+        def fmt_huf(val: float) -> str:
+            return f"{int(round(val)):,} Ft".replace(",", " ")
+
         res = calculate_2026_flat_tax(yearly_gross)
 
         st.markdown("---")
@@ -115,11 +118,11 @@ def render_tax_calculator_2026_module():
 
         m1, m2, m3, m4 = st.columns(4)
         with m1:
-            st.metric("Havi Tiszta Nettó (Zsebben)", f"{int(res['net_monthly']):,} Ft".replace(",", " "), delta="Tiszta Haszon")
+            st.metric("Havi Tiszta Nettó (Zsebben)", fmt_huf(res['net_monthly']), delta="Tiszta Haszon")
         with m2:
-            st.metric("Éves Tiszta Nettó", f"{int(res['net_yearly']):,} Ft".replace(",", " "))
+            st.metric("Éves Tiszta Nettó", fmt_huf(res['net_yearly']))
         with m3:
-            st.metric("Összes Éves Adóteher", f"{int(res['total_tax']):,} Ft".replace(",", " "), delta_color="inverse")
+            st.metric("Összes Éves Adóteher", fmt_huf(res['total_tax']), delta_color="inverse")
         with m4:
             st.metric("Effektív Adókulcs", f"{res['effective_tax_rate']:.1f}%")
 
@@ -127,19 +130,19 @@ def render_tax_calculator_2026_module():
         c_t1, c_t2 = st.columns(2)
         with c_t1:
             st.markdown(f"""
-            - **Éves Bruttó Bevétel:** `{int(res['gross_yearly']):,} Ft`.replace(',', ' ')
-            - **Elismert Költség (45%):** `{int(res['recognized_expense']):,} Ft`.replace(',', ' ')
-            - **Számított Jövedelem (55%):** `{int(res['calculated_income']):,} Ft`.replace(',', ' ')
-            - **Adómentes Jövedelemsáv (2026):** `{int(res['tax_free_income_limit']):,} Ft`.replace(',', ' ')
-            - **Adóköteles Jövedelemalap:** `{int(res['taxable_base']):,} Ft`.replace(',', ' ')
+            - **Éves Bruttó Bevétel:** `{fmt_huf(res['gross_yearly'])}`
+            - **Elismert Költség (45%):** `{fmt_huf(res['recognized_expense'])}`
+            - **Számított Jövedelem (55%):** `{fmt_huf(res['calculated_income'])}`
+            - **Adómentes Jövedelemsáv (2026):** `{fmt_huf(res['tax_free_income_limit'])}`
+            - **Adóköteles Jövedelemalap:** `{fmt_huf(res['taxable_base'])}`
             """)
         with c_t2:
             st.markdown(f"""
-            - **SZJA (15%):** `{int(res['szja']):,} Ft`.replace(',', ' ')
-            - **TB Járulék (18.5%):** `{int(res['tb']):,} Ft`.replace(',', ' ')
-            - **SZOCHO (13%):** `{int(res['szocho']):,} Ft`.replace(',', ' ')
-            - **HIPA (Helyi Iparűzési Adó):** `{int(res['hipa']):,} Ft`.replace(',', ' ')
-            - **Kamarai Hozzájárulás (fix):** `{int(res['chamber_fee']):,} Ft`.replace(',', ' ')
+            - **SZJA (15%):** `{fmt_huf(res['szja'])}`
+            - **TB Járulék (18.5%):** `{fmt_huf(res['tb'])}`
+            - **SZOCHO (13%):** `{fmt_huf(res['szocho'])}`
+            - **HIPA (Helyi Iparűzési Adó):** `{fmt_huf(res['hipa'])}`
+            - **Kamarai Hozzájárulás (fix):** `{fmt_huf(res['chamber_fee'])}`
             """)
 
     # ─────────────────────────────────────────────────────────
