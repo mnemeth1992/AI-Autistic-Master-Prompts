@@ -1071,21 +1071,28 @@ build_devotional_cover_prompt = lambda *args, **kwargs: build_kdp_cover_master_p
 # ─────────────────────────────────────────────────────────
 
 def build_kdp_autopilot_manifest_prompt(
-    book_title: str,
-    theme: str,
+    book_title: str = "Coloring Book",
+    theme: str = "",
     page_count: int = 30,
     target_audience: str = "children",
     style_name: str = "",
     image_model: str = "",
     trim_size: str = "8.5x11",
-    aspect_ratio: str = "3:4"
+    aspect_ratio: str = "3:4",
+    is_adult: bool = False,
+    *args,
+    **kwargs
 ) -> str:
     """
     Builds the Master Prompt for Gemini 3.7 Flash to generate the full book JSON manifest.
     Strict JSON output containing all scene details, KJV scripture references/texts, color suggestions,
     and optimized Imagen 3 / Nano Banana Pro visual prompts with exact aspect ratio and framing rules.
     """
-    is_adult = "adult" in target_audience.lower() or "felnőtt" in target_audience.lower()
+    if is_adult or "adult" in target_audience.lower() or "felnőtt" in target_audience.lower():
+        is_adult_mode = True
+    else:
+        is_adult_mode = False
+    is_adult = is_adult_mode
     style_spec = f"\nVisual Style Modifier: {style_name}" if style_name else ""
     clean_ratio = aspect_ratio.strip() if aspect_ratio else ("1:1" if "8.5x8.5" in trim_size else "3:4")
     
